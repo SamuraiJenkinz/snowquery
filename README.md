@@ -13,7 +13,7 @@ A local Python application that enables natural language querying of ServiceNow 
 
 ## Tech Stack
 
-- **Python 3.10+**
+- **Python 3.11** (recommended - best compatibility with ML packages)
 - **DuckDB** - Fast SQL queries on local data
 - **ChromaDB** - Vector embeddings for semantic search
 - **sentence-transformers** - Local embedding generation
@@ -22,23 +22,29 @@ A local Python application that enables natural language querying of ServiceNow 
 
 ## Quick Start
 
-1. **Install dependencies**:
+1. **Create virtual environment** (Python 3.11 recommended):
+   ```bash
+   python3.11 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Configure OpenAI** (optional, for query routing):
+3. **Configure OpenAI** (optional, for query routing):
    ```bash
    export OPENAI_API_KEY="your-api-key"
    export OPENAI_API_BASE="https://your-corporate-endpoint"  # if using corporate instance
    ```
 
-3. **Run the app**:
+4. **Run the app**:
    ```bash
    streamlit run app.py
    ```
 
-4. **Upload data**: Use the sidebar to upload a ServiceNow CSV export
+5. **Upload data**: Use the sidebar to upload a ServiceNow CSV export
 
 ## Project Structure
 
