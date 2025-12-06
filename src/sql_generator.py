@@ -7,15 +7,15 @@ from typing import Any
 
 import duckdb
 import pandas as pd
-from openai import OpenAI
+import requests
 
 from config import (
+    API_VERSION,
+    AZURE_OPENAI_API_KEY,
+    AZURE_OPENAI_ENDPOINT,
     DEFAULT_QUERY_LIMIT,
     DUCKDB_PATH,
     MAX_QUERY_LIMIT,
-    OPENAI_API_BASE,
-    OPENAI_API_KEY,
-    OPENAI_MODEL,
 )
 from src.utils import QueryError, format_schema_for_llm, logger
 
@@ -81,26 +81,54 @@ FEW_SHOT_EXAMPLES = [
 ]
 
 
-def _get_openai_client() -> OpenAI:
+def _call_azure_openai(messages: list[dict]) -> str:
     """
-    Get configured OpenAI client.
+    Call Azure OpenAI API.
+
+    Args:
+        messages: List of message dicts
 
     Returns:
-        OpenAI client instance
+        Response content string
 
     Raises:
-        QueryError: If API key not configured
+        QueryError: If API call fails
     """
-    if not OPENAI_API_KEY:
+    if not AZURE_OPENAI_API_KEY:
         raise QueryError(
-            "OpenAI API key not configured",
-            "Set the OPENAI_API_KEY environment variable."
+            "Azure OpenAI API key not configured",
+            "Set the AZURE_OPENAI_API_KEY environment variable."
         )
 
-    return OpenAI(
-        api_key=OPENAI_API_KEY,
-        base_url=OPENAI_API_BASE
-    )
+    if not AZURE_OPENAI_ENDPOINT:
+        raise QueryError(
+            "Azure OpenAI endpoint not configured",
+            "Set the AZURE_OPENAI_ENDPOINT environment variable."
+        )
+
+    headers = {
+        "Content-Type": "application/json",
+        "api-key": AZURE_OPENAI_API_KEY,
+    }
+
+    payload = {
+        "messages": messages,
+        "temperature": 0.1,
+        "max_tokens": 1000,
+    }
+
+    try:
+        response = requests.post(
+            f"{AZURE_OPENAI_ENDPOINT}?api-version={API_VERSION}",
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"]
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Azure OpenAI API error: {e}")
+        raise QueryError("Azure OpenAI API call failed", str(e))
 
 
 def _build_prompt(user_query: str, schema_summary: dict[str, Any]) -> list[dict]:
@@ -160,17 +188,8 @@ def generate_sql(
     logger.info(f"Generating SQL for: {user_query}")
 
     try:
-        client = _get_openai_client()
         messages = _build_prompt(user_query, schema_summary)
-
-        response = client.chat.completions.create(
-            model=OPENAI_MODEL,
-            messages=messages,
-            temperature=0.1,
-            max_tokens=1000
-        )
-
-        content = response.choices[0].message.content.strip()
+        content = _call_azure_openai(messages).strip()
 
         # Parse JSON response
         try:

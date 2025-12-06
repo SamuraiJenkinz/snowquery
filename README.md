@@ -17,7 +17,7 @@ A local Python application that enables natural language querying of ServiceNow 
 - **DuckDB** - Fast SQL queries on local data
 - **ChromaDB** - Vector embeddings for semantic search
 - **sentence-transformers** - Local embedding generation
-- **OpenAI API** - Query routing and SQL generation
+- **Azure OpenAI** - Query routing and SQL generation
 - **Streamlit** - Web interface
 
 ## Quick Start
@@ -33,10 +33,10 @@ A local Python application that enables natural language querying of ServiceNow 
    pip install -r requirements.txt
    ```
 
-3. **Configure OpenAI** (optional, for query routing):
+3. **Configure Azure OpenAI**:
    ```bash
-   export OPENAI_API_KEY="your-api-key"
-   export OPENAI_API_BASE="https://your-corporate-endpoint"  # if using corporate instance
+   cp .env.example .env
+   # Edit .env with your Azure OpenAI credentials
    ```
 
 4. **Run the app**:
@@ -69,13 +69,13 @@ snow_query/
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key | (required for query features) |
-| `OPENAI_API_BASE` | API endpoint URL | https://api.openai.com/v1 |
-| `OPENAI_MODEL` | Model to use | gpt-4o |
+| `AZURE_OPENAI_ENDPOINT` | Azure OpenAI endpoint URL | (required) |
+| `AZURE_OPENAI_API_KEY` | Azure OpenAI API key | (required) |
+| `API_VERSION` | Azure API version | 2023-05-15 |
 | `LOG_LEVEL` | Logging verbosity | INFO |
 
 ## Data Privacy
 
 - All data processing happens locally
-- Only OpenAI API calls leave your machine (for query routing/SQL generation)
+- Only Azure OpenAI API calls leave your machine (for query routing/SQL generation)
 - CSV data and embeddings are stored in the `db/` directory

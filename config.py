@@ -7,10 +7,10 @@ from pathlib import Path
 # Base directory
 BASE_DIR = Path(__file__).parent
 
-# OpenAI Configuration
-OPENAI_API_BASE: str = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
-OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o")
+# Azure OpenAI Configuration
+AZURE_OPENAI_ENDPOINT: str = os.getenv("AZURE_OPENAI_ENDPOINT", "")
+AZURE_OPENAI_API_KEY: str = os.getenv("AZURE_OPENAI_API_KEY", "")
+API_VERSION: str = os.getenv("API_VERSION", "2023-05-15")
 
 # Embedding Configuration
 EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
