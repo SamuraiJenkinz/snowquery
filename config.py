@@ -4,8 +4,13 @@ Configuration settings for ServiceNow Incident Query Tool.
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 # Base directory
 BASE_DIR = Path(__file__).parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / ".env")
 
 # Azure OpenAI Configuration
 AZURE_OPENAI_ENDPOINT: str = os.getenv("AZURE_OPENAI_ENDPOINT", "")
