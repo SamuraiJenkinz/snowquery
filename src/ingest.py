@@ -158,14 +158,30 @@ def load_csv(
     logger.info("Starting CSV ingestion")
 
     try:
-        # Read CSV into pandas first for type inference
-        if isinstance(file, (str, Path)):
-            df = pd.read_csv(file, low_memory=False)
-        else:
-            # Reset file position if BytesIO
-            if hasattr(file, "seek"):
-                file.seek(0)
-            df = pd.read_csv(file, low_memory=False)
+        # Try different encodings for CSV reading
+        encodings = ['utf-8', 'cp1252', 'latin-1', 'iso-8859-1']
+        df = None
+
+        for encoding in encodings:
+            try:
+                if isinstance(file, (str, Path)):
+                    df = pd.read_csv(file, low_memory=False, encoding=encoding)
+                else:
+                    # Reset file position if BytesIO
+                    if hasattr(file, "seek"):
+                        file.seek(0)
+                    df = pd.read_csv(file, low_memory=False, encoding=encoding)
+                logger.info(f"Successfully read CSV with {encoding} encoding")
+                break
+            except UnicodeDecodeError:
+                logger.debug(f"Failed to read with {encoding} encoding, trying next...")
+                continue
+
+        if df is None:
+            raise IngestionError(
+                "Failed to read CSV file",
+                "Could not decode file with any supported encoding (utf-8, cp1252, latin-1)"
+            )
 
         if df.empty:
             raise IngestionError(
