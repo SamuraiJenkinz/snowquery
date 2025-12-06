@@ -2,10 +2,12 @@
 Data ingestion module for ServiceNow Incident Query Tool.
 Handles CSV loading, type inference, and DuckDB persistence.
 """
+from __future__ import annotations
+
 import re
 from io import BytesIO
 from pathlib import Path
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, Optional
 
 import duckdb
 import pandas as pd

@@ -2,10 +2,12 @@
 Utility functions for ServiceNow Incident Query Tool.
 Includes result formatting, error handling, and logging configuration.
 """
+from __future__ import annotations
+
 import logging
 import sys
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 

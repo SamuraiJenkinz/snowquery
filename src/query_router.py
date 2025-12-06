@@ -2,8 +2,10 @@
 Query router for intelligent query classification and routing.
 Determines whether to use SQL or semantic search based on query intent.
 """
+from __future__ import annotations
+
 import json
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 import requests

@@ -2,9 +2,11 @@
 Embedding pipeline for semantic search capability.
 Builds and manages vector embeddings in ChromaDB from incident text fields.
 """
+from __future__ import annotations
+
 import time
 from datetime import datetime
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 import chromadb
 from chromadb.config import Settings
@@ -19,9 +21,9 @@ from config import (
 from src.utils import EmbeddingError, logger
 
 # Module-level cache for model and client
-_model: SentenceTransformer | None = None
-_chroma_client: chromadb.PersistentClient | None = None
-_collection: chromadb.Collection | None = None
+_model: Optional[SentenceTransformer] = None
+_chroma_client: Optional[chromadb.PersistentClient] = None
+_collection: Optional[chromadb.Collection] = None
 
 # Collection name
 COLLECTION_NAME = "incidents"

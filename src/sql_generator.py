@@ -1,9 +1,11 @@
 """
 SQL generator for natural language to SQL conversion.
-Uses OpenAI to generate DuckDB-compatible SQL from user queries.
+Uses Azure OpenAI to generate DuckDB-compatible SQL from user queries.
 """
+from __future__ import annotations
+
 import json
-from typing import Any
+from typing import Any, Optional
 
 import duckdb
 import pandas as pd

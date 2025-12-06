@@ -2,7 +2,9 @@
 Semantic search module for vector similarity queries.
 Finds incidents similar to natural language descriptions.
 """
-from typing import Any
+from __future__ import annotations
+
+from typing import Any, Optional
 
 import duckdb
 import pandas as pd
