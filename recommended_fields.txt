@@ -1,0 +1,50 @@
+# Recommended ServiceNow Incident Export Fields
+# 30 fields optimized for natural language querying
+# Created by Kevin "Overlord of AI Bespoke Apps" Taylor
+
+# === IDENTIFIERS ===
+number
+sys_id
+
+# === CORE CONTENT (for embeddings & search) ===
+short_description
+description
+close_notes
+cause
+
+# === CLASSIFICATION ===
+category
+subcategory
+priority
+urgency
+impact
+severity
+
+# === STATUS ===
+state
+incident_state
+close_code
+
+# === OWNERSHIP ===
+assignment_group
+assigned_to
+caller_id
+opened_by
+closed_by
+resolved_by
+
+# === TIMELINE ===
+opened_at
+closed_at
+resolved_at
+
+# === METRICS ===
+business_duration
+made_sla
+reassignment_count
+reopen_count
+
+# === CONTEXT ===
+contact_type
+cmdb_ci
+business_service
