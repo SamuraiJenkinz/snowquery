@@ -3,7 +3,7 @@
 # Created by Kevin "Overlord of AI Bespoke Apps" Taylor
 
 param(
-    [string]$AppPath = "C:\apps\snow_query",
+    [string]$AppPath = "C:\snow_query",
     [string]$Port = "8501",
     [string]$TaskName = "SnowQueryTool"
 )
