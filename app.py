@@ -15,7 +15,7 @@ from src.embeddings import (
     get_embedding_stats,
 )
 from src.ingest import get_schema_summary, load_csv, table_exists
-from src.query_router import get_mode_description, route_query
+from src.query_router import generate_executive_summary, get_mode_description, route_query
 from src.utils import (
     dataframe_to_csv_bytes,
     format_dataframe_for_display,
@@ -152,6 +152,12 @@ def render_sidebar():
                 help="Display the SQL query when using structured search"
             )
 
+            st.session_state.show_summary = st.checkbox(
+                "Show executive summary",
+                value=True,
+                help="Generate AI-powered executive summary of results"
+            )
+
 
 def _build_embeddings_with_progress(force: bool = False):
     """Build embeddings with progress display."""
@@ -220,12 +226,19 @@ def render_chat_history():
                     display_results(
                         message["results"],
                         message.get("sql"),
-                        message.get("query_id", "")
+                        message.get("query_id", ""),
+                        message.get("executive_summary")
                     )
 
 
-def display_results(df: pd.DataFrame, sql: str | None, query_id: str):
+def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None):
     """Display query results with formatting and export."""
+    # Executive summary (shown first if available)
+    if executive_summary:
+        st.markdown("### 📋 Executive Summary")
+        st.markdown(executive_summary)
+        st.divider()
+
     # Results table
     display_df = format_dataframe_for_display(df)
 
@@ -326,10 +339,20 @@ def process_query(user_query: str, mode: str):
         if row_count == 0:
             content_parts.append("\n_No results found. Try a different query or adjust the search mode._")
 
+        # Generate executive summary if we have results
+        executive_summary = None
+        if row_count > 0 and st.session_state.get("show_summary", True):
+            executive_summary = generate_executive_summary(
+                user_query,
+                result.get("results"),
+                route_used
+            )
+
         return {
             "content": "\n\n".join(content_parts),
             "results": result.get("results"),
-            "sql": result.get("sql")
+            "sql": result.get("sql"),
+            "executive_summary": executive_summary
         }
 
     except Exception as e:
@@ -415,7 +438,8 @@ def render_main_content():
                 display_results(
                     response["results"],
                     response["sql"],
-                    query_id
+                    query_id,
+                    response.get("executive_summary")
                 )
 
         # Save assistant message
@@ -424,7 +448,8 @@ def render_main_content():
             "content": response["content"],
             "results": response["results"],
             "sql": response["sql"],
-            "query_id": query_id
+            "query_id": query_id,
+            "executive_summary": response.get("executive_summary")
         })
 
     # Clear chat button

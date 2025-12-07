@@ -414,3 +414,83 @@ def get_mode_description(mode: str) -> str:
         "hybrid": "Combine SQL and semantic search for comprehensive results"
     }
     return descriptions.get(mode, "Unknown mode")
+
+
+# System prompt for executive summary generation
+SUMMARY_PROMPT = """You are an executive summary generator for ServiceNow incident data analysis.
+
+Given a user's question and the query results, provide a concise executive summary suitable for management.
+
+Guidelines:
+1. Start with key findings (2-3 sentences max)
+2. Highlight patterns, trends, or notable insights
+3. If applicable, provide a brief recommendation
+4. Keep total response under 150 words
+5. Use business-friendly language, avoid technical jargon
+6. If results are empty, acknowledge no data was found for the criteria
+
+Format your response as:
+**Key Findings**: [Main insights]
+
+**Patterns/Trends**: [Notable observations, if any]
+
+**Recommendation**: [Actionable suggestion, if applicable]"""
+
+
+def generate_executive_summary(
+    user_query: str,
+    results: pd.DataFrame,
+    route_used: str
+) -> str | None:
+    """
+    Generate an executive summary of query results using LLM.
+
+    Args:
+        user_query: The original user question
+        results: DataFrame with query results
+        route_used: The query route that was used
+
+    Returns:
+        Executive summary string or None if generation fails
+    """
+    if results is None or results.empty:
+        return None
+
+    try:
+        # Prepare results for LLM (limit to avoid token overflow)
+        max_rows = 20
+        if len(results) > max_rows:
+            results_sample = results.head(max_rows)
+            row_note = f"(showing top {max_rows} of {len(results)} results)"
+        else:
+            results_sample = results
+            row_note = f"({len(results)} results)"
+
+        # Convert to readable format
+        results_text = results_sample.to_string(index=False, max_colwidth=50)
+
+        messages = [
+            {
+                "role": "system",
+                "content": SUMMARY_PROMPT
+            },
+            {
+                "role": "user",
+                "content": f"""Question: {user_query}
+
+Query Type: {route_used}
+
+Results {row_note}:
+{results_text}
+
+Please provide an executive summary of these results."""
+            }
+        ]
+
+        summary = _call_azure_openai(messages).strip()
+        logger.info("Executive summary generated successfully")
+        return summary
+
+    except Exception as e:
+        logger.warning(f"Failed to generate executive summary: {e}")
+        return None
