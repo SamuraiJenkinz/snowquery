@@ -358,14 +358,25 @@ def combine_results(
     if semantic_df.empty:
         return sql_df
 
-    # Determine ID column
-    id_col = "number" if "number" in sql_df.columns else "sys_id"
+    # Determine ID column - handle aggregated queries without ID columns
+    if "number" in sql_df.columns:
+        id_col = "number"
+    elif "sys_id" in sql_df.columns:
+        id_col = "sys_id"
+    else:
+        # Aggregated SQL result (no ID column) - return both without deduplication
+        sql_df = sql_df.copy()
+        semantic_df = semantic_df.copy()
+        sql_df["_source"] = "sql"
+        semantic_df["_source"] = "semantic"
+        return pd.concat([sql_df, semantic_df], ignore_index=True)
 
     # Get IDs from SQL results
     sql_ids = set(sql_df[id_col].astype(str).tolist())
 
     # Filter semantic results to only include new IDs
-    semantic_df = semantic_df[~semantic_df[id_col].astype(str).isin(sql_ids)]
+    if id_col in semantic_df.columns:
+        semantic_df = semantic_df[~semantic_df[id_col].astype(str).isin(sql_ids)]
 
     # Add source column
     sql_df = sql_df.copy()
