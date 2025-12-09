@@ -140,7 +140,8 @@ def _get_sample_value(df: pd.DataFrame, column: str) -> Any:
 
 def load_csv(
     file: str | Path | BinaryIO | BytesIO,
-    table_name: str = "incidents"
+    table_name: str = "incidents",
+    append: bool = False
 ) -> dict[str, Any]:
     """
     Load a CSV file into DuckDB with automatic type inference.
@@ -148,6 +149,7 @@ def load_csv(
     Args:
         file: File path, BytesIO, or file-like object
         table_name: Name of the table to create
+        append: If True, append to existing table instead of replacing
 
     Returns:
         Schema summary dictionary
@@ -210,20 +212,34 @@ def load_csv(
         conn = duckdb.connect(str(DUCKDB_PATH))
 
         try:
-            # Drop existing table if exists
-            conn.execute(f"DROP TABLE IF EXISTS {table_name}")
+            # Check if table exists
+            table_exists_result = conn.execute(
+                f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
+            ).fetchone()[0] > 0
 
-            # Register DataFrame and create table
-            conn.register("temp_df", df)
-            conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM temp_df")
-            conn.unregister("temp_df")
+            if append and table_exists_result:
+                # Append mode: insert into existing table
+                rows_before = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
 
-            # Get row count
-            row_count = conn.execute(
-                f"SELECT COUNT(*) FROM {table_name}"
-            ).fetchone()[0]
+                conn.register("temp_df", df)
+                conn.execute(f"INSERT INTO {table_name} SELECT * FROM temp_df")
+                conn.unregister("temp_df")
 
-            logger.info(f"Loaded {row_count} rows into {table_name}")
+                row_count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+                new_rows = row_count - rows_before
+
+                logger.info(f"Appended {new_rows} rows to {table_name} (total: {row_count})")
+            else:
+                # Replace mode: drop and recreate
+                conn.execute(f"DROP TABLE IF EXISTS {table_name}")
+
+                conn.register("temp_df", df)
+                conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM temp_df")
+                conn.unregister("temp_df")
+
+                row_count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+
+                logger.info(f"Loaded {row_count} rows into {table_name}")
 
         finally:
             conn.close()

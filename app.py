@@ -53,6 +53,33 @@ def init_session_state():
         st.session_state.embeddings_ready = False
 
 
+def _load_csv_data(uploaded_file, append: bool = False):
+    """Load CSV data with replace or append mode."""
+    mode_text = "Appending to" if append else "Loading"
+    with st.spinner(f"{mode_text} CSV data..."):
+        try:
+            schema = load_csv(uploaded_file, append=append)
+            st.session_state.schema = schema
+            st.session_state.data_loaded = True
+
+            if append:
+                st.success(
+                    f"✅ Appended data - now {schema['row_count']:,} total incidents"
+                )
+                logger.info(f"Appended data, total: {schema['row_count']} rows")
+            else:
+                st.success(
+                    f"✅ Loaded {schema['row_count']:,} incidents "
+                    f"with {len(schema['columns'])} columns"
+                )
+                logger.info(f"Successfully loaded {schema['row_count']} rows")
+
+            st.rerun()
+        except Exception as e:
+            st.error(format_error_message(e))
+            logger.exception("Failed to load CSV")
+
+
 def render_sidebar():
     """Render the sidebar with data management controls."""
     with st.sidebar:
@@ -66,23 +93,14 @@ def render_sidebar():
         )
 
         if uploaded_file is not None:
-            if st.button("📤 Load Data", type="primary", use_container_width=True):
-                with st.spinner("Loading CSV data..."):
-                    try:
-                        schema = load_csv(uploaded_file)
-                        st.session_state.schema = schema
-                        st.session_state.data_loaded = True
-                        st.success(
-                            f"✅ Loaded {schema['row_count']:,} incidents "
-                            f"with {len(schema['columns'])} columns"
-                        )
-                        logger.info(
-                            f"Successfully loaded {schema['row_count']} rows"
-                        )
-                        st.rerun()
-                    except Exception as e:
-                        st.error(format_error_message(e))
-                        logger.exception("Failed to load CSV")
+            # Load mode selection
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("📤 Replace", type="primary", use_container_width=True, help="Replace existing data"):
+                    _load_csv_data(uploaded_file, append=False)
+            with col2:
+                if st.button("➕ Append", type="secondary", use_container_width=True, help="Add to existing data"):
+                    _load_csv_data(uploaded_file, append=True)
 
         st.divider()
 
