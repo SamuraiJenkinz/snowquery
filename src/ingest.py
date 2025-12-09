@@ -218,14 +218,30 @@ def load_csv(
             ).fetchone()[0] > 0
 
             if append and table_exists_result:
-                # Append mode: insert into existing table
-                rows_before = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+                # Append mode: combine existing data with new data
+                # This handles schema mismatches by re-inferring types
+                existing_df = conn.execute(f"SELECT * FROM {table_name}").fetchdf()
+                rows_before = len(existing_df)
 
-                conn.register("temp_df", df)
-                conn.execute(f"INSERT INTO {table_name} SELECT * FROM temp_df")
+                # Combine dataframes (pandas handles column alignment)
+                combined_df = pd.concat([existing_df, df], ignore_index=True)
+
+                # Re-infer schema from combined data
+                combined_schema = _infer_schema(combined_df)
+                for col, dtype in combined_schema.items():
+                    if dtype == "TIMESTAMP" and col in combined_df.columns:
+                        try:
+                            combined_df[col] = pd.to_datetime(combined_df[col], errors="coerce")
+                        except Exception:
+                            pass
+
+                # Drop and recreate with combined data
+                conn.execute(f"DROP TABLE {table_name}")
+                conn.register("temp_df", combined_df)
+                conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM temp_df")
                 conn.unregister("temp_df")
 
-                row_count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+                row_count = len(combined_df)
                 new_rows = row_count - rows_before
 
                 logger.info(f"Appended {new_rows} rows to {table_name} (total: {row_count})")
