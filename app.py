@@ -614,88 +614,74 @@ def _load_csv_data(uploaded_file, append: bool = False):
 def render_sidebar():
     """Render the sidebar with data management controls."""
     with st.sidebar:
-        # Logo in sidebar
-        logo_b64 = load_logo_base64()
-        if logo_b64:
-            st.markdown(f"""
-            <div style="text-align: center; padding: 1rem 0; border-bottom: 2px solid #000; margin-bottom: 1rem;">
-                <img src="data:image/png;base64,{logo_b64}" style="height: 50px;" alt="SnowGrep">
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown(f"### {SYMBOLS['data']} DATA MANAGEMENT")
+        # Data Management section
+        st.markdown("### 📁 Data Management")
+        st.caption("Upload ServiceNow CSV Export")
 
         # CSV Upload
         uploaded_file = st.file_uploader(
-            "UPLOAD CSV EXPORT",
+            "Upload CSV",
             type=["csv"],
-            help="Upload a CSV export from ServiceNow containing incident data"
+            help="Upload a CSV export from ServiceNow containing incident data",
+            label_visibility="collapsed"
         )
 
         if uploaded_file is not None:
-            # Load mode selection
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button(f"{SYMBOLS['replace']} REPLACE", type="primary", use_container_width=True, help="Replace existing data"):
-                    _load_csv_data(uploaded_file, append=False)
-            with col2:
-                if st.button(f"{SYMBOLS['append']} APPEND", type="secondary", use_container_width=True, help="Add to existing data"):
-                    _load_csv_data(uploaded_file, append=True)
+            # Load mode selection - stacked buttons
+            if st.button("Replace", use_container_width=True, help="Replace existing data"):
+                _load_csv_data(uploaded_file, append=False)
+            if st.button("Append", use_container_width=True, help="Add to existing data"):
+                _load_csv_data(uploaded_file, append=True)
 
         st.divider()
 
         # Display current data status
-        st.markdown(f"### {SYMBOLS['status']} DATA STATUS")
+        st.markdown("### 📊 Data Status")
 
         if st.session_state.schema:
             schema = st.session_state.schema
-            st.metric("INCIDENTS", f"{schema['row_count']:,}")
-            st.metric("COLUMNS", len(schema['columns']))
+            st.caption("Incidents Loaded")
+            st.markdown(f"<div style='font-size: 2.5rem; font-weight: 800; color: #fff;'>{schema['row_count']:,}</div>", unsafe_allow_html=True)
         elif table_exists():
             # Try to load existing schema
             schema = get_schema_summary()
             if schema:
                 st.session_state.schema = schema
                 st.session_state.data_loaded = True
-                st.metric("INCIDENTS", f"{schema['row_count']:,}")
-                st.metric("COLUMNS", len(schema['columns']))
+                st.caption("Incidents Loaded")
+                st.markdown(f"<div style='font-size: 2.5rem; font-weight: 800; color: #fff;'>{schema['row_count']:,}</div>", unsafe_allow_html=True)
             else:
-                st.info(f"{SYMBOLS['info']} NO DATA LOADED")
+                st.info("No data loaded")
         else:
-            st.info(f"{SYMBOLS['info']} NO DATA — UPLOAD CSV TO START")
+            st.info("No data — upload CSV to start")
 
         st.divider()
 
         # Embeddings management
-        st.markdown(f"### {SYMBOLS['embeddings']} EMBEDDINGS")
+        st.markdown("### 🔮 Embeddings")
 
         # Check embedding status
         if embeddings_exist():
             stats = get_embedding_stats()
             st.session_state.embeddings_ready = True
-            st.success(f"{SYMBOLS['success']} {stats['document_count']:,} DOCS INDEXED")
+            st.success(f"✓ {stats['document_count']:,} docs indexed")
         else:
             st.session_state.embeddings_ready = False
-            st.warning(f"{SYMBOLS['warning']} NO EMBEDDINGS BUILT")
+            st.warning("No embeddings built")
 
-        # Build embeddings button
+        # Build embeddings buttons - stacked
         if st.session_state.data_loaded:
-            col1, col2 = st.columns(2)
-
-            with col1:
-                if st.button(f"{SYMBOLS['rebuild']} REBUILD", use_container_width=True):
-                    _build_embeddings_with_progress(force=True)
-
-            with col2:
-                if st.button(f"{SYMBOLS['update']} UPDATE", use_container_width=True):
-                    _build_embeddings_with_progress(force=False)
+            if st.button("Rebuild", use_container_width=True, help="Rebuild all embeddings"):
+                _build_embeddings_with_progress(force=True)
+            if st.button("Update", use_container_width=True, help="Update new embeddings only"):
+                _build_embeddings_with_progress(force=False)
 
         st.divider()
 
         # Settings
-        st.markdown(f"### {SYMBOLS['settings']} SETTINGS")
+        st.markdown("### ⚙️ Settings")
 
-        with st.expander("QUERY OPTIONS"):
+        with st.expander("Query Options"):
             st.session_state.top_k = st.slider(
                 "SEMANTIC RESULTS",
                 min_value=5,
@@ -751,16 +737,16 @@ def render_schema_details():
 
     schema = st.session_state.schema
 
-    with st.expander(f"{SYMBOLS['schema']} SCHEMA DETAILS", expanded=False):
-        st.markdown(f"**TABLE:** `{schema['table_name']}`")
-        st.markdown(f"**ROWS:** `{schema['row_count']:,}`")
+    with st.expander("📋 Schema Details", expanded=False):
+        st.markdown(f"**Table:** `{schema['table_name']}`")
+        st.markdown(f"**Rows:** `{schema['row_count']:,}`")
 
         # Create columns DataFrame
         cols_data = [
             {
-                "COLUMN": col["name"],
-                "TYPE": col["type"],
-                "SAMPLE": col["sample"][:50] + "..." if len(col["sample"]) > 50 else col["sample"]
+                "Column": col["name"],
+                "Type": col["type"],
+                "Sample": col["sample"][:50] + "..." if len(col["sample"]) > 50 else col["sample"]
             }
             for col in schema["columns"]
         ]
@@ -927,75 +913,27 @@ def process_query(user_query: str, mode: str):
 
 def render_main_content():
     """Render the main content area."""
-    render_header()
+    # Main title
+    st.markdown("# 🔍 SnowGrep")
 
     if not st.session_state.data_loaded:
-        st.markdown("""
-<div class="info-box">
-    <h4>GETTING STARTED</h4>
-    <ul>
-        <li>UPLOAD A SERVICENOW CSV EXPORT USING THE SIDEBAR</li>
-        <li>BUILD EMBEDDINGS FOR SEMANTIC SEARCH</li>
-        <li>ASK QUESTIONS IN NATURAL LANGUAGE</li>
-    </ul>
-</div>
-""", unsafe_allow_html=True)
-
-        # Show example queries
-        st.markdown(f"""
-<div class="section-label">EXAMPLES</div>
-<div class="section-title">QUERY PATTERNS</div>
-""", unsafe_allow_html=True)
-
-        st.markdown("""
-<div class="terminal-window">
-    <div class="terminal-header">
-        <div class="terminal-dot red"></div>
-        <div class="terminal-dot yellow"></div>
-        <div class="terminal-dot green"></div>
-    </div>
-    <div class="terminal-body">
-        <span style="color: #888;"># STRUCTURED QUERIES (SQL)</span><br>
-        > Show all P1 incidents from last month<br>
-        > Top 5 assignment groups by volume<br>
-        > How many incidents were opened this week?<br><br>
-        <span style="color: #888;"># SEMANTIC QUERIES (VECTOR)</span><br>
-        > Find incidents similar to Outlook crashes<br>
-        > Issues where users report slow performance<br>
-        > Problems related to VPN connectivity<br>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+        st.info("Upload a ServiceNow CSV export using the sidebar to get started.")
         return
 
-    # Show schema details
+    # Schema Details expander
     render_schema_details()
 
-    # Stats bar
-    schema = st.session_state.schema
-    embed_count = get_embedding_stats().get("document_count", 0) if embeddings_exist() else 0
+    st.divider()
 
-    st.markdown(f"""
-<div class="stats-bar">
-    <span>INCIDENTS: <span class="stats-value">{schema['row_count']:,}</span></span>
-    <span>COLUMNS: <span class="stats-value">{len(schema['columns'])}</span></span>
-    <span>EMBEDDINGS: <span class="stats-value">{embed_count:,}</span></span>
-    <span>STATUS: <span class="stats-value">{'READY' if st.session_state.embeddings_ready else 'BUILD REQUIRED'}</span></span>
-</div>
-""", unsafe_allow_html=True)
-
-    # Mode selection
+    # Query Interface section
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        st.markdown(f"""
-<div class="section-label">INTERFACE</div>
-<div class="section-title">{SYMBOLS['query']} QUERY</div>
-""", unsafe_allow_html=True)
+        st.markdown("### 💬 Query Interface")
 
     with col2:
         selected_mode_label = st.selectbox(
-            "MODE",
+            "Mode",
             options=list(MODE_OPTIONS.keys()),
             index=0,
             help=get_mode_description(MODE_OPTIONS[list(MODE_OPTIONS.keys())[0]]),
@@ -1004,7 +942,7 @@ def render_main_content():
         selected_mode = MODE_OPTIONS[selected_mode_label]
 
     # Display mode description
-    st.caption(f"_{get_mode_description(selected_mode).upper()}_")
+    st.caption(f"_{get_mode_description(selected_mode)}_")
 
     # Chat history
     render_chat_history()
