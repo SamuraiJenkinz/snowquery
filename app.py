@@ -369,6 +369,25 @@ def inject_custom_css():
         border-radius: 0 !important;
         padding: 1rem;
         margin: 0.5rem 0;
+        background-color: #fff !important;
+        color: #000 !important;
+    }}
+
+    [data-testid="stChatMessage"] * {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stChatMessage"] p,
+    [data-testid="stChatMessage"] span,
+    [data-testid="stChatMessage"] div {{
+        color: #000 !important;
+    }}
+
+    /* Assistant message specifically */
+    [data-testid="stChatMessage"][data-testid*="assistant"],
+    .stChatMessage {{
+        background-color: #f5f5f5 !important;
+        color: #000 !important;
     }}
 
     /* File uploader */
