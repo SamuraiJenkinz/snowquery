@@ -1,10 +1,12 @@
 """
-ServiceNow Incident Query Tool - Streamlit Application.
-Main entry point for the natural language query interface.
+SnowGrep - Natural Language Incident Query Tool
+Main entry point for the query interface.
 """
 from __future__ import annotations
 
+import base64
 from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -26,19 +28,427 @@ from src.utils import (
 
 # Page configuration
 st.set_page_config(
-    page_title="ServiceNow Incident Query Tool",
-    page_icon="🔍",
+    page_title="SnowGrep",
+    page_icon="▣",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Mode mapping for UI
 MODE_OPTIONS = {
-    "Auto": "auto",
-    "Report (SQL)": "structured",
-    "Find Similar": "semantic",
-    "Analyze (Hybrid)": "hybrid"
+    "AUTO": "auto",
+    "REPORT [SQL]": "structured",
+    "SIMILAR [VECTOR]": "semantic",
+    "ANALYZE [HYBRID]": "hybrid"
 }
+
+# Geometric symbols mapping
+SYMBOLS = {
+    "data": "▣",
+    "status": "◈",
+    "embeddings": "◎",
+    "settings": "☰",
+    "replace": "↻",
+    "append": "+",
+    "rebuild": "◇",
+    "update": "△",
+    "structured": "▤",
+    "semantic": "◉",
+    "hybrid": "⬡",
+    "query": "▷",
+    "results": "◫",
+    "export": "↓",
+    "sql": "⌘",
+    "schema": "▦",
+    "clear": "×",
+    "success": "✓",
+    "warning": "!",
+    "error": "×",
+    "info": "○"
+}
+
+
+def load_logo_base64():
+    """Load logo as base64 for embedding in HTML."""
+    logo_path = Path(__file__).parent / "snowgrep-badge.png"
+    if logo_path.exists():
+        with open(logo_path, "rb") as f:
+            return base64.b64encode(f.read()).decode()
+    return None
+
+
+# Custom CSS injection
+def inject_custom_css():
+    """Inject brutalist CSS styling."""
+    logo_b64 = load_logo_base64()
+    logo_css = ""
+    if logo_b64:
+        logo_css = f"""
+        .logo-img {{
+            height: 40px;
+            margin-right: 12px;
+        }}
+        """
+
+    st.markdown(f"""
+<style>
+    /* Import monospace font */
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+    /* Global overrides */
+    .stApp {{
+        background-color: #fafafa;
+        font-family: 'JetBrains Mono', monospace;
+    }}
+
+    /* Hide Streamlit branding */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
+
+    /* Sidebar styling */
+    [data-testid="stSidebar"] {{
+        background-color: #fff;
+        border-right: 2px solid #000;
+    }}
+
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {{
+        font-family: 'JetBrains Mono', monospace;
+    }}
+
+    /* Logo styling */
+    {logo_css}
+
+    /* Header styling */
+    .brutalist-header {{
+        display: flex;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 2px solid #000;
+        margin-bottom: 2rem;
+        font-family: 'JetBrains Mono', monospace;
+    }}
+
+    .brutalist-logo {{
+        font-size: 1.5rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+    }}
+
+    .brutalist-tagline {{
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #666;
+        margin-left: 1rem;
+        padding-left: 1rem;
+        border-left: 1px solid #ccc;
+    }}
+
+    /* Section headers */
+    .section-label {{
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #999;
+        margin-bottom: 0.25rem;
+    }}
+
+    .section-title {{
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.25rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+        margin-bottom: 1rem;
+    }}
+
+    /* Stats bar */
+    .stats-bar {{
+        display: flex;
+        gap: 2rem;
+        padding: 0.75rem 0;
+        border-top: 1px solid #ddd;
+        border-bottom: 1px solid #ddd;
+        margin: 1.5rem 0;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #666;
+    }}
+
+    .stats-bar span {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }}
+
+    .stats-value {{
+        color: #000;
+        font-weight: 700;
+    }}
+
+    /* Contract/Info box */
+    .info-box {{
+        border: 2px solid #000;
+        padding: 1.25rem;
+        font-family: 'JetBrains Mono', monospace;
+        background: #fff;
+        margin: 1rem 0;
+    }}
+
+    .info-box h4 {{
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 0.75rem;
+        border-bottom: 1px solid #000;
+        padding-bottom: 0.5rem;
+    }}
+
+    .info-box ul {{
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }}
+
+    .info-box li {{
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }}
+
+    /* Terminal window */
+    .terminal-window {{
+        background: #1a1a1a;
+        border-radius: 4px;
+        overflow: hidden;
+        font-family: 'JetBrains Mono', monospace;
+        margin: 1rem 0;
+    }}
+
+    .terminal-header {{
+        background: #2d2d2d;
+        padding: 0.5rem 0.75rem;
+        display: flex;
+        gap: 0.4rem;
+    }}
+
+    .terminal-dot {{
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }}
+
+    .terminal-dot.red {{ background: #ff5f56; }}
+    .terminal-dot.yellow {{ background: #ffbd2e; }}
+    .terminal-dot.green {{ background: #27ca40; }}
+
+    .terminal-body {{
+        padding: 1rem;
+        color: #00ff00;
+        font-size: 0.8rem;
+        line-height: 1.6;
+    }}
+
+    /* Executive summary box */
+    .summary-box {{
+        border: 2px solid #000;
+        padding: 1.25rem;
+        font-family: 'JetBrains Mono', monospace;
+        background: #f8f8f8;
+        margin: 1rem 0;
+    }}
+
+    .summary-box h4 {{
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }}
+
+    .summary-content {{
+        font-size: 0.85rem;
+        line-height: 1.7;
+    }}
+
+    /* Streamlit component overrides */
+    .stButton > button {{
+        font-family: 'JetBrains Mono', monospace !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 0 !important;
+        border: 2px solid #000 !important;
+        background: #000 !important;
+        color: #fff !important;
+        padding: 0.5rem 1rem !important;
+        font-size: 0.75rem !important;
+    }}
+
+    .stButton > button:hover {{
+        background: #333 !important;
+        border-color: #333 !important;
+    }}
+
+    .stButton > button[kind="secondary"] {{
+        background: #fff !important;
+        color: #000 !important;
+    }}
+
+    .stButton > button[kind="secondary"]:hover {{
+        background: #f0f0f0 !important;
+    }}
+
+    .stTextInput > div > div > input {{
+        font-family: 'JetBrains Mono', monospace !important;
+        border-radius: 0 !important;
+        border: 2px solid #000 !important;
+    }}
+
+    .stSelectbox > div > div {{
+        font-family: 'JetBrains Mono', monospace !important;
+        border-radius: 0 !important;
+    }}
+
+    [data-testid="stChatInput"] {{
+        font-family: 'JetBrains Mono', monospace !important;
+    }}
+
+    [data-testid="stChatInput"] textarea {{
+        font-family: 'JetBrains Mono', monospace !important;
+        border-radius: 0 !important;
+        border: 2px solid #000 !important;
+    }}
+
+    /* Metric styling */
+    [data-testid="stMetricValue"] {{
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 1.75rem !important;
+        font-weight: 800 !important;
+    }}
+
+    [data-testid="stMetricLabel"] {{
+        font-family: 'JetBrains Mono', monospace !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        font-size: 0.7rem !important;
+    }}
+
+    /* Expander styling */
+    .streamlit-expanderHeader {{
+        font-family: 'JetBrains Mono', monospace !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.8rem !important;
+        border: 1px solid #ddd;
+        border-radius: 0 !important;
+    }}
+
+    /* Dataframe styling */
+    .stDataFrame {{
+        border: 2px solid #000;
+    }}
+
+    .stDataFrame [data-testid="stDataFrameResizable"] {{
+        font-family: 'JetBrains Mono', monospace !important;
+    }}
+
+    /* Chat message styling */
+    [data-testid="stChatMessage"] {{
+        font-family: 'JetBrains Mono', monospace;
+        border: 1px solid #ddd;
+        border-radius: 0 !important;
+        padding: 1rem;
+        margin: 0.5rem 0;
+    }}
+
+    /* File uploader */
+    [data-testid="stFileUploader"] {{
+        font-family: 'JetBrains Mono', monospace;
+    }}
+
+    [data-testid="stFileUploader"] section {{
+        border: 2px dashed #000;
+        border-radius: 0;
+    }}
+
+    /* Divider */
+    hr {{
+        border: none;
+        border-top: 1px solid #ddd;
+        margin: 1.5rem 0;
+    }}
+
+    /* Success/Warning/Error messages */
+    .stSuccess, .stWarning, .stError, .stInfo {{
+        font-family: 'JetBrains Mono', monospace;
+        border-radius: 0 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
+    }}
+
+    /* Download button */
+    .stDownloadButton > button {{
+        font-family: 'JetBrains Mono', monospace !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 0 !important;
+        border: 2px solid #000 !important;
+        font-size: 0.75rem !important;
+    }}
+
+    /* Spinner */
+    .stSpinner > div {{
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }}
+
+    /* Slider */
+    .stSlider {{
+        font-family: 'JetBrains Mono', monospace;
+    }}
+
+    /* Checkbox */
+    .stCheckbox {{
+        font-family: 'JetBrains Mono', monospace;
+    }}
+
+    .stCheckbox label {{
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
+    }}
+</style>
+""", unsafe_allow_html=True)
+
+
+def render_header():
+    """Render the main header with logo."""
+    logo_b64 = load_logo_base64()
+    logo_html = ""
+    if logo_b64:
+        logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo-img" alt="SnowGrep">'
+
+    st.markdown(f"""
+<div class="brutalist-header">
+    <div class="brutalist-logo">
+        {logo_html}
+        SnowGrep
+    </div>
+    <div class="brutalist-tagline">Natural Language Incident Search</div>
+</div>
+""", unsafe_allow_html=True)
 
 
 def init_session_state():
@@ -55,8 +465,8 @@ def init_session_state():
 
 def _load_csv_data(uploaded_file, append: bool = False):
     """Load CSV data with replace or append mode."""
-    mode_text = "Appending to" if append else "Loading"
-    with st.spinner(f"{mode_text} CSV data..."):
+    mode_text = "APPENDING" if append else "LOADING"
+    with st.spinner(f"{mode_text} DATA..."):
         try:
             schema = load_csv(uploaded_file, append=append)
             st.session_state.schema = schema
@@ -64,13 +474,13 @@ def _load_csv_data(uploaded_file, append: bool = False):
 
             if append:
                 st.success(
-                    f"✅ Appended data - now {schema['row_count']:,} total incidents"
+                    f"{SYMBOLS['success']} APPENDED — {schema['row_count']:,} TOTAL INCIDENTS"
                 )
                 logger.info(f"Appended data, total: {schema['row_count']} rows")
             else:
                 st.success(
-                    f"✅ Loaded {schema['row_count']:,} incidents "
-                    f"with {len(schema['columns'])} columns"
+                    f"{SYMBOLS['success']} LOADED {schema['row_count']:,} INCIDENTS / "
+                    f"{len(schema['columns'])} COLUMNS"
                 )
                 logger.info(f"Successfully loaded {schema['row_count']} rows")
 
@@ -83,11 +493,20 @@ def _load_csv_data(uploaded_file, append: bool = False):
 def render_sidebar():
     """Render the sidebar with data management controls."""
     with st.sidebar:
-        st.header("📁 Data Management")
+        # Logo in sidebar
+        logo_b64 = load_logo_base64()
+        if logo_b64:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 1rem 0; border-bottom: 2px solid #000; margin-bottom: 1rem;">
+                <img src="data:image/png;base64,{logo_b64}" style="height: 50px;" alt="SnowGrep">
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown(f"### {SYMBOLS['data']} DATA MANAGEMENT")
 
         # CSV Upload
         uploaded_file = st.file_uploader(
-            "Upload ServiceNow CSV Export",
+            "UPLOAD CSV EXPORT",
             type=["csv"],
             help="Upload a CSV export from ServiceNow containing incident data"
         )
@@ -96,68 +515,68 @@ def render_sidebar():
             # Load mode selection
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("📤 Replace", type="primary", use_container_width=True, help="Replace existing data"):
+                if st.button(f"{SYMBOLS['replace']} REPLACE", type="primary", use_container_width=True, help="Replace existing data"):
                     _load_csv_data(uploaded_file, append=False)
             with col2:
-                if st.button("➕ Append", type="secondary", use_container_width=True, help="Add to existing data"):
+                if st.button(f"{SYMBOLS['append']} APPEND", type="secondary", use_container_width=True, help="Add to existing data"):
                     _load_csv_data(uploaded_file, append=True)
 
         st.divider()
 
         # Display current data status
-        st.subheader("📊 Data Status")
+        st.markdown(f"### {SYMBOLS['status']} DATA STATUS")
 
         if st.session_state.schema:
             schema = st.session_state.schema
-            st.metric("Incidents Loaded", f"{schema['row_count']:,}")
-            st.metric("Columns", len(schema['columns']))
+            st.metric("INCIDENTS", f"{schema['row_count']:,}")
+            st.metric("COLUMNS", len(schema['columns']))
         elif table_exists():
             # Try to load existing schema
             schema = get_schema_summary()
             if schema:
                 st.session_state.schema = schema
                 st.session_state.data_loaded = True
-                st.metric("Incidents Loaded", f"{schema['row_count']:,}")
-                st.metric("Columns", len(schema['columns']))
+                st.metric("INCIDENTS", f"{schema['row_count']:,}")
+                st.metric("COLUMNS", len(schema['columns']))
             else:
-                st.info("No data loaded")
+                st.info(f"{SYMBOLS['info']} NO DATA LOADED")
         else:
-            st.info("No data loaded. Upload a CSV to get started.")
+            st.info(f"{SYMBOLS['info']} NO DATA — UPLOAD CSV TO START")
 
         st.divider()
 
         # Embeddings management
-        st.subheader("🔮 Embeddings")
+        st.markdown(f"### {SYMBOLS['embeddings']} EMBEDDINGS")
 
         # Check embedding status
         if embeddings_exist():
             stats = get_embedding_stats()
             st.session_state.embeddings_ready = True
-            st.success(f"✅ {stats['document_count']:,} documents indexed")
+            st.success(f"{SYMBOLS['success']} {stats['document_count']:,} DOCS INDEXED")
         else:
             st.session_state.embeddings_ready = False
-            st.warning("No embeddings built")
+            st.warning(f"{SYMBOLS['warning']} NO EMBEDDINGS BUILT")
 
         # Build embeddings button
         if st.session_state.data_loaded:
             col1, col2 = st.columns(2)
 
             with col1:
-                if st.button("🔄 Rebuild", use_container_width=True):
+                if st.button(f"{SYMBOLS['rebuild']} REBUILD", use_container_width=True):
                     _build_embeddings_with_progress(force=True)
 
             with col2:
-                if st.button("➕ Update", use_container_width=True):
+                if st.button(f"{SYMBOLS['update']} UPDATE", use_container_width=True):
                     _build_embeddings_with_progress(force=False)
 
         st.divider()
 
         # Settings
-        st.subheader("⚙️ Settings")
+        st.markdown(f"### {SYMBOLS['settings']} SETTINGS")
 
-        with st.expander("Query Settings"):
+        with st.expander("QUERY OPTIONS"):
             st.session_state.top_k = st.slider(
-                "Results (semantic)",
+                "SEMANTIC RESULTS",
                 min_value=5,
                 max_value=50,
                 value=10,
@@ -165,13 +584,13 @@ def render_sidebar():
             )
 
             st.session_state.show_sql = st.checkbox(
-                "Show generated SQL",
+                "SHOW SQL",
                 value=True,
                 help="Display the SQL query when using structured search"
             )
 
             st.session_state.show_summary = st.checkbox(
-                "Show executive summary",
+                "SHOW SUMMARY",
                 value=True,
                 help="Generate AI-powered executive summary of results"
             )
@@ -184,7 +603,7 @@ def _build_embeddings_with_progress(force: bool = False):
 
     def progress_callback(progress: float, message: str):
         progress_bar.progress(progress)
-        status_text.text(message)
+        status_text.text(message.upper())
 
     try:
         stats = build_embeddings(
@@ -193,8 +612,8 @@ def _build_embeddings_with_progress(force: bool = False):
         )
         st.session_state.embeddings_ready = True
         st.success(
-            f"✅ Embedded {stats['total_embedded']:,} incidents "
-            f"in {stats['time_taken']:.1f}s"
+            f"{SYMBOLS['success']} EMBEDDED {stats['total_embedded']:,} INCIDENTS "
+            f"IN {stats['time_taken']:.1f}s"
         )
         st.rerun()
     except Exception as e:
@@ -211,16 +630,16 @@ def render_schema_details():
 
     schema = st.session_state.schema
 
-    with st.expander("📋 Schema Details", expanded=False):
-        st.write(f"**Table:** {schema['table_name']}")
-        st.write(f"**Row Count:** {schema['row_count']:,}")
+    with st.expander(f"{SYMBOLS['schema']} SCHEMA DETAILS", expanded=False):
+        st.markdown(f"**TABLE:** `{schema['table_name']}`")
+        st.markdown(f"**ROWS:** `{schema['row_count']:,}`")
 
         # Create columns DataFrame
         cols_data = [
             {
-                "Column": col["name"],
-                "Type": col["type"],
-                "Sample Value": col["sample"][:50] + "..." if len(col["sample"]) > 50 else col["sample"]
+                "COLUMN": col["name"],
+                "TYPE": col["type"],
+                "SAMPLE": col["sample"][:50] + "..." if len(col["sample"]) > 50 else col["sample"]
             }
             for col in schema["columns"]
         ]
@@ -253,9 +672,12 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
     """Display query results with formatting and export."""
     # Executive summary (shown first if available)
     if executive_summary:
-        st.markdown("### 📋 Executive Summary")
-        st.markdown(executive_summary)
-        st.divider()
+        st.markdown(f"""
+<div class="summary-box">
+    <h4>{SYMBOLS['results']} EXECUTIVE SUMMARY</h4>
+    <div class="summary-content">{executive_summary}</div>
+</div>
+""", unsafe_allow_html=True)
 
     # Results table
     display_df = format_dataframe_for_display(df)
@@ -280,7 +702,7 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
     with col1:
         csv_data = dataframe_to_csv_bytes(df)
         st.download_button(
-            label="📥 Export CSV",
+            label=f"{SYMBOLS['export']} EXPORT CSV",
             data=csv_data,
             file_name=generate_export_filename("incidents"),
             mime="text/csv",
@@ -289,7 +711,7 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
 
     with col2:
         if sql and st.session_state.get("show_sql", True):
-            with st.expander("🔍 Generated SQL"):
+            with st.expander(f"{SYMBOLS['sql']} GENERATED SQL"):
                 st.code(sql, language="sql")
 
 
@@ -297,7 +719,7 @@ def process_query(user_query: str, mode: str):
     """Process a user query and return formatted response."""
     if not st.session_state.schema:
         return {
-            "content": "⚠️ No data loaded. Please upload a CSV file first.",
+            "content": f"{SYMBOLS['warning']} NO DATA LOADED. UPLOAD A CSV FILE FIRST.",
             "results": None,
             "sql": None
         }
@@ -306,7 +728,7 @@ def process_query(user_query: str, mode: str):
     if mode in ["semantic", "hybrid", "auto"] and not st.session_state.embeddings_ready:
         if mode == "semantic":
             return {
-                "content": "⚠️ No embeddings found. Please build embeddings first using the sidebar.",
+                "content": f"{SYMBOLS['warning']} NO EMBEDDINGS. BUILD EMBEDDINGS FIRST.",
                 "results": None,
                 "sql": None
             }
@@ -322,7 +744,7 @@ def process_query(user_query: str, mode: str):
         # Handle errors
         if result.get("error"):
             return {
-                "content": f"❌ Error: {result['error']}",
+                "content": f"{SYMBOLS['error']} ERROR: {result['error']}",
                 "results": None,
                 "sql": result.get("sql")
             }
@@ -335,27 +757,27 @@ def process_query(user_query: str, mode: str):
         row_count = result.get("row_count", 0)
         explanation = result.get("explanation", "")
 
-        # Format route display
-        route_emoji = {
-            "structured": "📊",
-            "semantic": "🔮",
-            "hybrid": "🔄"
-        }.get(route_used, "❓")
+        # Format route display with geometric symbols
+        route_symbol = {
+            "structured": SYMBOLS["structured"],
+            "semantic": SYMBOLS["semantic"],
+            "hybrid": SYMBOLS["hybrid"]
+        }.get(route_used, "?")
 
         content_parts = [
-            f"{route_emoji} **Route:** {route_used.title()} (confidence: {confidence:.0%})"
+            f"**{route_symbol} ROUTE:** {route_used.upper()} ({confidence:.0%} CONFIDENCE)"
         ]
 
         if reasoning:
-            content_parts.append(f"💡 **Reasoning:** {reasoning}")
+            content_parts.append(f"**{SYMBOLS['info']} REASONING:** {reasoning}")
 
         if explanation:
-            content_parts.append(f"📝 **Query:** {explanation}")
+            content_parts.append(f"**{SYMBOLS['query']} QUERY:** {explanation}")
 
-        content_parts.append(f"📈 **Results:** {row_count:,} incidents found")
+        content_parts.append(f"**{SYMBOLS['results']} RESULTS:** {row_count:,} INCIDENTS")
 
         if row_count == 0:
-            content_parts.append("\n_No results found. Try a different query or adjust the search mode._")
+            content_parts.append(f"\n_{SYMBOLS['info']} NO RESULTS. TRY A DIFFERENT QUERY OR MODE._")
 
         # Generate executive summary if we have results
         executive_summary = None
@@ -376,7 +798,7 @@ def process_query(user_query: str, mode: str):
     except Exception as e:
         logger.exception("Error processing query")
         return {
-            "content": f"❌ Error processing query: {str(e)}",
+            "content": f"{SYMBOLS['error']} ERROR: {str(e)}",
             "results": None,
             "sql": None
         }
@@ -384,39 +806,75 @@ def process_query(user_query: str, mode: str):
 
 def render_main_content():
     """Render the main content area."""
-    st.title("🔍 ServiceNow Incident Query Tool")
+    render_header()
 
     if not st.session_state.data_loaded:
-        st.info(
-            "👋 Welcome! Upload a ServiceNow incident CSV export using the "
-            "sidebar to get started."
-        )
+        st.markdown("""
+<div class="info-box">
+    <h4>GETTING STARTED</h4>
+    <ul>
+        <li>UPLOAD A SERVICENOW CSV EXPORT USING THE SIDEBAR</li>
+        <li>BUILD EMBEDDINGS FOR SEMANTIC SEARCH</li>
+        <li>ASK QUESTIONS IN NATURAL LANGUAGE</li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
 
         # Show example queries
-        st.subheader("Example Queries")
+        st.markdown(f"""
+<div class="section-label">EXAMPLES</div>
+<div class="section-title">QUERY PATTERNS</div>
+""", unsafe_allow_html=True)
+
         st.markdown("""
-        Once data is loaded, you can ask questions like:
-        - "Show all P1 incidents from last month"
-        - "Find incidents similar to Outlook crashes"
-        - "What are the top 5 assignment groups by incident volume?"
-        - "How many incidents were opened this week?"
-        """)
+<div class="terminal-window">
+    <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+    </div>
+    <div class="terminal-body">
+        <span style="color: #888;"># STRUCTURED QUERIES (SQL)</span><br>
+        > Show all P1 incidents from last month<br>
+        > Top 5 assignment groups by volume<br>
+        > How many incidents were opened this week?<br><br>
+        <span style="color: #888;"># SEMANTIC QUERIES (VECTOR)</span><br>
+        > Find incidents similar to Outlook crashes<br>
+        > Issues where users report slow performance<br>
+        > Problems related to VPN connectivity<br>
+    </div>
+</div>
+""", unsafe_allow_html=True)
         return
 
     # Show schema details
     render_schema_details()
 
-    st.divider()
+    # Stats bar
+    schema = st.session_state.schema
+    embed_count = get_embedding_stats().get("document_count", 0) if embeddings_exist() else 0
+
+    st.markdown(f"""
+<div class="stats-bar">
+    <span>INCIDENTS: <span class="stats-value">{schema['row_count']:,}</span></span>
+    <span>COLUMNS: <span class="stats-value">{len(schema['columns'])}</span></span>
+    <span>EMBEDDINGS: <span class="stats-value">{embed_count:,}</span></span>
+    <span>STATUS: <span class="stats-value">{'READY' if st.session_state.embeddings_ready else 'BUILD REQUIRED'}</span></span>
+</div>
+""", unsafe_allow_html=True)
 
     # Mode selection
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        st.subheader("💬 Query Interface")
+        st.markdown(f"""
+<div class="section-label">INTERFACE</div>
+<div class="section-title">{SYMBOLS['query']} QUERY</div>
+""", unsafe_allow_html=True)
 
     with col2:
         selected_mode_label = st.selectbox(
-            "Mode",
+            "MODE",
             options=list(MODE_OPTIONS.keys()),
             index=0,
             help=get_mode_description(MODE_OPTIONS[list(MODE_OPTIONS.keys())[0]]),
@@ -425,13 +883,13 @@ def render_main_content():
         selected_mode = MODE_OPTIONS[selected_mode_label]
 
     # Display mode description
-    st.caption(f"_{get_mode_description(selected_mode)}_")
+    st.caption(f"_{get_mode_description(selected_mode).upper()}_")
 
     # Chat history
     render_chat_history()
 
     # Query input
-    if user_query := st.chat_input("Ask a question about your incidents..."):
+    if user_query := st.chat_input("ENTER QUERY..."):
         # Generate unique query ID
         query_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
 
@@ -447,7 +905,7 @@ def render_main_content():
 
         # Process and display response
         with st.chat_message("assistant"):
-            with st.spinner("Analyzing your query..."):
+            with st.spinner("PROCESSING..."):
                 response = process_query(user_query, selected_mode)
 
             st.markdown(response["content"])
@@ -472,13 +930,14 @@ def render_main_content():
 
     # Clear chat button
     if st.session_state.messages:
-        if st.button("🗑️ Clear Chat", type="secondary"):
+        if st.button(f"{SYMBOLS['clear']} CLEAR CHAT", type="secondary"):
             st.session_state.messages = []
             st.rerun()
 
 
 def main():
     """Main application entry point."""
+    inject_custom_css()
     init_session_state()
     render_sidebar()
     render_main_content()
