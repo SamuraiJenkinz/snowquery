@@ -143,7 +143,7 @@ def inject_custom_css():
     /* Sidebar */
     [data-testid="stSidebar"] {{
         background-color: var(--bg-sidebar) !important;
-        border-right: 1px solid var(--border-color) !important;
+        border-right: 3px solid var(--accent) !important;
         padding-top: 1rem;
         min-width: 280px !important;
         width: 280px !important;
@@ -160,8 +160,21 @@ def inject_custom_css():
     }}
 
     /* Sidebar collapse button */
-    [data-testid="stSidebar"] button[kind="header"] {{
+    [data-testid="stSidebar"] button[kind="header"],
+    [data-testid="collapsedControl"] {{
         color: var(--text-primary) !important;
+        background-color: var(--bg-sidebar) !important;
+        border: 1px solid var(--accent) !important;
+    }}
+
+    /* Sidebar toggle button in main area */
+    .sidebar-toggle-btn {{
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--accent) !important;
+        color: var(--accent) !important;
+        font-size: 1.2rem !important;
+        padding: 0.25rem 0.5rem !important;
+        cursor: pointer !important;
     }}
 
     [data-testid="stSidebar"] * {{
@@ -1027,6 +1040,14 @@ def render_stats_bar():
 
 def render_main_content():
     """Render the main content area."""
+    # Sidebar toggle button at top
+    toggle_label = "◀ HIDE" if st.session_state.sidebar_visible else "▶ MENU"
+    col_toggle, col_spacer = st.columns([1, 10])
+    with col_toggle:
+        if st.button(toggle_label, key="sidebar_toggle", help="Toggle sidebar"):
+            st.session_state.sidebar_visible = not st.session_state.sidebar_visible
+            st.rerun()
+
     # Brutalist header
     render_header()
 
@@ -1113,7 +1134,15 @@ def main():
     """Main application entry point."""
     inject_custom_css()
     init_session_state()
-    render_sidebar()
+
+    # Initialize sidebar state
+    if "sidebar_visible" not in st.session_state:
+        st.session_state.sidebar_visible = True
+
+    # Render sidebar if visible
+    if st.session_state.sidebar_visible:
+        render_sidebar()
+
     render_main_content()
 
 
