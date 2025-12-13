@@ -134,20 +134,34 @@ def inject_custom_css():
         color: var(--text-primary) !important;
     }}
 
-    /* Hide Streamlit branding */
+    /* Hide Streamlit branding but keep sidebar toggle */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
-    header {{visibility: hidden;}}
+    header [data-testid="stToolbar"] {{visibility: hidden;}}
+    header [data-testid="stDecoration"] {{visibility: hidden;}}
 
     /* Sidebar */
     [data-testid="stSidebar"] {{
-        background-color: var(--bg-sidebar);
-        border-right: none;
+        background-color: var(--bg-sidebar) !important;
+        border-right: 1px solid var(--border-color) !important;
         padding-top: 1rem;
+        min-width: 280px !important;
+        width: 280px !important;
     }}
 
     [data-testid="stSidebar"] > div:first-child {{
         padding: 1rem;
+        width: 100% !important;
+    }}
+
+    [data-testid="stSidebar"][aria-expanded="true"] {{
+        display: block !important;
+        visibility: visible !important;
+    }}
+
+    /* Sidebar collapse button */
+    [data-testid="stSidebar"] button[kind="header"] {{
+        color: var(--text-primary) !important;
     }}
 
     [data-testid="stSidebar"] * {{
