@@ -99,21 +99,21 @@ def inject_custom_css():
        DARK BRUTALIST THEME
        ============================================ */
 
-    /* Color Variables */
+    /* Color Variables - Brutalist Green */
     :root {{
-        --bg-main: #0f1419;
-        --bg-sidebar: #1a1f2e;
-        --bg-card: #1e2433;
-        --bg-input: #2a3142;
+        --bg-main: #0a0a0a;
+        --bg-sidebar: #111111;
+        --bg-card: #1a1a1a;
+        --bg-input: #2a2a2a;
         --text-primary: #ffffff;
-        --text-secondary: #8b949e;
-        --text-muted: #6e7681;
-        --border-color: #30363d;
-        --accent: #58a6ff;
-        --accent-hover: #79b8ff;
-        --success: #3fb950;
-        --warning: #d29922;
-        --error: #f85149;
+        --text-secondary: #888888;
+        --text-muted: #666666;
+        --border-color: #333333;
+        --accent: #00ff00;
+        --accent-dim: #00cc00;
+        --success: #00ff00;
+        --warning: #ffcc00;
+        --error: #ff4444;
     }}
 
     /* Global styles */
@@ -160,71 +160,111 @@ def inject_custom_css():
 
     /* Sidebar section headers */
     [data-testid="stSidebar"] h3 {{
-        font-size: 0.9rem !important;
+        font-size: 0.85rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
+        letter-spacing: 1px !important;
         margin-bottom: 1rem !important;
+        margin-top: 0.5rem !important;
         color: var(--text-primary) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }}
+
+    /* Sidebar section with icon styling */
+    [data-testid="stSidebar"] h3::before {{
+        content: '▣';
+        color: var(--accent);
+        font-size: 1rem;
     }}
 
     /* Logo styling */
     {logo_css}
 
-    /* Header - Main title area */
+    /* Brutalist Header */
     .brutalist-header {{
         display: flex;
         align-items: center;
-        padding: 1.5rem 0;
-        margin-bottom: 1rem;
-        color: var(--text-primary);
+        padding: 1rem 1.5rem;
+        background: var(--bg-main);
+        border: 3px solid var(--accent);
+        margin-bottom: 1.5rem;
+        gap: 1rem;
     }}
 
-    .brutalist-logo {{
+    .logo-box {{
+        width: 60px;
+        height: 60px;
+        border: 3px solid var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 2rem;
         font-weight: 800;
+        color: var(--accent);
+        flex-shrink: 0;
+    }}
+
+    .header-text {{
         display: flex;
-        align-items: center;
-        color: var(--text-primary);
+        flex-direction: column;
     }}
 
-    .brutalist-tagline {{
-        display: none;
-    }}
-
-    /* Large metric display for sidebar */
-    .big-metric {{
-        font-size: 2.5rem;
+    .header-title {{
+        font-size: 2rem;
         font-weight: 800;
         color: var(--text-primary);
-        line-height: 1;
-        margin-top: 0.5rem;
+        letter-spacing: 4px;
+        text-transform: uppercase;
     }}
 
-    .metric-label {{
+    .header-subtitle {{
         font-size: 0.75rem;
         color: var(--text-secondary);
+        letter-spacing: 3px;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.25rem;
     }}
 
-    /* Section headers in main area */
-    .section-header {{
+    /* Stats bar */
+    .stats-bar {{
+        display: flex;
+        gap: 2rem;
+        padding: 0.5rem 0;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 1rem;
+    }}
+
+    .stats-bar span {{
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin: 1.5rem 0 0.5rem 0;
+        gap: 0.5rem;
     }}
 
-    .section-description {{
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        font-style: italic;
-        margin-bottom: 1rem;
+    .stats-value {{
+        color: var(--text-primary);
+        font-weight: 700;
+    }}
+
+    /* Success box styling */
+    .success-box {{
+        background: rgba(0, 255, 0, 0.15);
+        border: 1px solid var(--accent);
+        padding: 0.75rem 1rem;
+        margin: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent);
+        font-size: 0.85rem;
+    }}
+
+    .success-box .checkmark {{
+        color: var(--accent);
     }}
 
     /* File uploader styling */
@@ -353,18 +393,39 @@ def inject_custom_css():
         background-color: var(--bg-input) !important;
     }}
 
-    /* Chat input */
+    /* Chat input - brutalist green */
+    [data-testid="stChatInput"] {{
+        background-color: var(--bg-card) !important;
+        border-radius: 0 !important;
+        border: 1px solid var(--border-color) !important;
+        padding: 0.5rem !important;
+    }}
+
     [data-testid="stChatInput"] textarea {{
         font-family: 'JetBrains Mono', monospace !important;
         border-radius: 0 !important;
         border: 1px solid var(--border-color) !important;
         background-color: var(--bg-input) !important;
         color: var(--text-primary) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
     }}
 
-    [data-testid="stChatInput"] {{
-        background-color: var(--bg-card) !important;
+    [data-testid="stChatInput"] textarea::placeholder {{
+        text-transform: uppercase !important;
+        letter-spacing: 2px !important;
+        color: var(--text-muted) !important;
+    }}
+
+    [data-testid="stChatInput"] button {{
+        background-color: var(--bg-input) !important;
+        border: none !important;
         border-radius: 0 !important;
+        color: var(--text-primary) !important;
+    }}
+
+    [data-testid="stChatInput"] button:hover {{
+        background-color: var(--border-color) !important;
     }}
 
     /* Metrics */
@@ -555,19 +616,14 @@ def inject_custom_css():
 
 
 def render_header():
-    """Render the main header with logo."""
-    logo_b64 = load_logo_base64()
-    logo_html = ""
-    if logo_b64:
-        logo_html = f'<img src="data:image/png;base64,{logo_b64}" class="logo-img" alt="SnowGrep">'
-
-    st.markdown(f"""
+    """Render the brutalist header with S logo box."""
+    st.markdown("""
 <div class="brutalist-header">
-    <div class="brutalist-logo">
-        {logo_html}
-        SnowGrep
+    <div class="logo-box">S</div>
+    <div class="header-text">
+        <div class="header-title">SNOWGREP</div>
+        <div class="header-subtitle">SERVICENOW INCIDENT QUERY</div>
     </div>
-    <div class="brutalist-tagline">Natural Language Incident Search</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -615,71 +671,68 @@ def render_sidebar():
     """Render the sidebar with data management controls."""
     with st.sidebar:
         # Data Management section
-        st.markdown("### 📁 Data Management")
+        st.markdown("### Data Management")
         st.caption("Upload ServiceNow CSV Export")
 
         # CSV Upload
         uploaded_file = st.file_uploader(
             "Upload CSV",
             type=["csv"],
-            help="Upload a CSV export from ServiceNow containing incident data",
+            help="Drag and drop file here. Limit 200MB per file - CSV",
             label_visibility="collapsed"
         )
 
         if uploaded_file is not None:
-            # Load mode selection - stacked buttons
-            if st.button("Replace", use_container_width=True, help="Replace existing data"):
-                _load_csv_data(uploaded_file, append=False)
-            if st.button("Append", use_container_width=True, help="Add to existing data"):
-                _load_csv_data(uploaded_file, append=True)
+            # Load mode selection - side-by-side buttons
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Replace", use_container_width=True, help="Replace existing data"):
+                    _load_csv_data(uploaded_file, append=False)
+            with col2:
+                if st.button("+ Append", use_container_width=True, help="Add to existing data"):
+                    _load_csv_data(uploaded_file, append=True)
 
         st.divider()
 
-        # Display current data status
-        st.markdown("### 📊 Data Status")
-
-        if st.session_state.schema:
-            schema = st.session_state.schema
-            st.caption("Incidents Loaded")
-            st.markdown(f"<div style='font-size: 2.5rem; font-weight: 800; color: #fff;'>{schema['row_count']:,}</div>", unsafe_allow_html=True)
-        elif table_exists():
-            # Try to load existing schema
-            schema = get_schema_summary()
-            if schema:
-                st.session_state.schema = schema
-                st.session_state.data_loaded = True
-                st.caption("Incidents Loaded")
-                st.markdown(f"<div style='font-size: 2.5rem; font-weight: 800; color: #fff;'>{schema['row_count']:,}</div>", unsafe_allow_html=True)
-            else:
-                st.info("No data loaded")
-        else:
-            st.info("No data — upload CSV to start")
-
-        st.divider()
-
-        # Embeddings management
-        st.markdown("### 🔮 Embeddings")
+        # Embeddings section with status
+        st.markdown("### Embeddings")
 
         # Check embedding status
         if embeddings_exist():
             stats = get_embedding_stats()
             st.session_state.embeddings_ready = True
-            st.success(f"✓ {stats['document_count']:,} docs indexed")
+            # Green success box like trynow.png
+            st.markdown(f"""
+<div class="success-box">
+    <span class="checkmark">✓</span>
+    <span>{stats['document_count']:,} documents indexed</span>
+</div>
+""", unsafe_allow_html=True)
         else:
             st.session_state.embeddings_ready = False
             st.warning("No embeddings built")
 
-        # Build embeddings buttons - stacked
+        # Check if data is loaded from existing table
+        if not st.session_state.schema and table_exists():
+            schema = get_schema_summary()
+            if schema:
+                st.session_state.schema = schema
+                st.session_state.data_loaded = True
+
+        # Build embeddings buttons - side-by-side with icons
         if st.session_state.data_loaded:
-            if st.button("Rebuild", use_container_width=True, help="Rebuild all embeddings"):
-                _build_embeddings_with_progress(force=True)
-            if st.button("Update", use_container_width=True, help="Update new embeddings only"):
-                _build_embeddings_with_progress(force=False)
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("◇ Rebuild", use_container_width=True, help="Rebuild all embeddings"):
+                    _build_embeddings_with_progress(force=True)
+            with col2:
+                if st.button("+ Update", use_container_width=True, help="Update new embeddings only"):
+                    _build_embeddings_with_progress(force=False)
 
         st.divider()
 
         # Settings
-        st.markdown("### ⚙️ Settings")
+        st.markdown("### Settings")
 
         with st.expander("Query Options"):
             st.session_state.top_k = st.slider(
@@ -737,7 +790,7 @@ def render_schema_details():
 
     schema = st.session_state.schema
 
-    with st.expander("📋 Schema Details", expanded=False):
+    with st.expander("Schema Details", expanded=False):
         st.markdown(f"**Table:** `{schema['table_name']}`")
         st.markdown(f"**Rows:** `{schema['row_count']:,}`")
 
@@ -911,10 +964,44 @@ def process_query(user_query: str, mode: str):
         }
 
 
+def render_stats_bar():
+    """Render the stats bar showing current data status."""
+    if st.session_state.schema:
+        schema = st.session_state.schema
+        incidents = schema['row_count']
+        columns = len(schema['columns'])
+
+        # Get embeddings count
+        if embeddings_exist():
+            stats = get_embedding_stats()
+            embeddings = stats.get('document_count', 0)
+            status = "READY"
+        else:
+            embeddings = 0
+            status = "NO EMBEDDINGS"
+    else:
+        incidents = 0
+        columns = 0
+        embeddings = 0
+        status = "NO DATA"
+
+    st.markdown(f"""
+<div class="stats-bar">
+    <span>INCIDENTS: <span class="stats-value">{incidents:,}</span></span>
+    <span>COLUMNS: <span class="stats-value">{columns}</span></span>
+    <span>EMBEDDINGS: <span class="stats-value">{embeddings:,}</span></span>
+    <span>STATUS: <span class="stats-value">{status}</span></span>
+</div>
+""", unsafe_allow_html=True)
+
+
 def render_main_content():
     """Render the main content area."""
-    # Main title
-    st.markdown("# 🔍 SnowGrep")
+    # Brutalist header
+    render_header()
+
+    # Stats bar
+    render_stats_bar()
 
     if not st.session_state.data_loaded:
         st.info("Upload a ServiceNow CSV export using the sidebar to get started.")
@@ -923,13 +1010,11 @@ def render_main_content():
     # Schema Details expander
     render_schema_details()
 
-    st.divider()
-
     # Query Interface section
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        st.markdown("### 💬 Query Interface")
+        st.markdown("### Query Interface")
 
     with col2:
         selected_mode_label = st.selectbox(
