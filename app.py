@@ -95,10 +95,35 @@ def inject_custom_css():
     /* Import monospace font */
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
 
+    /* ============================================
+       GLOBAL COLOR RESET - Ensure all text visible
+       ============================================ */
+    .stApp, .stApp * {{
+        font-family: 'JetBrains Mono', monospace;
+    }}
+
+    /* Force black text globally */
+    .stApp p, .stApp span, .stApp div, .stApp label,
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+    .stApp li, .stApp td, .stApp th, .stApp caption,
+    .stApp strong, .stApp em, .stApp b, .stApp i {{
+        color: #000 !important;
+    }}
+
+    /* Code and pre elements - dark background, light text */
+    .stApp code, .stApp pre {{
+        background-color: #1a1a1a !important;
+        color: #00ff00 !important;
+    }}
+
+    .stApp code {{
+        padding: 0.2em 0.4em !important;
+        border-radius: 2px !important;
+    }}
+
     /* Global overrides */
     .stApp {{
         background-color: #fafafa;
-        font-family: 'JetBrains Mono', monospace;
     }}
 
     /* Hide Streamlit branding */
@@ -408,6 +433,7 @@ def inject_custom_css():
         font-family: 'JetBrains Mono', monospace !important;
         font-size: 1.75rem !important;
         font-weight: 800 !important;
+        color: #000 !important;
     }}
 
     [data-testid="stMetricLabel"] {{
@@ -415,6 +441,22 @@ def inject_custom_css():
         text-transform: uppercase !important;
         letter-spacing: 1px !important;
         font-size: 0.7rem !important;
+        color: #000 !important;
+    }}
+
+    [data-testid="stMetricDelta"] {{
+        color: #000 !important;
+    }}
+
+    /* Metric container */
+    [data-testid="metric-container"] {{
+        background-color: #fff !important;
+        border: 1px solid #ddd !important;
+        padding: 0.5rem !important;
+    }}
+
+    [data-testid="metric-container"] * {{
+        color: #000 !important;
     }}
 
     /* Expander styling */
@@ -423,8 +465,47 @@ def inject_custom_css():
         text-transform: uppercase;
         letter-spacing: 1px;
         font-size: 0.8rem !important;
-        border: 1px solid #ddd;
+        border: 1px solid #000 !important;
         border-radius: 0 !important;
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
+    }}
+
+    .streamlit-expanderHeader:hover {{
+        background-color: #e0e0e0 !important;
+    }}
+
+    .streamlit-expanderHeader p,
+    .streamlit-expanderHeader span,
+    .streamlit-expanderHeader svg {{
+        color: #000 !important;
+        fill: #000 !important;
+    }}
+
+    .streamlit-expanderContent {{
+        background-color: #fff !important;
+        border: 1px solid #ddd !important;
+        border-top: none !important;
+        color: #000 !important;
+    }}
+
+    .streamlit-expanderContent * {{
+        color: #000 !important;
+    }}
+
+    /* Alternative expander selectors */
+    [data-testid="stExpander"] {{
+        border: 1px solid #000 !important;
+        border-radius: 0 !important;
+    }}
+
+    [data-testid="stExpander"] summary {{
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
+    }}
+
+    [data-testid="stExpander"] summary span {{
+        color: #000 !important;
     }}
 
     /* Dataframe styling */
@@ -434,6 +515,31 @@ def inject_custom_css():
 
     .stDataFrame [data-testid="stDataFrameResizable"] {{
         font-family: 'JetBrains Mono', monospace !important;
+    }}
+
+    /* Dataframe cells and headers */
+    .stDataFrame th, .stDataFrame td,
+    [data-testid="stDataFrame"] th,
+    [data-testid="stDataFrame"] td,
+    [data-testid="stDataFrame"] [role="gridcell"],
+    [data-testid="stDataFrame"] [role="columnheader"] {{
+        color: #000 !important;
+        background-color: #fff !important;
+    }}
+
+    [data-testid="stDataFrame"] [role="columnheader"] {{
+        background-color: #f0f0f0 !important;
+        font-weight: 700 !important;
+    }}
+
+    /* Glide Data Grid (Streamlit's dataframe component) */
+    .dvn-scroller, .dvn-scroller * {{
+        color: #000 !important;
+    }}
+
+    [data-testid="glideDataEditor"],
+    [data-testid="glideDataEditor"] * {{
+        color: #000 !important;
     }}
 
     /* Chat message styling */
@@ -488,6 +594,19 @@ def inject_custom_css():
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-size: 0.8rem;
+        color: #000 !important;
+    }}
+
+    .stSuccess *, .stWarning *, .stError *, .stInfo * {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stAlert"] {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stAlert"] * {{
+        color: #000 !important;
     }}
 
     /* Download button */
@@ -498,6 +617,12 @@ def inject_custom_css():
         border-radius: 0 !important;
         border: 2px solid #000 !important;
         font-size: 0.75rem !important;
+        background-color: #000 !important;
+        color: #fff !important;
+    }}
+
+    .stDownloadButton > button:hover {{
+        background-color: #333 !important;
     }}
 
     /* Spinner */
@@ -505,11 +630,16 @@ def inject_custom_css():
         font-family: 'JetBrains Mono', monospace;
         text-transform: uppercase;
         letter-spacing: 1px;
+        color: #000 !important;
     }}
 
     /* Slider */
     .stSlider {{
         font-family: 'JetBrains Mono', monospace;
+    }}
+
+    .stSlider label, .stSlider p, .stSlider span {{
+        color: #000 !important;
     }}
 
     /* Checkbox */
@@ -521,6 +651,112 @@ def inject_custom_css():
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-size: 0.8rem;
+        color: #000 !important;
+    }}
+
+    .stCheckbox span {{
+        color: #000 !important;
+    }}
+
+    /* Number input */
+    .stNumberInput label {{
+        color: #000 !important;
+    }}
+
+    .stNumberInput input {{
+        color: #000 !important;
+        background-color: #fff !important;
+    }}
+
+    /* Selectbox / Dropdown */
+    .stSelectbox label {{
+        color: #000 !important;
+    }}
+
+    .stSelectbox [data-baseweb="select"] {{
+        background-color: #fff !important;
+    }}
+
+    .stSelectbox [data-baseweb="select"] * {{
+        color: #000 !important;
+    }}
+
+    /* Text input */
+    .stTextInput label {{
+        color: #000 !important;
+    }}
+
+    .stTextInput input {{
+        color: #000 !important;
+        background-color: #fff !important;
+    }}
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {{
+        background-color: #fff !important;
+    }}
+
+    .stTabs [data-baseweb="tab"] {{
+        color: #000 !important;
+    }}
+
+    /* Catch-all for any remaining text elements */
+    .element-container, .element-container * {{
+        color: #000;
+    }}
+
+    /* Tooltip */
+    [data-testid="stTooltipIcon"] {{
+        color: #666 !important;
+    }}
+
+    /* Radio buttons */
+    .stRadio label {{
+        color: #000 !important;
+    }}
+
+    .stRadio [role="radiogroup"] label {{
+        color: #000 !important;
+    }}
+
+    /* Multiselect */
+    .stMultiSelect label {{
+        color: #000 !important;
+    }}
+
+    .stMultiSelect [data-baseweb="select"] * {{
+        color: #000 !important;
+    }}
+
+    /* Text area */
+    .stTextArea label {{
+        color: #000 !important;
+    }}
+
+    .stTextArea textarea {{
+        color: #000 !important;
+        background-color: #fff !important;
+    }}
+
+    /* Caption and markdown */
+    .stCaption {{
+        color: #666 !important;
+    }}
+
+    .stMarkdown {{
+        color: #000 !important;
+    }}
+
+    .stMarkdown * {{
+        color: #000 !important;
+    }}
+
+    /* Override any remaining white text on white background issues */
+    [style*="color: rgb(255, 255, 255)"],
+    [style*="color: white"],
+    [style*="color:#fff"],
+    [style*="color: #fff"] {{
+        color: #000 !important;
     }}
 </style>
 """, unsafe_allow_html=True)
