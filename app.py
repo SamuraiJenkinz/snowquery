@@ -269,36 +269,51 @@ def inject_custom_css():
 
     /* File uploader styling */
     [data-testid="stFileUploader"] {{
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 0;
-        padding: 0.75rem;
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 0 !important;
+        padding: 0.75rem !important;
+    }}
+
+    [data-testid="stFileUploader"] * {{
+        color: var(--text-primary) !important;
     }}
 
     [data-testid="stFileUploader"] section {{
         background-color: transparent !important;
-        border: none !important;
-        padding: 0 !important;
+        border: 1px dashed var(--border-color) !important;
+        padding: 1rem !important;
     }}
 
     [data-testid="stFileUploader"] section > div {{
-        display: flex;
-        align-items: center;
-        gap: 1rem;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
     }}
 
     [data-testid="stFileUploader"] button {{
         background-color: var(--bg-input) !important;
         color: var(--text-primary) !important;
-        border: none !important;
+        border: 1px solid var(--border-color) !important;
         border-radius: 0 !important;
         padding: 0.5rem 1rem !important;
         font-family: 'JetBrains Mono', monospace !important;
         font-size: 0.75rem !important;
+        text-transform: uppercase !important;
     }}
 
-    [data-testid="stFileUploader"] small {{
+    [data-testid="stFileUploader"] small,
+    [data-testid="stFileUploader"] span,
+    [data-testid="stFileUploader"] p {{
         color: var(--text-muted) !important;
+        font-size: 0.75rem !important;
+    }}
+
+    /* Drag drop icon */
+    [data-testid="stFileUploader"] svg {{
+        stroke: var(--text-muted) !important;
+        fill: none !important;
     }}
 
     /* Executive summary box */
@@ -720,14 +735,15 @@ def render_sidebar():
                 st.session_state.data_loaded = True
 
         # Build embeddings buttons - side-by-side with icons
-        if st.session_state.data_loaded:
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("◇ Rebuild", use_container_width=True, help="Rebuild all embeddings"):
-                    _build_embeddings_with_progress(force=True)
-            with col2:
-                if st.button("+ Update", use_container_width=True, help="Update new embeddings only"):
-                    _build_embeddings_with_progress(force=False)
+        col1, col2 = st.columns(2)
+        with col1:
+            rebuild_disabled = not st.session_state.data_loaded
+            if st.button("◇ Rebuild", use_container_width=True, help="Rebuild all embeddings", disabled=rebuild_disabled):
+                _build_embeddings_with_progress(force=True)
+        with col2:
+            update_disabled = not st.session_state.data_loaded
+            if st.button("+ Update", use_container_width=True, help="Update new embeddings only", disabled=update_disabled):
+                _build_embeddings_with_progress(force=False)
 
         st.divider()
 
