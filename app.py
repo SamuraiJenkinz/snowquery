@@ -96,24 +96,24 @@ def inject_custom_css():
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
 
     /* ============================================
-       DARK THEME - Claude Code Style
+       DARK BRUTALIST THEME
        ============================================ */
 
     /* Color Variables */
     :root {{
-        --bg-primary: #1a1a2e;
-        --bg-secondary: #16213e;
-        --bg-tertiary: #0f0f1a;
-        --bg-input: #252545;
-        --text-primary: #e8e8e8;
-        --text-secondary: #a0a0a0;
-        --text-muted: #666680;
-        --border-color: #3a3a5c;
-        --accent: #6c63ff;
-        --accent-hover: #5a52d9;
-        --success: #4ade80;
-        --warning: #fbbf24;
-        --error: #f87171;
+        --bg-main: #0f1419;
+        --bg-sidebar: #1a1f2e;
+        --bg-card: #1e2433;
+        --bg-input: #2a3142;
+        --text-primary: #ffffff;
+        --text-secondary: #8b949e;
+        --text-muted: #6e7681;
+        --border-color: #30363d;
+        --accent: #58a6ff;
+        --accent-hover: #79b8ff;
+        --success: #3fb950;
+        --warning: #d29922;
+        --error: #f85149;
     }}
 
     /* Global styles */
@@ -122,7 +122,7 @@ def inject_custom_css():
     }}
 
     .stApp {{
-        background-color: var(--bg-primary);
+        background-color: var(--bg-main);
         color: var(--text-primary);
     }}
 
@@ -141,8 +141,13 @@ def inject_custom_css():
 
     /* Sidebar */
     [data-testid="stSidebar"] {{
-        background-color: var(--bg-secondary);
-        border-right: 1px solid var(--border-color);
+        background-color: var(--bg-sidebar);
+        border-right: none;
+        padding-top: 1rem;
+    }}
+
+    [data-testid="stSidebar"] > div:first-child {{
+        padding: 1rem;
     }}
 
     [data-testid="stSidebar"] * {{
@@ -153,141 +158,122 @@ def inject_custom_css():
         color: var(--text-secondary) !important;
     }}
 
+    /* Sidebar section headers */
+    [data-testid="stSidebar"] h3 {{
+        font-size: 0.9rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        margin-bottom: 1rem !important;
+        color: var(--text-primary) !important;
+    }}
+
     /* Logo styling */
     {logo_css}
 
-    /* Header */
+    /* Header - Main title area */
     .brutalist-header {{
         display: flex;
         align-items: center;
-        padding: 1rem 0;
-        border-bottom: 1px solid var(--border-color);
-        margin-bottom: 2rem;
+        padding: 1.5rem 0;
+        margin-bottom: 1rem;
         color: var(--text-primary);
     }}
 
     .brutalist-logo {{
-        font-size: 1.5rem;
+        font-size: 2rem;
         font-weight: 800;
-        letter-spacing: -0.5px;
-        text-transform: uppercase;
         display: flex;
         align-items: center;
         color: var(--text-primary);
     }}
 
     .brutalist-tagline {{
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: var(--text-secondary);
-        margin-left: 1rem;
-        padding-left: 1rem;
-        border-left: 1px solid var(--border-color);
+        display: none;
     }}
 
-    /* Stats bar */
-    .stats-bar {{
-        display: flex;
-        gap: 2rem;
-        padding: 0.75rem 0;
-        border-top: 1px solid var(--border-color);
-        border-bottom: 1px solid var(--border-color);
-        margin: 1.5rem 0;
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: var(--text-secondary);
+    /* Large metric display for sidebar */
+    .big-metric {{
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+        margin-top: 0.5rem;
     }}
 
-    .stats-bar span {{
+    .metric-label {{
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }}
+
+    /* Section headers in main area */
+    .section-header {{
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-    }}
-
-    .stats-value {{
-        color: var(--accent) !important;
+        gap: 0.75rem;
+        font-size: 1.25rem;
         font-weight: 700;
-    }}
-
-    /* Info box */
-    .info-box {{
-        border: 1px solid var(--border-color);
-        padding: 1.25rem;
-        background: var(--bg-secondary);
-        margin: 1rem 0;
-        border-radius: 4px;
-    }}
-
-    .info-box h4 {{
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 0.75rem;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 0.5rem;
         color: var(--text-primary);
+        margin: 1.5rem 0 0.5rem 0;
     }}
 
-    .info-box ul {{
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }}
-
-    .info-box li {{
-        font-size: 0.75rem;
-        padding: 0.25rem 0;
-        color: var(--text-secondary);
-    }}
-
-    /* Terminal window */
-    .terminal-window {{
-        background: var(--bg-tertiary);
-        border-radius: 6px;
-        overflow: hidden;
-        margin: 1rem 0;
-        border: 1px solid var(--border-color);
-    }}
-
-    .terminal-header {{
-        background: var(--bg-secondary);
-        padding: 0.5rem 0.75rem;
-        display: flex;
-        gap: 0.4rem;
-    }}
-
-    .terminal-dot {{
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-    }}
-
-    .terminal-dot.red {{ background: #ff5f56; }}
-    .terminal-dot.yellow {{ background: #ffbd2e; }}
-    .terminal-dot.green {{ background: #27ca40; }}
-
-    .terminal-body {{
-        padding: 1rem;
-        color: var(--success);
+    .section-description {{
         font-size: 0.8rem;
-        line-height: 1.6;
+        color: var(--text-secondary);
+        font-style: italic;
+        margin-bottom: 1rem;
+    }}
+
+    /* File uploader styling */
+    [data-testid="stFileUploader"] {{
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 0;
+        padding: 0.75rem;
+    }}
+
+    [data-testid="stFileUploader"] section {{
+        background-color: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+    }}
+
+    [data-testid="stFileUploader"] section > div {{
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }}
+
+    [data-testid="stFileUploader"] button {{
+        background-color: var(--bg-input) !important;
+        color: var(--text-primary) !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0.5rem 1rem !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 0.75rem !important;
+    }}
+
+    [data-testid="stFileUploader"] small {{
+        color: var(--text-muted) !important;
     }}
 
     /* Executive summary box */
     .summary-box {{
         border: 1px solid var(--border-color);
         padding: 1.25rem;
-        background: var(--bg-secondary);
+        background: var(--bg-card);
         margin: 1rem 0;
-        border-radius: 4px;
+        border-radius: 0;
     }}
 
     .summary-box h4 {{
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         text-transform: uppercase;
-        letter-spacing: 2px;
+        letter-spacing: 1px;
         margin-bottom: 1rem;
         color: var(--accent);
     }}
@@ -303,22 +289,22 @@ def inject_custom_css():
         font-family: 'JetBrains Mono', monospace !important;
         text-transform: uppercase;
         letter-spacing: 1px;
-        border-radius: 4px !important;
-        border: 1px solid var(--accent) !important;
-        background: var(--accent) !important;
-        color: #fff !important;
+        border-radius: 0 !important;
+        border: none !important;
+        background: var(--bg-input) !important;
+        color: var(--text-primary) !important;
         padding: 0.5rem 1rem !important;
         font-size: 0.75rem !important;
     }}
 
     .stButton > button:hover {{
-        background: var(--accent-hover) !important;
-        border-color: var(--accent-hover) !important;
+        background: var(--border-color) !important;
     }}
 
     .stButton > button[kind="secondary"] {{
         background: transparent !important;
-        color: var(--accent) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
     }}
 
     /* Inputs */
@@ -326,7 +312,7 @@ def inject_custom_css():
     .stNumberInput input,
     .stTextArea textarea {{
         font-family: 'JetBrains Mono', monospace !important;
-        border-radius: 4px !important;
+        border-radius: 0 !important;
         border: 1px solid var(--border-color) !important;
         background-color: var(--bg-input) !important;
         color: var(--text-primary) !important;
@@ -334,12 +320,13 @@ def inject_custom_css():
 
     /* Selectbox */
     .stSelectbox > div > div {{
-        border-radius: 4px !important;
+        border-radius: 0 !important;
     }}
 
     .stSelectbox [data-baseweb="select"],
     [data-baseweb="select"] {{
         background-color: var(--bg-input) !important;
+        border-radius: 0 !important;
     }}
 
     .stSelectbox [data-baseweb="select"] *,
@@ -347,27 +334,51 @@ def inject_custom_css():
         color: var(--text-primary) !important;
     }}
 
+    /* Dropdown menu */
+    [data-baseweb="popover"] {{
+        border-radius: 0 !important;
+    }}
+
+    [data-baseweb="menu"] {{
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 0 !important;
+    }}
+
+    [data-baseweb="menu"] li {{
+        background-color: var(--bg-card) !important;
+    }}
+
+    [data-baseweb="menu"] li:hover {{
+        background-color: var(--bg-input) !important;
+    }}
+
     /* Chat input */
     [data-testid="stChatInput"] textarea {{
         font-family: 'JetBrains Mono', monospace !important;
-        border-radius: 4px !important;
+        border-radius: 0 !important;
         border: 1px solid var(--border-color) !important;
         background-color: var(--bg-input) !important;
         color: var(--text-primary) !important;
     }}
 
+    [data-testid="stChatInput"] {{
+        background-color: var(--bg-card) !important;
+        border-radius: 0 !important;
+    }}
+
     /* Metrics */
     [data-testid="stMetricValue"] {{
         font-family: 'JetBrains Mono', monospace !important;
-        font-size: 1.75rem !important;
+        font-size: 2.5rem !important;
         font-weight: 800 !important;
-        color: var(--accent) !important;
+        color: var(--text-primary) !important;
     }}
 
     [data-testid="stMetricLabel"] {{
         font-family: 'JetBrains Mono', monospace !important;
         text-transform: uppercase !important;
-        letter-spacing: 1px !important;
+        letter-spacing: 0.5px !important;
         font-size: 0.7rem !important;
         color: var(--text-secondary) !important;
     }}
@@ -376,13 +387,12 @@ def inject_custom_css():
     .streamlit-expanderHeader,
     [data-testid="stExpander"] summary {{
         font-family: 'JetBrains Mono', monospace !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 0.8rem !important;
+        font-size: 0.85rem !important;
         border: 1px solid var(--border-color) !important;
-        border-radius: 4px !important;
-        background-color: var(--bg-secondary) !important;
+        border-radius: 0 !important;
+        background-color: var(--bg-card) !important;
         color: var(--text-primary) !important;
+        padding: 0.75rem 1rem !important;
     }}
 
     .streamlit-expanderHeader:hover {{
@@ -390,7 +400,7 @@ def inject_custom_css():
     }}
 
     .streamlit-expanderContent {{
-        background-color: var(--bg-tertiary) !important;
+        background-color: var(--bg-main) !important;
         border: 1px solid var(--border-color) !important;
         border-top: none !important;
         color: var(--text-primary) !important;
@@ -398,13 +408,13 @@ def inject_custom_css():
 
     [data-testid="stExpander"] {{
         border: 1px solid var(--border-color) !important;
-        border-radius: 4px !important;
+        border-radius: 0 !important;
     }}
 
     /* Dataframe */
     .stDataFrame {{
         border: 1px solid var(--border-color);
-        border-radius: 4px;
+        border-radius: 0;
     }}
 
     .stDataFrame th, .stDataFrame td,
@@ -413,11 +423,11 @@ def inject_custom_css():
     [data-testid="stDataFrame"] [role="gridcell"],
     [data-testid="stDataFrame"] [role="columnheader"] {{
         color: var(--text-primary) !important;
-        background-color: var(--bg-secondary) !important;
+        background-color: var(--bg-card) !important;
     }}
 
     [data-testid="stDataFrame"] [role="columnheader"] {{
-        background-color: var(--bg-tertiary) !important;
+        background-color: var(--bg-input) !important;
         font-weight: 700 !important;
     }}
 
@@ -425,17 +435,17 @@ def inject_custom_css():
     [data-testid="glideDataEditor"],
     [data-testid="glideDataEditor"] * {{
         color: var(--text-primary) !important;
-        background-color: var(--bg-secondary) !important;
+        background-color: var(--bg-card) !important;
     }}
 
     /* Chat messages */
     [data-testid="stChatMessage"] {{
         font-family: 'JetBrains Mono', monospace;
         border: 1px solid var(--border-color);
-        border-radius: 4px !important;
+        border-radius: 0 !important;
         padding: 1rem;
         margin: 0.5rem 0;
-        background-color: var(--bg-secondary) !important;
+        background-color: var(--bg-card) !important;
         color: var(--text-primary) !important;
     }}
 
@@ -443,18 +453,11 @@ def inject_custom_css():
         color: var(--text-primary) !important;
     }}
 
-    /* File uploader */
-    [data-testid="stFileUploader"] section {{
-        border: 2px dashed var(--border-color);
-        border-radius: 4px;
-        background-color: var(--bg-secondary);
-    }}
-
     /* Alerts */
     .stSuccess, .stWarning, .stError, .stInfo,
     [data-testid="stAlert"] {{
         font-family: 'JetBrains Mono', monospace;
-        border-radius: 4px !important;
+        border-radius: 0 !important;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-size: 0.8rem;
@@ -469,11 +472,11 @@ def inject_custom_css():
         font-family: 'JetBrains Mono', monospace !important;
         text-transform: uppercase;
         letter-spacing: 1px;
-        border-radius: 4px !important;
-        border: 1px solid var(--accent) !important;
+        border-radius: 0 !important;
+        border: 1px solid var(--border-color) !important;
         font-size: 0.75rem !important;
-        background-color: var(--accent) !important;
-        color: #fff !important;
+        background-color: var(--bg-input) !important;
+        color: var(--text-primary) !important;
     }}
 
     /* Slider, Checkbox, Radio */
@@ -484,8 +487,6 @@ def inject_custom_css():
     }}
 
     .stCheckbox label, .stRadio label {{
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
         font-size: 0.8rem;
     }}
 
@@ -498,10 +499,10 @@ def inject_custom_css():
 
     /* Code blocks */
     .stApp code, .stApp pre {{
-        background-color: var(--bg-tertiary) !important;
+        background-color: var(--bg-input) !important;
         color: var(--success) !important;
         padding: 0.2em 0.4em !important;
-        border-radius: 4px !important;
+        border-radius: 0 !important;
     }}
 
     /* Spinner */
@@ -516,11 +517,19 @@ def inject_custom_css():
 
     /* Tabs */
     .stTabs [data-baseweb="tab-list"] {{
-        background-color: var(--bg-secondary) !important;
+        background-color: var(--bg-card) !important;
+        border-radius: 0 !important;
     }}
 
     .stTabs [data-baseweb="tab"] {{
         color: var(--text-primary) !important;
+        border-radius: 0 !important;
+    }}
+
+    /* Divider lines */
+    [data-testid="stSidebar"] hr {{
+        border-color: var(--border-color);
+        margin: 1.5rem 0;
     }}
 
     /* Scrollbar */
@@ -530,12 +539,12 @@ def inject_custom_css():
     }}
 
     ::-webkit-scrollbar-track {{
-        background: var(--bg-tertiary);
+        background: var(--bg-main);
     }}
 
     ::-webkit-scrollbar-thumb {{
         background: var(--border-color);
-        border-radius: 4px;
+        border-radius: 0;
     }}
 
     ::-webkit-scrollbar-thumb:hover {{
