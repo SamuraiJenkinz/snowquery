@@ -279,30 +279,46 @@ def inject_custom_css():
     }
 
     /* ============ EXPANDERS ============ */
-    .streamlit-expanderHeader,
+    [data-testid="stExpander"] {
+        border: none !important;
+    }
+
     [data-testid="stExpander"] summary {
         background: var(--bg-glass) !important;
         border: 1px solid var(--border-subtle) !important;
         border-radius: var(--radius-md) !important;
         color: var(--text-primary) !important;
         transition: var(--transition);
+        padding: 0.75rem 1rem !important;
     }
 
-    .streamlit-expanderHeader:hover,
     [data-testid="stExpander"] summary:hover {
         background: var(--bg-glass-hover) !important;
         border-color: var(--accent) !important;
     }
 
-    [data-testid="stExpander"] {
-        border: none !important;
+    /* Hide the broken material icon text */
+    [data-testid="stExpander"] summary > div:first-child {
+        font-size: 0 !important;
     }
 
-    .streamlit-expanderContent {
+    /* But show the actual label text */
+    [data-testid="stExpander"] summary > div:first-child > * {
+        font-size: 0.9rem !important;
+    }
+
+    /* Hide any stray icon text that appears */
+    [data-testid="stExpander"] summary {
+        overflow: hidden !important;
+    }
+
+    .streamlit-expanderContent,
+    [data-testid="stExpander"] > div:last-child {
         background: var(--bg-tertiary) !important;
         border: 1px solid var(--border-subtle) !important;
         border-top: none !important;
         border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+        padding: 1rem !important;
     }
 
     /* ============ CHAT ============ */
