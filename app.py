@@ -50,8 +50,11 @@ def inject_custom_css():
        Dark mode with glassmorphism & blue accents
        ============================================ */
 
-    /* Import fonts */
+    /* Import fonts - Inter for text, Material Icons for UI icons */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+    @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Outlined');
+    @import url('https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined');
 
     /* CSS Variables */
     :root {
@@ -126,29 +129,40 @@ def inject_custom_css():
         fill: white !important;
     }
 
-    /* ============ GLOBAL FIX: HIDE BROKEN MATERIAL ICON TEXT ============ */
-    /* Target the specific text that appears when Material Icons fail to load */
-    /* These show as "keyboard_arrow_right", "keyboard_arrow_down", etc. */
-
-    /* Hide icon text in expanders - use CSS arrows instead */
-    [data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"] {
-        font-size: 0 !important;
+    /* ============ MATERIAL ICONS STYLING ============ */
+    /* Ensure Material Icons font is applied correctly */
+    .material-icons,
+    .material-icons-outlined,
+    .material-symbols-outlined {
+        font-family: 'Material Icons', 'Material Icons Outlined', 'Material Symbols Outlined' !important;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased;
+        color: var(--text-muted);
     }
 
-    [data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"]::before {
-        content: "▸" !important;
-        font-size: 0.9rem !important;
+    /* Style expander icons */
+    [data-testid="stExpanderToggleIcon"] {
         color: var(--text-muted) !important;
     }
 
-    [data-testid="stExpander"][open] summary [data-testid="stExpanderToggleIcon"]::before {
-        content: "▾" !important;
+    /* Style file uploader icon */
+    [data-testid="stFileUploaderDropzoneIcon"] {
+        color: var(--text-muted) !important;
     }
 
-    /* Hide icon text in file uploader */
-    [data-testid="stFileUploaderDropzone"] [data-testid="stFileUploaderDropzoneIcon"],
-    [data-testid="stFileUploader"] svg {
-        display: none !important;
+    /* Style checkbox icons */
+    [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] {
+        color: var(--text-secondary) !important;
     }
 
     /* ============ SIDEBAR ============ */
