@@ -96,48 +96,58 @@ def inject_custom_css():
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    /* Hide Streamlit branding */
-    #MainMenu, footer, header {visibility: hidden;}
+    /* Hide Streamlit branding but keep header for sidebar toggle */
+    #MainMenu, footer {visibility: hidden;}
 
-    /* ============ GLOBAL FIX: HIDE ALL BROKEN ICON TEXT ============ */
-    /* Aggressively hide any text containing icon names */
-    @font-face {
-        font-family: 'Material Icons';
-        src: local('Material Icons');
-        font-display: block;
+    /* Header styling - keep visible for sidebar toggle */
+    header[data-testid="stHeader"] {
+        background: var(--bg-secondary) !important;
+        border-bottom: 1px solid var(--border-subtle) !important;
     }
 
-    /* Hide ALL elements using Material Icons font */
-    [style*="Material Icons"],
-    [style*="material-icons"],
-    [class*="material-icons"],
-    [data-icon],
-    .material-icons {
-        display: none !important;
+    /* Sidebar toggle button - make it prominent */
+    button[data-testid="collapsedControl"] {
+        background: var(--accent) !important;
+        border: none !important;
+        border-radius: var(--radius-sm) !important;
+        color: white !important;
+        padding: 0.5rem !important;
+        margin: 0.5rem !important;
+        box-shadow: var(--shadow-md) !important;
     }
 
-    /* Target spans that contain icon text patterns */
-    span:not([data-testid]) {
-        /* If it looks like an icon name, hide it */
+    button[data-testid="collapsedControl"]:hover {
+        background: var(--accent-hover) !important;
+        box-shadow: var(--shadow-glow) !important;
     }
 
-    /* Nuclear option: hide any element containing these icon names as text */
-    body {
-        --hide-icons: true;
+    button[data-testid="collapsedControl"] svg {
+        color: white !important;
+        fill: white !important;
     }
 
-    /* Force hide icon containers in Streamlit components */
-    [data-testid="stExpanderToggleIcon"],
-    [data-testid="stFileUploaderDropzoneIcon"],
-    [data-testid="stSelectboxVirtualDropdown"] svg,
-    svg[data-icon] {
-        display: none !important;
+    /* ============ GLOBAL FIX: HIDE BROKEN MATERIAL ICON TEXT ============ */
+    /* Target the specific text that appears when Material Icons fail to load */
+    /* These show as "keyboard_arrow_right", "keyboard_arrow_down", etc. */
+
+    /* Hide icon text in expanders - use CSS arrows instead */
+    [data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"] {
+        font-size: 0 !important;
     }
 
-    /* Remove the broken icon from expanders completely */
-    [data-testid="stExpander"] summary > svg,
-    [data-testid="stExpander"] summary > span:first-child,
-    [data-testid="stExpander"] details > summary > div > svg {
+    [data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"]::before {
+        content: "▸" !important;
+        font-size: 0.9rem !important;
+        color: var(--text-muted) !important;
+    }
+
+    [data-testid="stExpander"][open] summary [data-testid="stExpanderToggleIcon"]::before {
+        content: "▾" !important;
+    }
+
+    /* Hide icon text in file uploader */
+    [data-testid="stFileUploaderDropzone"] [data-testid="stFileUploaderDropzoneIcon"],
+    [data-testid="stFileUploader"] svg {
         display: none !important;
     }
 
@@ -652,6 +662,61 @@ def inject_custom_css():
         color: var(--text-secondary);
         line-height: 1.7;
     }
+
+    /* Stats bar for main content */
+    .stats-bar {
+        display: flex;
+        gap: 1.5rem;
+        padding: 0.75rem 1rem;
+        background: var(--bg-glass);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stats-bar-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .stats-bar-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stats-bar-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--accent);
+    }
+
+    .stats-bar-divider {
+        width: 1px;
+        height: 24px;
+        background: var(--border-medium);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.25rem;
+    }
+
+    .status-dot.ready {
+        background: var(--success);
+        box-shadow: 0 0 6px var(--success);
+    }
+
+    .status-dot.pending {
+        background: var(--warning);
+        box-shadow: 0 0 6px var(--warning);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1013,6 +1078,52 @@ def process_query(user_query: str, mode: str):
         }
 
 
+def render_stats_bar():
+    """Render a stats bar showing current data status."""
+    schema = st.session_state.schema
+    embeddings_ready = st.session_state.embeddings_ready
+
+    if not schema:
+        return
+
+    # Get embedding stats if available
+    embed_count = 0
+    if embeddings_ready:
+        try:
+            stats = get_embedding_stats()
+            embed_count = stats.get('document_count', 0)
+        except Exception:
+            pass
+
+    # Build stats bar HTML
+    status_class = "ready" if embeddings_ready else "pending"
+    status_text = "Ready" if embeddings_ready else "Index Pending"
+
+    st.markdown(f"""
+    <div class="stats-bar">
+        <div class="stats-bar-item">
+            <span class="stats-bar-label">Incidents</span>
+            <span class="stats-bar-value">{schema['row_count']:,}</span>
+        </div>
+        <div class="stats-bar-divider"></div>
+        <div class="stats-bar-item">
+            <span class="stats-bar-label">Columns</span>
+            <span class="stats-bar-value">{len(schema['columns'])}</span>
+        </div>
+        <div class="stats-bar-divider"></div>
+        <div class="stats-bar-item">
+            <span class="stats-bar-label">Embeddings</span>
+            <span class="stats-bar-value">{embed_count:,}</span>
+        </div>
+        <div class="stats-bar-divider"></div>
+        <div class="stats-bar-item">
+            <span class="stats-bar-label">Status</span>
+            <span class="stats-bar-value"><span class="status-dot {status_class}"></span>{status_text}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 def render_main_content():
     """Render the main content area."""
     # Custom header
@@ -1025,6 +1136,10 @@ def render_main_content():
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # Stats bar (always visible when data is loaded)
+    if st.session_state.data_loaded:
+        render_stats_bar()
 
     if not st.session_state.data_loaded:
         # Welcome state
