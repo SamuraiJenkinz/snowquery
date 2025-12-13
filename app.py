@@ -110,10 +110,28 @@ def inject_custom_css():
     [data-testid="stSidebar"] {{
         background-color: #fff;
         border-right: 2px solid #000;
+        color: #000 !important;
+    }}
+
+    [data-testid="stSidebar"] * {{
+        color: #000 !important;
     }}
 
     [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {{
         font-family: 'JetBrains Mono', monospace;
+        color: #000 !important;
+    }}
+
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] div {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stSidebar"] [data-testid="stMetricValue"],
+    [data-testid="stSidebar"] [data-testid="stMetricLabel"] {{
+        color: #000 !important;
     }}
 
     /* Logo styling */
