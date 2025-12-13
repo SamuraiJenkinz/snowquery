@@ -126,120 +126,21 @@ def inject_custom_css():
         fill: white !important;
     }
 
-    /* ============ UNICODE ICON REPLACEMENTS ============ */
-    /* Replace Material Icons with Unicode symbols for reliability */
+    /* ============ LIGHT-TOUCH WIDGET STYLING ============ */
+    /* Per aha.md: Only style outer containers, let Streamlit handle internals */
 
-    /* Hide all Material Icon text (keyboard_arrow_right, etc.) */
-    [data-testid="stExpanderToggleIcon"],
-    [data-testid="stFileUploaderDropzoneIcon"] {
-        font-size: 0 !important;
-        color: transparent !important;
-    }
-
-    /* Expander arrows using Unicode */
-    [data-testid="stExpander"] summary {
-        position: relative;
-    }
-
-    [data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"]::after {
-        content: "›";
-        font-size: 1.2rem;
-        font-family: 'Inter', sans-serif;
-        color: var(--text-muted);
-        font-weight: 300;
-        display: inline-block;
-        transition: transform 0.2s ease;
-    }
-
-    [data-testid="stExpander"][open] summary [data-testid="stExpanderToggleIcon"]::after {
-        content: "⌄";
-        transform: none;
-    }
-
-    /* File uploader - hide icon, show upload symbol */
-    [data-testid="stFileUploaderDropzone"] {
-        position: relative;
-    }
-
-    [data-testid="stFileUploaderDropzoneIcon"]::after {
-        content: "⬆";
-        font-size: 1.5rem;
-        color: var(--accent);
-        font-family: 'Inter', sans-serif;
-    }
-
-    /* Checkbox styling with Unicode checkmark */
-    [data-testid="stCheckbox"] label {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        cursor: pointer;
-    }
-
-    [data-testid="stCheckbox"] label > div:first-child {
-        width: 18px;
-        height: 18px;
-        border: 2px solid var(--border-medium);
-        border-radius: 4px;
-        background: var(--bg-tertiary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: var(--transition);
-        font-size: 0;
-    }
-
-    [data-testid="stCheckbox"] label > div:first-child svg {
-        display: none !important;
-    }
-
-    [data-testid="stCheckbox"] input[type="checkbox"]:checked + div {
-        background: var(--accent);
-        border-color: var(--accent);
-    }
-
-    [data-testid="stCheckbox"] input[type="checkbox"]:checked + div::after {
-        content: "✓";
-        font-size: 12px;
-        color: white;
-        font-weight: bold;
-        font-family: 'Inter', sans-serif;
-    }
-
-    [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] {
-        color: var(--text-secondary) !important;
-    }
-
-    /* Slider styling improvements */
-    [data-testid="stSlider"] {
-        padding: 0.5rem 0;
-    }
-
+    /* Slider - colors only, no layout changes */
     [data-testid="stSlider"] label {
         color: var(--text-secondary) !important;
-        font-size: 0.85rem !important;
-        margin-bottom: 0.5rem !important;
-    }
-
-    [data-testid="stSlider"] [data-baseweb="slider"] {
-        margin-top: 0.5rem;
-    }
-
-    [data-testid="stSlider"] [data-testid="stTickBar"] {
-        background: var(--bg-tertiary) !important;
-    }
-
-    [data-testid="stSlider"] [role="slider"] {
-        background: var(--accent) !important;
-        border: 2px solid var(--accent) !important;
     }
 
     [data-testid="stSlider"] [data-testid="stThumbValue"] {
         color: var(--text-primary) !important;
-        font-weight: 600 !important;
-        background: var(--bg-tertiary) !important;
-        border-radius: var(--radius-sm) !important;
-        padding: 2px 6px !important;
+    }
+
+    /* Checkbox - label color only */
+    [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] {
+        color: var(--text-secondary) !important;
     }
 
     /* ============ SIDEBAR ============ */
@@ -375,6 +276,7 @@ def inject_custom_css():
     }
 
     /* ============ FILE UPLOADER ============ */
+    /* Container-only styling - let Streamlit handle internals */
     [data-testid="stFileUploader"] {
         background: var(--bg-tertiary);
         border: 2px dashed var(--border-medium);
@@ -388,28 +290,11 @@ def inject_custom_css():
         background: var(--accent-subtle);
     }
 
-    [data-testid="stFileUploader"] * {
-        color: var(--text-secondary) !important;
-    }
-
-    /* Hide ALL icon-related elements in file uploader */
-    [data-testid="stFileUploader"] svg,
-    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] > div:first-child > span,
-    [data-testid="stFileUploaderDropzone"] > div > span:first-child {
-        display: none !important;
-    }
-
     [data-testid="stFileUploader"] button {
         background: var(--accent) !important;
         color: white !important;
         border: none !important;
         border-radius: var(--radius-sm) !important;
-    }
-
-    [data-testid="stFileUploader"] small,
-    [data-testid="stFileUploader"] section small {
-        font-size: 0.8rem !important;
-        color: var(--text-muted) !important;
     }
 
     /* ============ METRICS ============ */
@@ -435,6 +320,7 @@ def inject_custom_css():
     }
 
     /* ============ EXPANDERS ============ */
+    /* Container-only styling - let Streamlit handle icons */
     [data-testid="stExpander"] {
         border: none !important;
     }
@@ -445,12 +331,6 @@ def inject_custom_css():
         border-radius: var(--radius-md) !important;
         color: var(--text-primary) !important;
         transition: var(--transition);
-        padding: 0.75rem 1rem !important;
-        list-style: none !important;
-    }
-
-    [data-testid="stExpander"] summary::-webkit-details-marker {
-        display: none !important;
     }
 
     [data-testid="stExpander"] summary:hover {
@@ -458,16 +338,7 @@ def inject_custom_css():
         border-color: var(--accent) !important;
     }
 
-    /* Hide ALL SVGs and icon spans in expander summary */
-    [data-testid="stExpander"] summary svg,
-    [data-testid="stExpander"] summary > span:first-child {
-        display: none !important;
-    }
-
-    /* Ensure expander text is visible */
-    [data-testid="stExpander"] summary p,
-    [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"] {
-        font-size: 0.9rem !important;
+    [data-testid="stExpander"] summary p {
         color: var(--text-primary) !important;
     }
 
@@ -477,7 +348,6 @@ def inject_custom_css():
         border: 1px solid var(--border-subtle) !important;
         border-top: none !important;
         border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
-        padding: 1rem !important;
     }
 
     /* ============ CHAT ============ */
