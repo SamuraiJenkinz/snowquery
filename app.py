@@ -134,6 +134,62 @@ def inject_custom_css():
         color: #000 !important;
     }}
 
+    /* Sidebar expander styling */
+    [data-testid="stSidebar"] .streamlit-expanderHeader {{
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+    }}
+
+    [data-testid="stSidebar"] .streamlit-expanderHeader p {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stSidebar"] .streamlit-expanderContent {{
+        background-color: #fafafa !important;
+        border: 1px solid #ddd !important;
+        border-top: none !important;
+    }}
+
+    /* Sidebar checkbox and slider */
+    [data-testid="stSidebar"] [data-testid="stCheckbox"] label {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stSidebar"] [data-testid="stSlider"] label {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stSidebar"] [data-testid="stNumberInput"] label {{
+        color: #000 !important;
+    }}
+
+    /* Sidebar select/dropdown */
+    [data-testid="stSidebar"] [data-testid="stSelectbox"] label {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stSidebar"] [data-baseweb="select"] {{
+        background-color: #fff !important;
+    }}
+
+    [data-testid="stSidebar"] [data-baseweb="select"] * {{
+        color: #000 !important;
+    }}
+
+    /* Sidebar file uploader text */
+    [data-testid="stSidebar"] [data-testid="stFileUploader"] label {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stSidebar"] [data-testid="stFileUploader"] span {{
+        color: #000 !important;
+    }}
+
+    [data-testid="stSidebar"] [data-testid="stFileUploader"] small {{
+        color: #666 !important;
+    }}
+
     /* Logo styling */
     {logo_css}
 
