@@ -96,34 +96,42 @@ def inject_custom_css():
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
 
     /* ============================================
-       GLOBAL COLOR RESET - Ensure all text visible
+       DARK THEME - Claude Code Style
        ============================================ */
+
+    /* Color Variables */
+    :root {{
+        --bg-primary: #1a1a2e;
+        --bg-secondary: #16213e;
+        --bg-tertiary: #0f0f1a;
+        --bg-input: #252545;
+        --text-primary: #e8e8e8;
+        --text-secondary: #a0a0a0;
+        --text-muted: #666680;
+        --border-color: #3a3a5c;
+        --accent: #6c63ff;
+        --accent-hover: #5a52d9;
+        --success: #4ade80;
+        --warning: #fbbf24;
+        --error: #f87171;
+    }}
+
+    /* Global styles */
     .stApp, .stApp * {{
         font-family: 'JetBrains Mono', monospace;
     }}
 
-    /* Force black text globally */
+    .stApp {{
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+    }}
+
+    /* Force light text globally */
     .stApp p, .stApp span, .stApp div, .stApp label,
     .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
     .stApp li, .stApp td, .stApp th, .stApp caption,
     .stApp strong, .stApp em, .stApp b, .stApp i {{
-        color: #000 !important;
-    }}
-
-    /* Code and pre elements - dark background, light text */
-    .stApp code, .stApp pre {{
-        background-color: #1a1a1a !important;
-        color: #00ff00 !important;
-    }}
-
-    .stApp code {{
-        padding: 0.2em 0.4em !important;
-        border-radius: 2px !important;
-    }}
-
-    /* Global overrides */
-    .stApp {{
-        background-color: #fafafa;
+        color: var(--text-primary) !important;
     }}
 
     /* Hide Streamlit branding */
@@ -131,101 +139,31 @@ def inject_custom_css():
     footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
 
-    /* Sidebar styling */
+    /* Sidebar */
     [data-testid="stSidebar"] {{
-        background-color: #fff;
-        border-right: 2px solid #000;
-        color: #000 !important;
+        background-color: var(--bg-secondary);
+        border-right: 1px solid var(--border-color);
     }}
 
     [data-testid="stSidebar"] * {{
-        color: #000 !important;
+        color: var(--text-primary) !important;
     }}
 
-    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {{
-        font-family: 'JetBrains Mono', monospace;
-        color: #000 !important;
-    }}
-
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] div {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stSidebar"] [data-testid="stMetricValue"],
-    [data-testid="stSidebar"] [data-testid="stMetricLabel"] {{
-        color: #000 !important;
-    }}
-
-    /* Sidebar expander styling */
-    [data-testid="stSidebar"] .streamlit-expanderHeader {{
-        background-color: #f0f0f0 !important;
-        color: #000 !important;
-        border: 1px solid #000 !important;
-    }}
-
-    [data-testid="stSidebar"] .streamlit-expanderHeader p {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stSidebar"] .streamlit-expanderContent {{
-        background-color: #fafafa !important;
-        border: 1px solid #ddd !important;
-        border-top: none !important;
-    }}
-
-    /* Sidebar checkbox and slider */
-    [data-testid="stSidebar"] [data-testid="stCheckbox"] label {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stSidebar"] [data-testid="stSlider"] label {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stSidebar"] [data-testid="stNumberInput"] label {{
-        color: #000 !important;
-    }}
-
-    /* Sidebar select/dropdown */
-    [data-testid="stSidebar"] [data-testid="stSelectbox"] label {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stSidebar"] [data-baseweb="select"] {{
-        background-color: #fff !important;
-    }}
-
-    [data-testid="stSidebar"] [data-baseweb="select"] * {{
-        color: #000 !important;
-    }}
-
-    /* Sidebar file uploader text */
-    [data-testid="stSidebar"] [data-testid="stFileUploader"] label {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stSidebar"] [data-testid="stFileUploader"] span {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stSidebar"] [data-testid="stFileUploader"] small {{
-        color: #666 !important;
+    [data-testid="stSidebar"] small {{
+        color: var(--text-secondary) !important;
     }}
 
     /* Logo styling */
     {logo_css}
 
-    /* Header styling */
+    /* Header */
     .brutalist-header {{
         display: flex;
         align-items: center;
         padding: 1rem 0;
-        border-bottom: 2px solid #000;
+        border-bottom: 1px solid var(--border-color);
         margin-bottom: 2rem;
-        font-family: 'JetBrains Mono', monospace;
+        color: var(--text-primary);
     }}
 
     .brutalist-logo {{
@@ -235,35 +173,17 @@ def inject_custom_css():
         text-transform: uppercase;
         display: flex;
         align-items: center;
+        color: var(--text-primary);
     }}
 
     .brutalist-tagline {{
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 2px;
-        color: #666;
+        color: var(--text-secondary);
         margin-left: 1rem;
         padding-left: 1rem;
-        border-left: 1px solid #ccc;
-    }}
-
-    /* Section headers */
-    .section-label {{
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: #999;
-        margin-bottom: 0.25rem;
-    }}
-
-    .section-title {{
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.25rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: -0.5px;
-        margin-bottom: 1rem;
+        border-left: 1px solid var(--border-color);
     }}
 
     /* Stats bar */
@@ -271,14 +191,13 @@ def inject_custom_css():
         display: flex;
         gap: 2rem;
         padding: 0.75rem 0;
-        border-top: 1px solid #ddd;
-        border-bottom: 1px solid #ddd;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
         margin: 1.5rem 0;
-        font-family: 'JetBrains Mono', monospace;
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        color: #666;
+        color: var(--text-secondary);
     }}
 
     .stats-bar span {{
@@ -288,17 +207,17 @@ def inject_custom_css():
     }}
 
     .stats-value {{
-        color: #000;
+        color: var(--accent) !important;
         font-weight: 700;
     }}
 
-    /* Contract/Info box */
+    /* Info box */
     .info-box {{
-        border: 2px solid #000;
+        border: 1px solid var(--border-color);
         padding: 1.25rem;
-        font-family: 'JetBrains Mono', monospace;
-        background: #fff;
+        background: var(--bg-secondary);
         margin: 1rem 0;
+        border-radius: 4px;
     }}
 
     .info-box h4 {{
@@ -306,8 +225,9 @@ def inject_custom_css():
         text-transform: uppercase;
         letter-spacing: 2px;
         margin-bottom: 0.75rem;
-        border-bottom: 1px solid #000;
+        border-bottom: 1px solid var(--border-color);
         padding-bottom: 0.5rem;
+        color: var(--text-primary);
     }}
 
     .info-box ul {{
@@ -319,21 +239,20 @@ def inject_custom_css():
     .info-box li {{
         font-size: 0.75rem;
         padding: 0.25rem 0;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        color: var(--text-secondary);
     }}
 
     /* Terminal window */
     .terminal-window {{
-        background: #1a1a1a;
-        border-radius: 4px;
+        background: var(--bg-tertiary);
+        border-radius: 6px;
         overflow: hidden;
-        font-family: 'JetBrains Mono', monospace;
         margin: 1rem 0;
+        border: 1px solid var(--border-color);
     }}
 
     .terminal-header {{
-        background: #2d2d2d;
+        background: var(--bg-secondary);
         padding: 0.5rem 0.75rem;
         display: flex;
         gap: 0.4rem;
@@ -351,18 +270,18 @@ def inject_custom_css():
 
     .terminal-body {{
         padding: 1rem;
-        color: #00ff00;
+        color: var(--success);
         font-size: 0.8rem;
         line-height: 1.6;
     }}
 
     /* Executive summary box */
     .summary-box {{
-        border: 2px solid #000;
+        border: 1px solid var(--border-color);
         padding: 1.25rem;
-        font-family: 'JetBrains Mono', monospace;
-        background: #f8f8f8;
+        background: var(--bg-secondary);
         margin: 1rem 0;
+        border-radius: 4px;
     }}
 
     .summary-box h4 {{
@@ -370,70 +289,79 @@ def inject_custom_css():
         text-transform: uppercase;
         letter-spacing: 2px;
         margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        color: var(--accent);
     }}
 
     .summary-content {{
         font-size: 0.85rem;
         line-height: 1.7;
+        color: var(--text-primary);
     }}
 
-    /* Streamlit component overrides */
+    /* Buttons */
     .stButton > button {{
         font-family: 'JetBrains Mono', monospace !important;
         text-transform: uppercase;
         letter-spacing: 1px;
-        border-radius: 0 !important;
-        border: 2px solid #000 !important;
-        background: #000 !important;
+        border-radius: 4px !important;
+        border: 1px solid var(--accent) !important;
+        background: var(--accent) !important;
         color: #fff !important;
         padding: 0.5rem 1rem !important;
         font-size: 0.75rem !important;
     }}
 
     .stButton > button:hover {{
-        background: #333 !important;
-        border-color: #333 !important;
+        background: var(--accent-hover) !important;
+        border-color: var(--accent-hover) !important;
     }}
 
     .stButton > button[kind="secondary"] {{
-        background: #fff !important;
-        color: #000 !important;
+        background: transparent !important;
+        color: var(--accent) !important;
     }}
 
-    .stButton > button[kind="secondary"]:hover {{
-        background: #f0f0f0 !important;
-    }}
-
-    .stTextInput > div > div > input {{
+    /* Inputs */
+    .stTextInput > div > div > input,
+    .stNumberInput input,
+    .stTextArea textarea {{
         font-family: 'JetBrains Mono', monospace !important;
-        border-radius: 0 !important;
-        border: 2px solid #000 !important;
+        border-radius: 4px !important;
+        border: 1px solid var(--border-color) !important;
+        background-color: var(--bg-input) !important;
+        color: var(--text-primary) !important;
     }}
 
+    /* Selectbox */
     .stSelectbox > div > div {{
-        font-family: 'JetBrains Mono', monospace !important;
-        border-radius: 0 !important;
+        border-radius: 4px !important;
     }}
 
-    [data-testid="stChatInput"] {{
-        font-family: 'JetBrains Mono', monospace !important;
+    .stSelectbox [data-baseweb="select"],
+    [data-baseweb="select"] {{
+        background-color: var(--bg-input) !important;
     }}
 
+    .stSelectbox [data-baseweb="select"] *,
+    [data-baseweb="select"] * {{
+        color: var(--text-primary) !important;
+    }}
+
+    /* Chat input */
     [data-testid="stChatInput"] textarea {{
         font-family: 'JetBrains Mono', monospace !important;
-        border-radius: 0 !important;
-        border: 2px solid #000 !important;
+        border-radius: 4px !important;
+        border: 1px solid var(--border-color) !important;
+        background-color: var(--bg-input) !important;
+        color: var(--text-primary) !important;
     }}
 
-    /* Metric styling */
+    /* Metrics */
     [data-testid="stMetricValue"] {{
         font-family: 'JetBrains Mono', monospace !important;
         font-size: 1.75rem !important;
         font-weight: 800 !important;
-        color: #000 !important;
+        color: var(--accent) !important;
     }}
 
     [data-testid="stMetricLabel"] {{
@@ -441,322 +369,177 @@ def inject_custom_css():
         text-transform: uppercase !important;
         letter-spacing: 1px !important;
         font-size: 0.7rem !important;
-        color: #000 !important;
+        color: var(--text-secondary) !important;
     }}
 
-    [data-testid="stMetricDelta"] {{
-        color: #000 !important;
-    }}
-
-    /* Metric container */
-    [data-testid="metric-container"] {{
-        background-color: #fff !important;
-        border: 1px solid #ddd !important;
-        padding: 0.5rem !important;
-    }}
-
-    [data-testid="metric-container"] * {{
-        color: #000 !important;
-    }}
-
-    /* Expander styling */
-    .streamlit-expanderHeader {{
+    /* Expanders */
+    .streamlit-expanderHeader,
+    [data-testid="stExpander"] summary {{
         font-family: 'JetBrains Mono', monospace !important;
         text-transform: uppercase;
         letter-spacing: 1px;
         font-size: 0.8rem !important;
-        border: 1px solid #000 !important;
-        border-radius: 0 !important;
-        background-color: #f0f0f0 !important;
-        color: #000 !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 4px !important;
+        background-color: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
     }}
 
     .streamlit-expanderHeader:hover {{
-        background-color: #e0e0e0 !important;
-    }}
-
-    .streamlit-expanderHeader p,
-    .streamlit-expanderHeader span,
-    .streamlit-expanderHeader svg {{
-        color: #000 !important;
-        fill: #000 !important;
+        background-color: var(--bg-input) !important;
     }}
 
     .streamlit-expanderContent {{
-        background-color: #fff !important;
-        border: 1px solid #ddd !important;
+        background-color: var(--bg-tertiary) !important;
+        border: 1px solid var(--border-color) !important;
         border-top: none !important;
-        color: #000 !important;
+        color: var(--text-primary) !important;
     }}
 
-    .streamlit-expanderContent * {{
-        color: #000 !important;
-    }}
-
-    /* Alternative expander selectors */
     [data-testid="stExpander"] {{
-        border: 1px solid #000 !important;
-        border-radius: 0 !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 4px !important;
     }}
 
-    [data-testid="stExpander"] summary {{
-        background-color: #f0f0f0 !important;
-        color: #000 !important;
-    }}
-
-    [data-testid="stExpander"] summary span {{
-        color: #000 !important;
-    }}
-
-    /* Dataframe styling */
+    /* Dataframe */
     .stDataFrame {{
-        border: 2px solid #000;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
     }}
 
-    .stDataFrame [data-testid="stDataFrameResizable"] {{
-        font-family: 'JetBrains Mono', monospace !important;
-    }}
-
-    /* Dataframe cells and headers */
     .stDataFrame th, .stDataFrame td,
     [data-testid="stDataFrame"] th,
     [data-testid="stDataFrame"] td,
     [data-testid="stDataFrame"] [role="gridcell"],
     [data-testid="stDataFrame"] [role="columnheader"] {{
-        color: #000 !important;
-        background-color: #fff !important;
+        color: var(--text-primary) !important;
+        background-color: var(--bg-secondary) !important;
     }}
 
     [data-testid="stDataFrame"] [role="columnheader"] {{
-        background-color: #f0f0f0 !important;
+        background-color: var(--bg-tertiary) !important;
         font-weight: 700 !important;
     }}
 
-    /* Glide Data Grid (Streamlit's dataframe component) */
-    .dvn-scroller, .dvn-scroller * {{
-        color: #000 !important;
-    }}
-
+    .dvn-scroller, .dvn-scroller *,
     [data-testid="glideDataEditor"],
     [data-testid="glideDataEditor"] * {{
-        color: #000 !important;
+        color: var(--text-primary) !important;
+        background-color: var(--bg-secondary) !important;
     }}
 
-    /* Chat message styling */
+    /* Chat messages */
     [data-testid="stChatMessage"] {{
         font-family: 'JetBrains Mono', monospace;
-        border: 1px solid #ddd;
-        border-radius: 0 !important;
+        border: 1px solid var(--border-color);
+        border-radius: 4px !important;
         padding: 1rem;
         margin: 0.5rem 0;
-        background-color: #fff !important;
-        color: #000 !important;
+        background-color: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
     }}
 
     [data-testid="stChatMessage"] * {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stChatMessage"] p,
-    [data-testid="stChatMessage"] span,
-    [data-testid="stChatMessage"] div {{
-        color: #000 !important;
-    }}
-
-    /* Assistant message specifically */
-    [data-testid="stChatMessage"][data-testid*="assistant"],
-    .stChatMessage {{
-        background-color: #f5f5f5 !important;
-        color: #000 !important;
+        color: var(--text-primary) !important;
     }}
 
     /* File uploader */
-    [data-testid="stFileUploader"] {{
-        font-family: 'JetBrains Mono', monospace;
-    }}
-
     [data-testid="stFileUploader"] section {{
-        border: 2px dashed #000;
-        border-radius: 0;
+        border: 2px dashed var(--border-color);
+        border-radius: 4px;
+        background-color: var(--bg-secondary);
     }}
 
-    /* Divider */
-    hr {{
-        border: none;
-        border-top: 1px solid #ddd;
-        margin: 1.5rem 0;
-    }}
-
-    /* Success/Warning/Error messages */
-    .stSuccess, .stWarning, .stError, .stInfo {{
+    /* Alerts */
+    .stSuccess, .stWarning, .stError, .stInfo,
+    [data-testid="stAlert"] {{
         font-family: 'JetBrains Mono', monospace;
-        border-radius: 0 !important;
+        border-radius: 4px !important;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-size: 0.8rem;
-        color: #000 !important;
     }}
 
-    .stSuccess *, .stWarning *, .stError *, .stInfo * {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stAlert"] {{
-        color: #000 !important;
-    }}
-
-    [data-testid="stAlert"] * {{
-        color: #000 !important;
-    }}
+    .stSuccess, .stSuccess * {{ color: var(--success) !important; }}
+    .stWarning, .stWarning * {{ color: var(--warning) !important; }}
+    .stError, .stError * {{ color: var(--error) !important; }}
 
     /* Download button */
     .stDownloadButton > button {{
         font-family: 'JetBrains Mono', monospace !important;
         text-transform: uppercase;
         letter-spacing: 1px;
-        border-radius: 0 !important;
-        border: 2px solid #000 !important;
+        border-radius: 4px !important;
+        border: 1px solid var(--accent) !important;
         font-size: 0.75rem !important;
-        background-color: #000 !important;
+        background-color: var(--accent) !important;
         color: #fff !important;
     }}
 
-    .stDownloadButton > button:hover {{
-        background-color: #333 !important;
+    /* Slider, Checkbox, Radio */
+    .stSlider label, .stSlider p, .stSlider span,
+    .stCheckbox label, .stCheckbox span,
+    .stRadio label {{
+        color: var(--text-primary) !important;
+    }}
+
+    .stCheckbox label, .stRadio label {{
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.8rem;
+    }}
+
+    /* Divider */
+    hr {{
+        border: none;
+        border-top: 1px solid var(--border-color);
+        margin: 1.5rem 0;
+    }}
+
+    /* Code blocks */
+    .stApp code, .stApp pre {{
+        background-color: var(--bg-tertiary) !important;
+        color: var(--success) !important;
+        padding: 0.2em 0.4em !important;
+        border-radius: 4px !important;
     }}
 
     /* Spinner */
     .stSpinner > div {{
-        font-family: 'JetBrains Mono', monospace;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: #000 !important;
+        color: var(--text-primary) !important;
     }}
 
-    /* Slider */
-    .stSlider {{
-        font-family: 'JetBrains Mono', monospace;
-    }}
-
-    .stSlider label, .stSlider p, .stSlider span {{
-        color: #000 !important;
-    }}
-
-    /* Checkbox */
-    .stCheckbox {{
-        font-family: 'JetBrains Mono', monospace;
-    }}
-
-    .stCheckbox label {{
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-size: 0.8rem;
-        color: #000 !important;
-    }}
-
-    .stCheckbox span {{
-        color: #000 !important;
-    }}
-
-    /* Number input */
-    .stNumberInput label {{
-        color: #000 !important;
-    }}
-
-    .stNumberInput input {{
-        color: #000 !important;
-        background-color: #fff !important;
-    }}
-
-    /* Selectbox / Dropdown */
-    .stSelectbox label {{
-        color: #000 !important;
-    }}
-
-    .stSelectbox [data-baseweb="select"] {{
-        background-color: #fff !important;
-    }}
-
-    .stSelectbox [data-baseweb="select"] * {{
-        color: #000 !important;
-    }}
-
-    /* Text input */
-    .stTextInput label {{
-        color: #000 !important;
-    }}
-
-    .stTextInput input {{
-        color: #000 !important;
-        background-color: #fff !important;
+    /* Markdown */
+    .stMarkdown, .stMarkdown * {{
+        color: var(--text-primary) !important;
     }}
 
     /* Tabs */
     .stTabs [data-baseweb="tab-list"] {{
-        background-color: #fff !important;
+        background-color: var(--bg-secondary) !important;
     }}
 
     .stTabs [data-baseweb="tab"] {{
-        color: #000 !important;
+        color: var(--text-primary) !important;
     }}
 
-    /* Catch-all for any remaining text elements */
-    .element-container, .element-container * {{
-        color: #000;
+    /* Scrollbar */
+    ::-webkit-scrollbar {{
+        width: 8px;
+        height: 8px;
     }}
 
-    /* Tooltip */
-    [data-testid="stTooltipIcon"] {{
-        color: #666 !important;
+    ::-webkit-scrollbar-track {{
+        background: var(--bg-tertiary);
     }}
 
-    /* Radio buttons */
-    .stRadio label {{
-        color: #000 !important;
+    ::-webkit-scrollbar-thumb {{
+        background: var(--border-color);
+        border-radius: 4px;
     }}
 
-    .stRadio [role="radiogroup"] label {{
-        color: #000 !important;
-    }}
-
-    /* Multiselect */
-    .stMultiSelect label {{
-        color: #000 !important;
-    }}
-
-    .stMultiSelect [data-baseweb="select"] * {{
-        color: #000 !important;
-    }}
-
-    /* Text area */
-    .stTextArea label {{
-        color: #000 !important;
-    }}
-
-    .stTextArea textarea {{
-        color: #000 !important;
-        background-color: #fff !important;
-    }}
-
-    /* Caption and markdown */
-    .stCaption {{
-        color: #666 !important;
-    }}
-
-    .stMarkdown {{
-        color: #000 !important;
-    }}
-
-    .stMarkdown * {{
-        color: #000 !important;
-    }}
-
-    /* Override any remaining white text on white background issues */
-    [style*="color: rgb(255, 255, 255)"],
-    [style*="color: white"],
-    [style*="color:#fff"],
-    [style*="color: #fff"] {{
-        color: #000 !important;
+    ::-webkit-scrollbar-thumb:hover {{
+        background: var(--text-muted);
     }}
 </style>
 """, unsafe_allow_html=True)
