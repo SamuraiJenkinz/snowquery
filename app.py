@@ -99,6 +99,34 @@ def inject_custom_css():
     /* Hide Streamlit branding */
     #MainMenu, footer, header {visibility: hidden;}
 
+    /* ============ FIX MATERIAL ICON TEXT ============ */
+    /* Hide broken Material Icon text that appears when font doesn't load */
+    /* This targets the icon font class that shows text like "keyboard_arrow_right" */
+    .material-icons,
+    [class*="material-icons"],
+    span[style*="font-family: Material Icons"],
+    [data-testid="stExpanderToggleIcon"],
+    [data-testid="stFileUploaderDropzoneIcon"] {
+        font-size: 0 !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Alternative: Replace with CSS arrows/icons where needed */
+    [data-testid="stExpander"] summary::before {
+        content: '›' !important;
+        font-size: 1.2rem !important;
+        margin-right: 0.5rem !important;
+        color: var(--text-muted) !important;
+        transition: transform 0.2s ease !important;
+        display: inline-block !important;
+    }
+
+    [data-testid="stExpander"][open] summary::before {
+        transform: rotate(90deg) !important;
+    }
+
     /* ============ SIDEBAR ============ */
     [data-testid="stSidebar"] {
         background: var(--bg-secondary);
@@ -249,11 +277,32 @@ def inject_custom_css():
         color: var(--text-secondary) !important;
     }
 
+    /* Hide broken upload icon text */
+    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] > div:first-child {
+        font-size: 0 !important;
+    }
+
+    /* Add CSS upload icon */
+    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"]::before {
+        content: '↑' !important;
+        font-size: 2rem !important;
+        display: block !important;
+        text-align: center !important;
+        color: var(--text-muted) !important;
+        margin-bottom: 0.5rem !important;
+    }
+
     [data-testid="stFileUploader"] button {
         background: var(--accent) !important;
         color: white !important;
         border: none !important;
         border-radius: var(--radius-sm) !important;
+    }
+
+    [data-testid="stFileUploader"] small,
+    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] {
+        font-size: 0.8rem !important;
+        color: var(--text-muted) !important;
     }
 
     /* ============ METRICS ============ */
@@ -290,6 +339,8 @@ def inject_custom_css():
         color: var(--text-primary) !important;
         transition: var(--transition);
         padding: 0.75rem 1rem !important;
+        display: flex !important;
+        align-items: center !important;
     }
 
     [data-testid="stExpander"] summary:hover {
@@ -297,19 +348,11 @@ def inject_custom_css():
         border-color: var(--accent) !important;
     }
 
-    /* Hide the broken material icon text */
-    [data-testid="stExpander"] summary > div:first-child {
-        font-size: 0 !important;
-    }
-
-    /* But show the actual label text */
-    [data-testid="stExpander"] summary > div:first-child > * {
+    /* Ensure expander text is visible */
+    [data-testid="stExpander"] summary p,
+    [data-testid="stExpander"] summary span {
         font-size: 0.9rem !important;
-    }
-
-    /* Hide any stray icon text that appears */
-    [data-testid="stExpander"] summary {
-        overflow: hidden !important;
+        color: var(--text-primary) !important;
     }
 
     .streamlit-expanderContent,
