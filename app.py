@@ -50,11 +50,8 @@ def inject_custom_css():
        Dark mode with glassmorphism & blue accents
        ============================================ */
 
-    /* Import fonts - Inter for text, Material Icons for UI icons */
+    /* Import Inter font only - using Unicode symbols for icons */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
-    @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Outlined');
-    @import url('https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined');
 
     /* CSS Variables */
     :root {
@@ -129,40 +126,120 @@ def inject_custom_css():
         fill: white !important;
     }
 
-    /* ============ MATERIAL ICONS STYLING ============ */
-    /* Ensure Material Icons font is applied correctly */
-    .material-icons,
-    .material-icons-outlined,
-    .material-symbols-outlined {
-        font-family: 'Material Icons', 'Material Icons Outlined', 'Material Symbols Outlined' !important;
-        font-weight: normal;
-        font-style: normal;
-        font-size: 24px;
-        line-height: 1;
-        letter-spacing: normal;
-        text-transform: none;
-        display: inline-block;
-        white-space: nowrap;
-        word-wrap: normal;
-        direction: ltr;
-        -webkit-font-feature-settings: 'liga';
-        -webkit-font-smoothing: antialiased;
-        color: var(--text-muted);
-    }
+    /* ============ UNICODE ICON REPLACEMENTS ============ */
+    /* Replace Material Icons with Unicode symbols for reliability */
 
-    /* Style expander icons */
-    [data-testid="stExpanderToggleIcon"] {
-        color: var(--text-muted) !important;
-    }
-
-    /* Style file uploader icon */
+    /* Hide all Material Icon text (keyboard_arrow_right, etc.) */
+    [data-testid="stExpanderToggleIcon"],
     [data-testid="stFileUploaderDropzoneIcon"] {
-        color: var(--text-muted) !important;
+        font-size: 0 !important;
+        color: transparent !important;
     }
 
-    /* Style checkbox icons */
+    /* Expander arrows using Unicode */
+    [data-testid="stExpander"] summary {
+        position: relative;
+    }
+
+    [data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"]::after {
+        content: "›";
+        font-size: 1.2rem;
+        font-family: 'Inter', sans-serif;
+        color: var(--text-muted);
+        font-weight: 300;
+        display: inline-block;
+        transition: transform 0.2s ease;
+    }
+
+    [data-testid="stExpander"][open] summary [data-testid="stExpanderToggleIcon"]::after {
+        content: "⌄";
+        transform: none;
+    }
+
+    /* File uploader - hide icon, show upload symbol */
+    [data-testid="stFileUploaderDropzone"] {
+        position: relative;
+    }
+
+    [data-testid="stFileUploaderDropzoneIcon"]::after {
+        content: "⬆";
+        font-size: 1.5rem;
+        color: var(--accent);
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Checkbox styling with Unicode checkmark */
+    [data-testid="stCheckbox"] label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+    }
+
+    [data-testid="stCheckbox"] label > div:first-child {
+        width: 18px;
+        height: 18px;
+        border: 2px solid var(--border-medium);
+        border-radius: 4px;
+        background: var(--bg-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        font-size: 0;
+    }
+
+    [data-testid="stCheckbox"] label > div:first-child svg {
+        display: none !important;
+    }
+
+    [data-testid="stCheckbox"] input[type="checkbox"]:checked + div {
+        background: var(--accent);
+        border-color: var(--accent);
+    }
+
+    [data-testid="stCheckbox"] input[type="checkbox"]:checked + div::after {
+        content: "✓";
+        font-size: 12px;
+        color: white;
+        font-weight: bold;
+        font-family: 'Inter', sans-serif;
+    }
+
     [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] {
         color: var(--text-secondary) !important;
+    }
+
+    /* Slider styling improvements */
+    [data-testid="stSlider"] {
+        padding: 0.5rem 0;
+    }
+
+    [data-testid="stSlider"] label {
+        color: var(--text-secondary) !important;
+        font-size: 0.85rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    [data-testid="stSlider"] [data-baseweb="slider"] {
+        margin-top: 0.5rem;
+    }
+
+    [data-testid="stSlider"] [data-testid="stTickBar"] {
+        background: var(--bg-tertiary) !important;
+    }
+
+    [data-testid="stSlider"] [role="slider"] {
+        background: var(--accent) !important;
+        border: 2px solid var(--accent) !important;
+    }
+
+    [data-testid="stSlider"] [data-testid="stThumbValue"] {
+        color: var(--text-primary) !important;
+        font-weight: 600 !important;
+        background: var(--bg-tertiary) !important;
+        border-radius: var(--radius-sm) !important;
+        padding: 2px 6px !important;
     }
 
     /* ============ SIDEBAR ============ */
