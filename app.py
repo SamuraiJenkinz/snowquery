@@ -1,6 +1,6 @@
 """
-Insight - AI-Powered Incident Intelligence
-Natural language query interface for ServiceNow incident data.
+ServiceNow Incident Query Tool - Streamlit Application.
+Main entry point for the natural language query interface.
 """
 from __future__ import annotations
 
@@ -26,8 +26,8 @@ from src.utils import (
 
 # Page configuration
 st.set_page_config(
-    page_title="Insight",
-    page_icon="◆",
+    page_title="ServiceNow Incident Query Tool",
+    page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -35,651 +35,10 @@ st.set_page_config(
 # Mode mapping for UI
 MODE_OPTIONS = {
     "Auto": "auto",
-    "Structured": "structured",
-    "Semantic": "semantic",
-    "Hybrid": "hybrid"
+    "Report (SQL)": "structured",
+    "Find Similar": "semantic",
+    "Analyze (Hybrid)": "hybrid"
 }
-
-
-def inject_custom_css():
-    """Inject modern SaaS-style CSS."""
-    st.markdown("""
-<style>
-    /* ============================================
-       INSIGHT - MODERN SAAS THEME
-       Dark mode with glassmorphism & blue accents
-       ============================================ */
-
-    /* Import Inter font only - using Unicode symbols for icons */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-    /* CSS Variables */
-    :root {
-        --bg-primary: #0f1117;
-        --bg-secondary: #1a1d24;
-        --bg-tertiary: #252830;
-        --bg-glass: rgba(30, 34, 42, 0.7);
-        --bg-glass-hover: rgba(40, 45, 55, 0.8);
-        --border-subtle: rgba(255, 255, 255, 0.06);
-        --border-medium: rgba(255, 255, 255, 0.1);
-        --text-primary: #f0f2f5;
-        --text-secondary: #9ca3af;
-        --text-muted: #6b7280;
-        --accent: #3b82f6;
-        --accent-hover: #60a5fa;
-        --accent-glow: rgba(59, 130, 246, 0.15);
-        --accent-subtle: rgba(59, 130, 246, 0.1);
-        --success: #22c55e;
-        --success-bg: rgba(34, 197, 94, 0.1);
-        --warning: #f59e0b;
-        --warning-bg: rgba(245, 158, 11, 0.1);
-        --error: #ef4444;
-        --error-bg: rgba(239, 68, 68, 0.1);
-        --gradient-accent: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-        --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-        --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.2);
-        --radius-sm: 6px;
-        --radius-md: 10px;
-        --radius-lg: 14px;
-        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Global Styles */
-    .stApp {
-        background: var(--bg-primary);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    .stApp * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    /* Hide Streamlit branding but keep header for sidebar toggle */
-    #MainMenu, footer {visibility: hidden;}
-
-    /* Header styling - keep visible for sidebar toggle */
-    header[data-testid="stHeader"] {
-        background: var(--bg-secondary) !important;
-        border-bottom: 1px solid var(--border-subtle) !important;
-    }
-
-    /* Sidebar toggle button - make it prominent */
-    button[data-testid="collapsedControl"] {
-        background: var(--accent) !important;
-        border: none !important;
-        border-radius: var(--radius-sm) !important;
-        color: white !important;
-        padding: 0.5rem !important;
-        margin: 0.5rem !important;
-        box-shadow: var(--shadow-md) !important;
-    }
-
-    button[data-testid="collapsedControl"]:hover {
-        background: var(--accent-hover) !important;
-        box-shadow: var(--shadow-glow) !important;
-    }
-
-    button[data-testid="collapsedControl"] svg {
-        color: white !important;
-        fill: white !important;
-    }
-
-    /* ============ LIGHT-TOUCH WIDGET STYLING ============ */
-    /* Per aha.md: Only style outer containers, let Streamlit handle internals */
-
-    /* Slider - colors only, no layout changes */
-    [data-testid="stSlider"] label {
-        color: var(--text-secondary) !important;
-    }
-
-    [data-testid="stSlider"] [data-testid="stThumbValue"] {
-        color: var(--text-primary) !important;
-    }
-
-    /* Checkbox - label color only */
-    [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] {
-        color: var(--text-secondary) !important;
-    }
-
-    /* ============ SIDEBAR ============ */
-    [data-testid="stSidebar"] {
-        background: var(--bg-secondary);
-        border-right: 1px solid var(--border-subtle);
-    }
-
-    [data-testid="stSidebar"] > div:first-child {
-        padding: 1.5rem 1rem;
-    }
-
-    /* Sidebar text */
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] .stMarkdown {
-        color: var(--text-secondary) !important;
-    }
-
-    [data-testid="stSidebar"] h1,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3 {
-        color: var(--text-primary) !important;
-        font-weight: 600 !important;
-    }
-
-    /* Sidebar sections */
-    [data-testid="stSidebar"] hr {
-        border-color: var(--border-subtle);
-        margin: 1.5rem 0;
-    }
-
-    /* ============ TYPOGRAPHY ============ */
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--text-primary) !important;
-        font-weight: 600 !important;
-    }
-
-    p, span, label, div {
-        color: var(--text-secondary);
-    }
-
-    .stMarkdown p {
-        color: var(--text-secondary);
-        line-height: 1.6;
-    }
-
-    /* ============ BUTTONS ============ */
-    .stButton > button {
-        background: var(--bg-glass) !important;
-        border: 1px solid var(--border-medium) !important;
-        border-radius: var(--radius-md) !important;
-        color: var(--text-primary) !important;
-        font-weight: 500 !important;
-        padding: 0.5rem 1rem !important;
-        transition: var(--transition) !important;
-        backdrop-filter: blur(10px);
-    }
-
-    .stButton > button:hover {
-        background: var(--bg-glass-hover) !important;
-        border-color: var(--accent) !important;
-        box-shadow: var(--shadow-glow) !important;
-        transform: translateY(-1px);
-    }
-
-    .stButton > button[kind="primary"],
-    .stButton > button[data-testid="baseButton-primary"] {
-        background: var(--gradient-accent) !important;
-        border: none !important;
-        box-shadow: var(--shadow-md) !important;
-    }
-
-    .stButton > button[kind="primary"]:hover,
-    .stButton > button[data-testid="baseButton-primary"]:hover {
-        box-shadow: var(--shadow-glow), var(--shadow-md) !important;
-        transform: translateY(-1px);
-    }
-
-    /* ============ INPUTS ============ */
-    .stTextInput > div > div > input,
-    .stTextArea textarea,
-    .stNumberInput input {
-        background: var(--bg-tertiary) !important;
-        border: 1px solid var(--border-medium) !important;
-        border-radius: var(--radius-md) !important;
-        color: var(--text-primary) !important;
-        transition: var(--transition);
-    }
-
-    .stTextInput > div > div > input:focus,
-    .stTextArea textarea:focus {
-        border-color: var(--accent) !important;
-        box-shadow: 0 0 0 3px var(--accent-subtle) !important;
-    }
-
-    /* ============ SELECT BOX ============ */
-    .stSelectbox > div > div,
-    [data-baseweb="select"] {
-        background: var(--bg-tertiary) !important;
-        border-radius: var(--radius-md) !important;
-    }
-
-    [data-baseweb="select"] > div {
-        background: var(--bg-tertiary) !important;
-        border: 1px solid var(--border-medium) !important;
-        border-radius: var(--radius-md) !important;
-    }
-
-    [data-baseweb="select"] * {
-        color: var(--text-primary) !important;
-    }
-
-    [data-baseweb="popover"] {
-        background: var(--bg-secondary) !important;
-        border: 1px solid var(--border-medium) !important;
-        border-radius: var(--radius-md) !important;
-        box-shadow: var(--shadow-lg) !important;
-    }
-
-    [data-baseweb="menu"] {
-        background: var(--bg-secondary) !important;
-    }
-
-    [data-baseweb="menu"] li {
-        background: transparent !important;
-        transition: var(--transition);
-    }
-
-    [data-baseweb="menu"] li:hover {
-        background: var(--accent-subtle) !important;
-    }
-
-    /* ============ FILE UPLOADER ============ */
-    /* Container-only styling - let Streamlit handle internals */
-    [data-testid="stFileUploader"] {
-        background: var(--bg-tertiary);
-        border: 2px dashed var(--border-medium);
-        border-radius: var(--radius-lg);
-        padding: 1.5rem;
-        transition: var(--transition);
-    }
-
-    [data-testid="stFileUploader"]:hover {
-        border-color: var(--accent);
-        background: var(--accent-subtle);
-    }
-
-    [data-testid="stFileUploader"] button {
-        background: var(--accent) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: var(--radius-sm) !important;
-    }
-
-    /* ============ METRICS ============ */
-    [data-testid="stMetric"] {
-        background: var(--bg-glass);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-        backdrop-filter: blur(10px);
-    }
-
-    [data-testid="stMetricValue"] {
-        color: var(--text-primary) !important;
-        font-weight: 700 !important;
-        font-size: 1.75rem !important;
-    }
-
-    [data-testid="stMetricLabel"] {
-        color: var(--text-muted) !important;
-        font-size: 0.8rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-    }
-
-    /* ============ EXPANDERS ============ */
-    /* Container-only styling - let Streamlit handle icons */
-    [data-testid="stExpander"] {
-        border: none !important;
-    }
-
-    [data-testid="stExpander"] summary {
-        background: var(--bg-glass) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--radius-md) !important;
-        color: var(--text-primary) !important;
-        transition: var(--transition);
-    }
-
-    [data-testid="stExpander"] summary:hover {
-        background: var(--bg-glass-hover) !important;
-        border-color: var(--accent) !important;
-    }
-
-    [data-testid="stExpander"] summary p {
-        color: var(--text-primary) !important;
-    }
-
-    .streamlit-expanderContent,
-    [data-testid="stExpander"] > div:last-child {
-        background: var(--bg-tertiary) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-top: none !important;
-        border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
-    }
-
-    /* ============ CHAT ============ */
-    [data-testid="stChatMessage"] {
-        background: var(--bg-glass) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--radius-lg) !important;
-        padding: 1rem 1.25rem !important;
-        margin: 0.75rem 0 !important;
-        backdrop-filter: blur(10px);
-    }
-
-    [data-testid="stChatMessage"] * {
-        color: var(--text-secondary) !important;
-    }
-
-    [data-testid="stChatMessage"] strong,
-    [data-testid="stChatMessage"] h1,
-    [data-testid="stChatMessage"] h2,
-    [data-testid="stChatMessage"] h3 {
-        color: var(--text-primary) !important;
-    }
-
-    [data-testid="stChatInput"] {
-        border-radius: var(--radius-lg) !important;
-        background: var(--bg-secondary) !important;
-        border: 1px solid var(--border-medium) !important;
-    }
-
-    [data-testid="stChatInput"] textarea {
-        background: transparent !important;
-        color: var(--text-primary) !important;
-    }
-
-    [data-testid="stChatInput"] button {
-        background: var(--accent) !important;
-        border-radius: var(--radius-sm) !important;
-    }
-
-    /* ============ DATAFRAME ============ */
-    [data-testid="stDataFrame"] {
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--radius-md) !important;
-        overflow: hidden;
-    }
-
-    [data-testid="stDataFrame"] * {
-        color: var(--text-secondary) !important;
-        background: var(--bg-tertiary) !important;
-    }
-
-    [data-testid="stDataFrame"] [role="columnheader"] {
-        background: var(--bg-secondary) !important;
-        color: var(--text-primary) !important;
-        font-weight: 600 !important;
-    }
-
-    /* ============ ALERTS ============ */
-    .stSuccess {
-        background: var(--success-bg) !important;
-        border: 1px solid rgba(34, 197, 94, 0.3) !important;
-        border-radius: var(--radius-md) !important;
-        color: var(--success) !important;
-    }
-
-    .stWarning {
-        background: var(--warning-bg) !important;
-        border: 1px solid rgba(245, 158, 11, 0.3) !important;
-        border-radius: var(--radius-md) !important;
-        color: var(--warning) !important;
-    }
-
-    .stError {
-        background: var(--error-bg) !important;
-        border: 1px solid rgba(239, 68, 68, 0.3) !important;
-        border-radius: var(--radius-md) !important;
-        color: var(--error) !important;
-    }
-
-    .stInfo {
-        background: var(--accent-subtle) !important;
-        border: 1px solid rgba(59, 130, 246, 0.3) !important;
-        border-radius: var(--radius-md) !important;
-        color: var(--accent) !important;
-    }
-
-    /* ============ SLIDERS & CHECKBOXES ============ */
-    .stSlider > div > div {
-        color: var(--text-secondary) !important;
-    }
-
-    .stSlider [data-baseweb="slider"] div {
-        background: var(--accent) !important;
-    }
-
-    .stCheckbox label {
-        color: var(--text-secondary) !important;
-    }
-
-    .stCheckbox [data-testid="stCheckbox"] > div:first-child {
-        background: var(--bg-tertiary) !important;
-        border: 1px solid var(--border-medium) !important;
-        border-radius: var(--radius-sm) !important;
-    }
-
-    /* ============ DOWNLOAD BUTTON ============ */
-    .stDownloadButton > button {
-        background: var(--bg-glass) !important;
-        border: 1px solid var(--accent) !important;
-        color: var(--accent) !important;
-    }
-
-    .stDownloadButton > button:hover {
-        background: var(--accent-subtle) !important;
-    }
-
-    /* ============ CODE BLOCKS ============ */
-    .stCode, code, pre {
-        background: var(--bg-tertiary) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--radius-md) !important;
-        color: var(--accent-hover) !important;
-    }
-
-    /* ============ PROGRESS BAR ============ */
-    .stProgress > div > div {
-        background: var(--bg-tertiary) !important;
-        border-radius: var(--radius-sm) !important;
-    }
-
-    .stProgress > div > div > div {
-        background: var(--gradient-accent) !important;
-        border-radius: var(--radius-sm) !important;
-    }
-
-    /* ============ SCROLLBAR ============ */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: var(--bg-primary);
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: var(--bg-tertiary);
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--text-muted);
-    }
-
-    /* ============ CUSTOM COMPONENTS ============ */
-    .insight-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem 0 1.5rem 0;
-        border-bottom: 1px solid var(--border-subtle);
-        margin-bottom: 1.5rem;
-    }
-
-    .insight-logo {
-        width: 48px;
-        height: 48px;
-        background: var(--gradient-accent);
-        border-radius: var(--radius-md);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: white;
-        box-shadow: var(--shadow-glow);
-    }
-
-    .insight-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        letter-spacing: -0.5px;
-    }
-
-    .insight-subtitle {
-        font-size: 0.85rem;
-        color: var(--text-muted);
-        margin-top: 2px;
-    }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 0.75rem;
-        margin: 1rem 0;
-    }
-
-    .stat-card {
-        background: var(--bg-glass);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-md);
-        padding: 1rem;
-        text-align: center;
-        backdrop-filter: blur(10px);
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-
-    .stat-label {
-        font-size: 0.7rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 4px;
-    }
-
-    .mode-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.35rem 0.75rem;
-        background: var(--accent-subtle);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 20px;
-        font-size: 0.75rem;
-        color: var(--accent);
-        font-weight: 500;
-    }
-
-    .section-header {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-        color: var(--text-muted);
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .section-header::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: var(--border-subtle);
-    }
-
-    .summary-card {
-        background: var(--bg-glass);
-        border: 1px solid var(--border-subtle);
-        border-left: 3px solid var(--accent);
-        border-radius: var(--radius-md);
-        padding: 1.25rem;
-        margin: 1rem 0;
-        backdrop-filter: blur(10px);
-    }
-
-    .summary-title {
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--accent);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.75rem;
-    }
-
-    .summary-content {
-        color: var(--text-secondary);
-        line-height: 1.7;
-    }
-
-    /* Stats bar for main content */
-    .stats-bar {
-        display: flex;
-        gap: 1.5rem;
-        padding: 0.75rem 1rem;
-        background: var(--bg-glass);
-        border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-md);
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-    }
-
-    .stats-bar-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .stats-bar-label {
-        font-size: 0.7rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .stats-bar-value {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--accent);
-    }
-
-    .stats-bar-divider {
-        width: 1px;
-        height: 24px;
-        background: var(--border-medium);
-    }
-
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 0.25rem;
-    }
-
-    .status-dot.ready {
-        background: var(--success);
-        box-shadow: 0 0 6px var(--success);
-    }
-
-    .status-dot.pending {
-        background: var(--warning);
-        box-shadow: 0 0 6px var(--warning);
-    }
-</style>
-""", unsafe_allow_html=True)
 
 
 def init_session_state():
@@ -724,108 +83,97 @@ def _load_csv_data(uploaded_file, append: bool = False):
 def render_sidebar():
     """Render the sidebar with data management controls."""
     with st.sidebar:
-        # Sidebar header with branding
-        st.markdown("""
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
-            <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 1.1rem;">◆</div>
-            <div>
-                <div style="font-size: 1.1rem; font-weight: 600; color: #f0f2f5;">Insight</div>
-                <div style="font-size: 0.7rem; color: #6b7280;">Incident Intelligence</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Data section header
-        st.markdown('<div class="section-header">Data Source</div>', unsafe_allow_html=True)
+        st.header("📁 Data Management")
 
         # CSV Upload
         uploaded_file = st.file_uploader(
-            "Drop CSV or click to browse",
+            "Upload ServiceNow CSV Export",
             type=["csv"],
-            help="Upload a ServiceNow incident export",
-            label_visibility="collapsed"
+            help="Upload a CSV export from ServiceNow containing incident data"
         )
 
         if uploaded_file is not None:
+            # Load mode selection
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("Replace", type="primary", use_container_width=True):
+                if st.button("📤 Replace", type="primary", use_container_width=True, help="Replace existing data"):
                     _load_csv_data(uploaded_file, append=False)
             with col2:
-                if st.button("Append", use_container_width=True):
+                if st.button("➕ Append", type="secondary", use_container_width=True, help="Add to existing data"):
                     _load_csv_data(uploaded_file, append=True)
 
         st.divider()
 
-        # Data status with custom stats grid
-        st.markdown('<div class="section-header">Status</div>', unsafe_allow_html=True)
+        # Display current data status
+        st.subheader("📊 Data Status")
 
         if st.session_state.schema:
             schema = st.session_state.schema
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Incidents", f"{schema['row_count']:,}")
-            with col2:
-                st.metric("Fields", len(schema['columns']))
+            st.metric("Incidents Loaded", f"{schema['row_count']:,}")
+            st.metric("Columns", len(schema['columns']))
         elif table_exists():
+            # Try to load existing schema
             schema = get_schema_summary()
             if schema:
                 st.session_state.schema = schema
                 st.session_state.data_loaded = True
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("Incidents", f"{schema['row_count']:,}")
-                with col2:
-                    st.metric("Fields", len(schema['columns']))
+                st.metric("Incidents Loaded", f"{schema['row_count']:,}")
+                st.metric("Columns", len(schema['columns']))
             else:
-                st.caption("No data loaded yet")
+                st.info("No data loaded")
         else:
-            st.caption("Upload a CSV to get started")
+            st.info("No data loaded. Upload a CSV to get started.")
 
         st.divider()
 
-        # Embeddings section
-        st.markdown('<div class="section-header">Vector Index</div>', unsafe_allow_html=True)
+        # Embeddings management
+        st.subheader("🔮 Embeddings")
 
+        # Check embedding status
         if embeddings_exist():
             stats = get_embedding_stats()
             st.session_state.embeddings_ready = True
-            st.success(f"{stats['document_count']:,} documents indexed")
+            st.success(f"✅ {stats['document_count']:,} documents indexed")
         else:
             st.session_state.embeddings_ready = False
-            st.warning("Index not built")
+            st.warning("No embeddings built")
 
+        # Build embeddings button
         if st.session_state.data_loaded:
             col1, col2 = st.columns(2)
+
             with col1:
-                if st.button("Rebuild", use_container_width=True, help="Full rebuild"):
+                if st.button("🔄 Rebuild", use_container_width=True):
                     _build_embeddings_with_progress(force=True)
+
             with col2:
-                if st.button("Update", use_container_width=True, help="Add new only"):
+                if st.button("➕ Update", use_container_width=True):
                     _build_embeddings_with_progress(force=False)
 
         st.divider()
 
-        # Settings section
-        st.markdown('<div class="section-header">Settings</div>', unsafe_allow_html=True)
+        # Settings
+        st.subheader("⚙️ Settings")
 
-        with st.expander("Query Options", expanded=False):
+        with st.expander("Query Settings"):
             st.session_state.top_k = st.slider(
-                "Result limit",
+                "Results (semantic)",
                 min_value=5,
                 max_value=50,
                 value=10,
-                help="Max results for semantic search"
+                help="Number of results for semantic search"
             )
 
             st.session_state.show_sql = st.checkbox(
-                "Show SQL queries",
-                value=True
+                "Show generated SQL",
+                value=True,
+                help="Display the SQL query when using structured search"
             )
 
             st.session_state.show_summary = st.checkbox(
-                "Generate summaries",
-                value=True
+                "Show executive summary",
+                value=True,
+                help="Generate AI-powered executive summary of results"
             )
 
 
@@ -863,14 +211,9 @@ def render_schema_details():
 
     schema = st.session_state.schema
 
-    with st.expander("Schema Details", expanded=False):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.caption("TABLE")
-            st.markdown(f"**{schema['table_name']}**")
-        with col2:
-            st.caption("ROWS")
-            st.markdown(f"**{schema['row_count']:,}**")
+    with st.expander("📋 Schema Details", expanded=False):
+        st.write(f"**Table:** {schema['table_name']}")
+        st.write(f"**Row Count:** {schema['row_count']:,}")
 
         # Create columns DataFrame
         cols_data = [
@@ -908,14 +251,11 @@ def render_chat_history():
 
 def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None):
     """Display query results with formatting and export."""
-    # Executive summary with custom styling
+    # Executive summary (shown first if available)
     if executive_summary:
-        st.markdown(f"""
-        <div class="summary-card">
-            <div class="summary-title">Executive Summary</div>
-            <div class="summary-content">{executive_summary}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("### 📋 Executive Summary")
+        st.markdown(executive_summary)
+        st.divider()
 
     # Results table
     display_df = format_dataframe_for_display(df)
@@ -940,7 +280,7 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
     with col1:
         csv_data = dataframe_to_csv_bytes(df)
         st.download_button(
-            label="Export CSV",
+            label="📥 Export CSV",
             data=csv_data,
             file_name=generate_export_filename("incidents"),
             mime="text/csv",
@@ -949,7 +289,7 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
 
     with col2:
         if sql and st.session_state.get("show_sql", True):
-            with st.expander("View Generated SQL"):
+            with st.expander("🔍 Generated SQL"):
                 st.code(sql, language="sql")
 
 
@@ -995,24 +335,27 @@ def process_query(user_query: str, mode: str):
         row_count = result.get("row_count", 0)
         explanation = result.get("explanation", "")
 
-        # Format route display - clean, modern style
-        route_labels = {
-            "structured": "Structured",
-            "semantic": "Semantic",
-            "hybrid": "Hybrid"
-        }
+        # Format route display
+        route_emoji = {
+            "structured": "📊",
+            "semantic": "🔮",
+            "hybrid": "🔄"
+        }.get(route_used, "❓")
 
         content_parts = [
-            f"**{route_labels.get(route_used, 'Unknown')}** route • {confidence:.0%} confidence"
+            f"{route_emoji} **Route:** {route_used.title()} (confidence: {confidence:.0%})"
         ]
 
         if reasoning:
-            content_parts.append(f"*{reasoning}*")
+            content_parts.append(f"💡 **Reasoning:** {reasoning}")
 
-        if row_count > 0:
-            content_parts.append(f"Found **{row_count:,}** incidents")
-        else:
-            content_parts.append("No results found. Try adjusting your query or search mode.")
+        if explanation:
+            content_parts.append(f"📝 **Query:** {explanation}")
+
+        content_parts.append(f"📈 **Results:** {row_count:,} incidents found")
+
+        if row_count == 0:
+            content_parts.append("\n_No results found. Try a different query or adjust the search mode._")
 
         # Generate executive summary if we have results
         executive_summary = None
@@ -1039,122 +382,50 @@ def process_query(user_query: str, mode: str):
         }
 
 
-def render_stats_bar():
-    """Render a stats bar showing current data status."""
-    schema = st.session_state.schema
-    embeddings_ready = st.session_state.embeddings_ready
-
-    if not schema:
-        return
-
-    # Get embedding stats if available
-    embed_count = 0
-    if embeddings_ready:
-        try:
-            stats = get_embedding_stats()
-            embed_count = stats.get('document_count', 0)
-        except Exception:
-            pass
-
-    # Build stats bar HTML
-    status_class = "ready" if embeddings_ready else "pending"
-    status_text = "Ready" if embeddings_ready else "Index Pending"
-
-    st.markdown(f"""
-    <div class="stats-bar">
-        <div class="stats-bar-item">
-            <span class="stats-bar-label">Incidents</span>
-            <span class="stats-bar-value">{schema['row_count']:,}</span>
-        </div>
-        <div class="stats-bar-divider"></div>
-        <div class="stats-bar-item">
-            <span class="stats-bar-label">Columns</span>
-            <span class="stats-bar-value">{len(schema['columns'])}</span>
-        </div>
-        <div class="stats-bar-divider"></div>
-        <div class="stats-bar-item">
-            <span class="stats-bar-label">Embeddings</span>
-            <span class="stats-bar-value">{embed_count:,}</span>
-        </div>
-        <div class="stats-bar-divider"></div>
-        <div class="stats-bar-item">
-            <span class="stats-bar-label">Status</span>
-            <span class="stats-bar-value"><span class="status-dot {status_class}"></span>{status_text}</span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-
 def render_main_content():
     """Render the main content area."""
-    # Custom header
-    st.markdown("""
-    <div class="insight-header">
-        <div class="insight-logo">◆</div>
-        <div>
-            <div class="insight-title">Insight</div>
-            <div class="insight-subtitle">AI-Powered Incident Intelligence</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Stats bar (always visible when data is loaded)
-    if st.session_state.data_loaded:
-        render_stats_bar()
+    st.title("🔍 ServiceNow Incident Query Tool")
 
     if not st.session_state.data_loaded:
-        # Welcome state
-        st.markdown("""
-        <div style="text-align: center; padding: 3rem 1rem;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">◇</div>
-            <h2 style="margin-bottom: 0.5rem;">Welcome to Insight</h2>
-            <p style="color: #9ca3af; max-width: 400px; margin: 0 auto 2rem auto;">
-                Upload your ServiceNow incident data to unlock AI-powered natural language queries and analysis.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.info(
+            "👋 Welcome! Upload a ServiceNow incident CSV export using the "
+            "sidebar to get started."
+        )
 
-        # Example queries in a nice grid
-        st.markdown("#### Try asking questions like:")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("""
-            - Show all P1 incidents from last month
-            - How many incidents were opened this week?
-            """)
-        with col2:
-            st.markdown("""
-            - Find incidents similar to Outlook crashes
-            - Top 5 assignment groups by volume
-            """)
+        # Show example queries
+        st.subheader("Example Queries")
+        st.markdown("""
+        Once data is loaded, you can ask questions like:
+        - "Show all P1 incidents from last month"
+        - "Find incidents similar to Outlook crashes"
+        - "What are the top 5 assignment groups by incident volume?"
+        - "How many incidents were opened this week?"
+        """)
         return
 
-    # Schema details
+    # Show schema details
     render_schema_details()
 
-    # Query interface header with mode selector
+    st.divider()
+
+    # Mode selection
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        st.markdown("### Query Interface")
+        st.subheader("💬 Query Interface")
 
     with col2:
         selected_mode_label = st.selectbox(
             "Mode",
             options=list(MODE_OPTIONS.keys()),
             index=0,
+            help=get_mode_description(MODE_OPTIONS[list(MODE_OPTIONS.keys())[0]]),
             label_visibility="collapsed"
         )
         selected_mode = MODE_OPTIONS[selected_mode_label]
 
-    # Mode badge
-    mode_descriptions = {
-        "auto": "AI selects the best approach",
-        "structured": "SQL-based data retrieval",
-        "semantic": "Vector similarity search",
-        "hybrid": "Combined SQL + semantic"
-    }
-    st.markdown(f'<div class="mode-badge">{selected_mode_label} — {mode_descriptions.get(selected_mode, "")}</div>', unsafe_allow_html=True)
+    # Display mode description
+    st.caption(f"_{get_mode_description(selected_mode)}_")
 
     # Chat history
     render_chat_history()
@@ -1201,15 +472,13 @@ def render_main_content():
 
     # Clear chat button
     if st.session_state.messages:
-        st.markdown("<div style='height: 1rem'></div>", unsafe_allow_html=True)
-        if st.button("Clear conversation", type="secondary"):
+        if st.button("🗑️ Clear Chat", type="secondary"):
             st.session_state.messages = []
             st.rerun()
 
 
 def main():
     """Main application entry point."""
-    inject_custom_css()
     init_session_state()
     render_sidebar()
     render_main_content()
