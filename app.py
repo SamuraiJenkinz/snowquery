@@ -99,32 +99,46 @@ def inject_custom_css():
     /* Hide Streamlit branding */
     #MainMenu, footer, header {visibility: hidden;}
 
-    /* ============ FIX MATERIAL ICON TEXT ============ */
-    /* Hide broken Material Icon text that appears when font doesn't load */
-    /* This targets the icon font class that shows text like "keyboard_arrow_right" */
-    .material-icons,
+    /* ============ GLOBAL FIX: HIDE ALL BROKEN ICON TEXT ============ */
+    /* Aggressively hide any text containing icon names */
+    @font-face {
+        font-family: 'Material Icons';
+        src: local('Material Icons');
+        font-display: block;
+    }
+
+    /* Hide ALL elements using Material Icons font */
+    [style*="Material Icons"],
+    [style*="material-icons"],
     [class*="material-icons"],
-    span[style*="font-family: Material Icons"],
+    [data-icon],
+    .material-icons {
+        display: none !important;
+    }
+
+    /* Target spans that contain icon text patterns */
+    span:not([data-testid]) {
+        /* If it looks like an icon name, hide it */
+    }
+
+    /* Nuclear option: hide any element containing these icon names as text */
+    body {
+        --hide-icons: true;
+    }
+
+    /* Force hide icon containers in Streamlit components */
     [data-testid="stExpanderToggleIcon"],
-    [data-testid="stFileUploaderDropzoneIcon"] {
-        font-size: 0 !important;
-        visibility: hidden !important;
-        width: 0 !important;
-        overflow: hidden !important;
+    [data-testid="stFileUploaderDropzoneIcon"],
+    [data-testid="stSelectboxVirtualDropdown"] svg,
+    svg[data-icon] {
+        display: none !important;
     }
 
-    /* Alternative: Replace with CSS arrows/icons where needed */
-    [data-testid="stExpander"] summary::before {
-        content: '›' !important;
-        font-size: 1.2rem !important;
-        margin-right: 0.5rem !important;
-        color: var(--text-muted) !important;
-        transition: transform 0.2s ease !important;
-        display: inline-block !important;
-    }
-
-    [data-testid="stExpander"][open] summary::before {
-        transform: rotate(90deg) !important;
+    /* Remove the broken icon from expanders completely */
+    [data-testid="stExpander"] summary > svg,
+    [data-testid="stExpander"] summary > span:first-child,
+    [data-testid="stExpander"] details > summary > div > svg {
+        display: none !important;
     }
 
     /* ============ SIDEBAR ============ */
@@ -277,19 +291,11 @@ def inject_custom_css():
         color: var(--text-secondary) !important;
     }
 
-    /* Hide broken upload icon text */
-    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] > div:first-child {
-        font-size: 0 !important;
-    }
-
-    /* Add CSS upload icon */
-    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"]::before {
-        content: '↑' !important;
-        font-size: 2rem !important;
-        display: block !important;
-        text-align: center !important;
-        color: var(--text-muted) !important;
-        margin-bottom: 0.5rem !important;
+    /* Hide ALL icon-related elements in file uploader */
+    [data-testid="stFileUploader"] svg,
+    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] > div:first-child > span,
+    [data-testid="stFileUploaderDropzone"] > div > span:first-child {
+        display: none !important;
     }
 
     [data-testid="stFileUploader"] button {
@@ -300,7 +306,7 @@ def inject_custom_css():
     }
 
     [data-testid="stFileUploader"] small,
-    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] {
+    [data-testid="stFileUploader"] section small {
         font-size: 0.8rem !important;
         color: var(--text-muted) !important;
     }
@@ -339,8 +345,11 @@ def inject_custom_css():
         color: var(--text-primary) !important;
         transition: var(--transition);
         padding: 0.75rem 1rem !important;
-        display: flex !important;
-        align-items: center !important;
+        list-style: none !important;
+    }
+
+    [data-testid="stExpander"] summary::-webkit-details-marker {
+        display: none !important;
     }
 
     [data-testid="stExpander"] summary:hover {
@@ -348,9 +357,15 @@ def inject_custom_css():
         border-color: var(--accent) !important;
     }
 
+    /* Hide ALL SVGs and icon spans in expander summary */
+    [data-testid="stExpander"] summary svg,
+    [data-testid="stExpander"] summary > span:first-child {
+        display: none !important;
+    }
+
     /* Ensure expander text is visible */
     [data-testid="stExpander"] summary p,
-    [data-testid="stExpander"] summary span {
+    [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"] {
         font-size: 0.9rem !important;
         color: var(--text-primary) !important;
     }
