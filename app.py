@@ -4,6 +4,7 @@ Brutalist Terminal-Style Interface
 """
 from __future__ import annotations
 
+import os
 from datetime import datetime
 
 import pandas as pd
@@ -358,6 +359,8 @@ def init_session_state():
         st.session_state.data_loaded = False
     if "embeddings_ready" not in st.session_state:
         st.session_state.embeddings_ready = False
+    if "upload_authenticated" not in st.session_state:
+        st.session_state.upload_authenticated = False
 
 
 def _load_csv_data(uploaded_file, append: bool = False):
@@ -403,24 +406,72 @@ def render_sidebar():
         
         st.markdown("### DATA INGEST")
 
-        # CSV Upload
-        uploaded_file = st.file_uploader(
-            "UPLOAD SERVICENOW CSV",
-            type=["csv"],
-            help="Upload a CSV export from ServiceNow containing incident data",
-            label_visibility="collapsed"
-        )
-        
-        st.caption("DROP CSV FILE HERE")
+        # Password protection for upload
+        # Password can be set via SNOWGREP_UPLOAD_PASSWORD environment variable
+        # Default is "admin123" for development (NOT for production use)
+        upload_password = os.getenv("SNOWGREP_UPLOAD_PASSWORD", "admin123")
 
-        if uploaded_file is not None:
-            col1, col2 = st.columns(2)
+        if not st.session_state.upload_authenticated:
+            # Show password input when locked
+            password_input = st.text_input(
+                "UPLOAD PASSWORD",
+                type="password",
+                help="Enter password to unlock CSV upload functionality",
+                label_visibility="collapsed",
+                placeholder="ENTER PASSWORD..."
+            )
+
+            col1, col2 = st.columns([2, 1])
             with col1:
-                if st.button("REPLACE", type="primary", use_container_width=True):
-                    _load_csv_data(uploaded_file, append=False)
+                if st.button("UNLOCK UPLOAD", type="primary", use_container_width=True):
+                    if password_input == upload_password:
+                        st.session_state.upload_authenticated = True
+                        st.rerun()
+                    else:
+                        st.error("[ERR] INVALID PASSWORD")
+
             with col2:
-                if st.button("APPEND", type="secondary", use_container_width=True):
-                    _load_csv_data(uploaded_file, append=True)
+                st.markdown("""
+                <div style="color: #ff5f56; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; padding: 0.5rem 0; text-align: center;">
+                    <span style="font-size: 1rem;">🔒</span><br/>LOCKED
+                </div>
+                """, unsafe_allow_html=True)
+
+            # Show warning if using default password
+            if upload_password == "admin123":
+                st.caption("⚠️ USING DEFAULT PASSWORD")
+        else:
+            # Show unlocked status
+            st.markdown("""
+            <div style="color: #00ff00; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; padding: 0.25rem 0; margin-bottom: 0.5rem;">
+                <span style="font-size: 1rem;">🔓</span> UPLOAD UNLOCKED
+            </div>
+            """, unsafe_allow_html=True)
+
+            # CSV Upload (only visible when authenticated)
+            uploaded_file = st.file_uploader(
+                "UPLOAD SERVICENOW CSV",
+                type=["csv"],
+                help="Upload a CSV export from ServiceNow containing incident data",
+                label_visibility="collapsed"
+            )
+
+            st.caption("DROP CSV FILE HERE")
+
+            if uploaded_file is not None:
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("REPLACE", type="primary", use_container_width=True):
+                        _load_csv_data(uploaded_file, append=False)
+                with col2:
+                    if st.button("APPEND", type="secondary", use_container_width=True):
+                        _load_csv_data(uploaded_file, append=True)
+
+            # Lock upload button
+            st.write("")
+            if st.button("LOCK UPLOAD", use_container_width=True):
+                st.session_state.upload_authenticated = False
+                st.rerun()
 
         st.divider()
 
