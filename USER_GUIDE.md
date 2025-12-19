@@ -12,11 +12,12 @@ A natural language query interface for ServiceNow incident data using AI-powered
 2. [Loading Data](#loading-data)
 3. [Building Embeddings](#building-embeddings)
 4. [Query Modes](#query-modes)
-5. [Writing Effective Queries](#writing-effective-queries)
-6. [Understanding Results](#understanding-results)
-7. [Settings](#settings)
-8. [Tips & Best Practices](#tips--best-practices)
-9. [Troubleshooting](#troubleshooting)
+5. [Chart Visualization](#chart-visualization)
+6. [Writing Effective Queries](#writing-effective-queries)
+7. [Understanding Results](#understanding-results)
+8. [Settings](#settings)
+9. [Tips & Best Practices](#tips--best-practices)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -42,11 +43,23 @@ The application has two main areas:
 
 ## Loading Data
 
+### Unlocking CSV Upload
+
+CSV upload is password-protected. To upload files:
+
+1. Enter the upload password in the sidebar
+2. Click **"UNLOCK UPLOAD"**
+3. Once unlocked, the file uploader appears
+4. Click **"LOCK UPLOAD"** when finished to re-secure
+
+**Default password:** `admin123` (change via `SNOWGREP_UPLOAD_PASSWORD` environment variable)
+
 ### Uploading CSV Files
 
-1. Click **"Browse files"** in the sidebar under "Upload ServiceNow CSV Export"
-2. Select your ServiceNow incident export CSV file
-3. Choose load mode:
+1. Unlock the upload section (see above)
+2. Click **"Browse files"** in the sidebar
+3. Select your ServiceNow incident export CSV file
+4. Choose load mode:
    - **Replace**: Overwrites existing data (use for first upload or fresh start)
    - **Append**: Adds to existing data (use for combining multiple exports)
 
@@ -159,6 +172,44 @@ Combines SQL filtering with semantic search for comprehensive results.
 
 ---
 
+## Chart Visualization
+
+Request charts in your queries to visualize data. Charts appear above the results table.
+
+### Supported Chart Types
+
+| Chart Type | Keywords | Best For |
+|------------|----------|----------|
+| **Pie Chart** | "pie chart", "breakdown", "proportion" | Category distribution |
+| **Bar Chart** | "bar chart", "top 10", "compare", "ranking" | Comparisons, rankings |
+| **Line Chart** | "line chart", "trend", "over time" | Time-based trends |
+
+### Example Chart Queries
+
+**Pie Charts:**
+- "Create a pie chart of incidents by priority"
+- "Show breakdown of incidents by category"
+- "What's the proportion of incidents by assignment group?"
+
+**Bar Charts:**
+- "Bar chart of top 10 assignment groups by incident count"
+- "Compare incident volumes by category"
+- "Show ranking of most common issues"
+
+**Line Charts:**
+- "Show trend of incidents over time"
+- "Line chart of incidents opened per week"
+- "How have P1 incidents trended per month?"
+
+### Chart Features
+
+- **Vibrant Colors**: Each segment uses distinct, high-contrast colors
+- **Dark Theme**: Charts match the application's terminal aesthetic
+- **Interactive**: Hover for details (powered by Altair)
+- **Auto-Detection**: The AI infers the best chart type if not specified
+
+---
+
 ## Writing Effective Queries
 
 ### Good Query Examples
@@ -189,6 +240,9 @@ The AI recognizes these patterns:
 | "last month", "this week", "between" | SQL date filtering |
 | "similar to", "like", "related" | Semantic search |
 | "issues with", "problems about" | Semantic search |
+| "pie chart", "breakdown", "proportion" | Pie chart |
+| "bar chart", "compare", "ranking" | Bar chart |
+| "trend", "over time", "per week/month" | Line chart |
 
 ---
 
@@ -321,4 +375,4 @@ Contact your system administrator or refer to the project repository for technic
 
 ---
 
-*Last updated: December 2024*
+*Last updated: December 2024 (v2.0 - Added password protection & chart visualization)*

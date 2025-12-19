@@ -7,8 +7,10 @@ A local Python application that enables natural language querying of ServiceNow 
 ## Features
 
 - **CSV Import**: Upload ServiceNow incident exports with automatic schema detection
+- **Password-Protected Upload**: Secure file uploads with configurable password
 - **SQL Queries**: Ask structured questions in plain English (e.g., "Show all P1 incidents from last month")
 - **Semantic Search**: Find similar incidents using natural language (e.g., "Find incidents like Outlook crashes")
+- **Chart Visualization**: Generate pie, bar, and line charts from query results
 - **Intelligent Routing**: Automatically routes queries to the best search method
 
 ## Tech Stack
@@ -18,6 +20,7 @@ A local Python application that enables natural language querying of ServiceNow 
 - **ChromaDB** - Vector embeddings for semantic search
 - **sentence-transformers** - Local embedding generation
 - **Azure OpenAI** - Query routing and SQL generation
+- **Altair** - Interactive chart visualization
 - **Streamlit** - Web interface
 
 ## Quick Start
@@ -72,6 +75,7 @@ snow_query/
 | `AZURE_OPENAI_ENDPOINT` | Azure OpenAI endpoint URL | (required) |
 | `AZURE_OPENAI_API_KEY` | Azure OpenAI API key | (required) |
 | `API_VERSION` | Azure API version | 2023-05-15 |
+| `SNOWGREP_UPLOAD_PASSWORD` | Password to unlock CSV upload | admin123 |
 | `LOG_LEVEL` | Logging verbosity | INFO |
 
 ## Data Privacy
