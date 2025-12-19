@@ -10,6 +10,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
+from src.chart_generator import generate_chart, infer_chart_type
 from src.embeddings import (
     build_embeddings,
     embeddings_exist,
@@ -334,6 +335,14 @@ st.markdown("""
     .example-query:hover { border-color: #00ff00; color: #00ff00; }
     .example-query::before { content: "> "; color: #00ff00; }
 
+    /* Chart container styling */
+    .chart-container {
+        border: 1px solid #333;
+        padding: 1rem;
+        background-color: transparent;
+        margin: 1rem 0;
+    }
+
     /* Final safety: ensure SVG icons generally visible */
     svg { fill: currentColor; display: inline-block; }
 
@@ -628,16 +637,23 @@ def render_chat_history():
                         message["results"],
                         message.get("sql"),
                         message.get("query_id", ""),
-                        message.get("executive_summary")
+                        message.get("executive_summary"),
+                        message.get("chart")
                     )
 
 
-def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None):
+def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None, chart=None):
     """Display query results with formatting and export."""
     # Executive summary
     if executive_summary:
         st.markdown("### EXECUTIVE SUMMARY")
         st.markdown(f'<div class="query-box">{executive_summary}</div>', unsafe_allow_html=True)
+        st.divider()
+
+    # Chart display
+    if chart is not None:
+        st.markdown("### VISUALIZATION")
+        st.altair_chart(chart, use_container_width=True)
         st.divider()
 
     # Results table
@@ -713,6 +729,20 @@ def process_query(user_query: str, mode: str):
         reasoning = classification.get("reasoning", "")
         row_count = result.get("row_count", 0)
         explanation = result.get("explanation", "")
+        chart_requested = classification.get("chart_requested", False)
+        chart_type = classification.get("chart_type")
+
+        # Generate chart if requested and we have results
+        chart = None
+        if chart_requested and result.get("results") is not None:
+            df = result["results"]
+            if not df.empty:
+                chart_config = infer_chart_type(user_query, df)
+                if chart_config:
+                    # Override with explicit type if provided
+                    if chart_type:
+                        chart_config["type"] = chart_type
+                    chart = generate_chart(df, chart_config)
 
         # Route badge colors
         route_colors = {
@@ -750,7 +780,8 @@ def process_query(user_query: str, mode: str):
             "content": "".join(content_parts),
             "results": result.get("results"),
             "sql": result.get("sql"),
-            "executive_summary": executive_summary
+            "executive_summary": executive_summary,
+            "chart": chart
         }
 
     except Exception as e:
@@ -850,7 +881,8 @@ def render_main_content():
                     response["results"],
                     response["sql"],
                     query_id,
-                    response.get("executive_summary")
+                    response.get("executive_summary"),
+                    response.get("chart")
                 )
 
         st.session_state.messages.append({
@@ -859,7 +891,8 @@ def render_main_content():
             "results": response["results"],
             "sql": response["sql"],
             "query_id": query_id,
-            "executive_summary": response.get("executive_summary")
+            "executive_summary": response.get("executive_summary"),
+            "chart": response.get("chart")
         })
 
     # Clear chat button

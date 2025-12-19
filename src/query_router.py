@@ -21,6 +21,15 @@ from src.sql_generator import query_with_sql
 from src.utils import QueryError, format_schema_for_llm, logger
 
 
+# Chart detection keywords
+CHART_KEYWORDS = {
+    "pie": ["pie chart", "pie graph", "breakdown by", "proportion"],
+    "bar": ["bar chart", "bar graph", "compare", "top \\d+", "ranking"],
+    "line": ["line chart", "trend", "over time", "per week", "per month"],
+    "histogram": ["histogram", "distribution of"],
+}
+
+
 # System prompt for intent classification
 CLASSIFICATION_PROMPT = """You are a query classifier for a ServiceNow incident management system.
 
@@ -62,6 +71,35 @@ Respond with JSON:
         "date_range": "description" or null
     }
 }"""
+
+
+def _detect_chart_request(query: str) -> tuple[bool, str | None]:
+    """
+    Detect if query requests a chart and what type.
+
+    Args:
+        query: The user's query string
+
+    Returns:
+        Tuple of (chart_requested: bool, chart_type: str | None)
+        chart_type will be "pie", "bar", "line", "histogram", or None
+    """
+    import re
+
+    query_lower = query.lower()
+
+    # Check each chart type's keywords
+    for chart_type, keywords in CHART_KEYWORDS.items():
+        for keyword in keywords:
+            # Use regex if keyword contains regex patterns (like \d+)
+            if "\\" in keyword:
+                if re.search(keyword, query_lower):
+                    return True, chart_type
+            else:
+                if keyword in query_lower:
+                    return True, chart_type
+
+    return False, None
 
 
 def _call_azure_openai(messages: list[dict]) -> str:
@@ -115,12 +153,15 @@ def classify_intent(
         schema_summary: Schema information for context
 
     Returns:
-        Dict with intent, confidence, reasoning, detected_filters
+        Dict with intent, confidence, reasoning, detected_filters, chart_requested, chart_type
 
     Raises:
         QueryError: If classification fails
     """
     logger.info(f"Classifying intent for: {user_query}")
+
+    # Detect chart request first
+    chart_requested, chart_type = _detect_chart_request(user_query)
 
     try:
         schema_text = format_schema_for_llm(schema_summary)
@@ -163,7 +204,9 @@ def classify_intent(
             "intent": result.get("intent", "structured"),
             "confidence": result.get("confidence", 0.5),
             "reasoning": result.get("reasoning", ""),
-            "detected_filters": result.get("detected_filters", {})
+            "detected_filters": result.get("detected_filters", {}),
+            "chart_requested": chart_requested,
+            "chart_type": chart_type
         }
 
     except QueryError:
@@ -184,6 +227,9 @@ def _heuristic_classify(user_query: str) -> dict[str, Any]:
         Classification dict
     """
     query_lower = user_query.lower()
+
+    # Detect chart request
+    chart_requested, chart_type = _detect_chart_request(user_query)
 
     # Semantic indicators
     semantic_keywords = [
@@ -217,7 +263,9 @@ def _heuristic_classify(user_query: str) -> dict[str, Any]:
         "intent": intent,
         "confidence": confidence,
         "reasoning": "Classified using keyword heuristics (OpenAI unavailable)",
-        "detected_filters": {}
+        "detected_filters": {},
+        "chart_requested": chart_requested,
+        "chart_type": chart_type
     }
 
 
@@ -248,6 +296,8 @@ def route_query(
         confidence = classification["confidence"]
         reasoning = classification["reasoning"]
     else:
+        # Even with mode override, detect chart requests
+        chart_requested, chart_type = _detect_chart_request(user_query)
         intent = mode
         confidence = 1.0
         reasoning = f"Mode override: {mode}"
@@ -255,7 +305,9 @@ def route_query(
             "intent": intent,
             "confidence": confidence,
             "reasoning": reasoning,
-            "detected_filters": {}
+            "detected_filters": {},
+            "chart_requested": chart_requested,
+            "chart_type": chart_type
         }
 
     # Execute based on intent

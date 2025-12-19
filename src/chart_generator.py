@@ -1,0 +1,389 @@
+"""
+Chart generation module for SNOWGREP.
+Renders HTML charts (Pie, Bar, Line) using Altair with vibrant colors on dark background.
+"""
+from __future__ import annotations
+
+import re
+from typing import Any, Optional
+
+import altair as alt
+import pandas as pd
+
+from src.utils import logger
+
+
+# Vibrant color palette for charts
+CHART_COLORS = [
+    "#FF6B6B",  # Coral Red
+    "#4ECDC4",  # Teal
+    "#45B7D1",  # Sky Blue
+    "#96CEB4",  # Sage Green
+    "#FFEAA7",  # Soft Yellow
+    "#DDA0DD",  # Plum
+    "#98D8C8",  # Mint
+    "#F7DC6F",  # Gold
+    "#BB8FCE",  # Lavender
+    "#85C1E9",  # Light Blue
+]
+
+# Chart detection patterns
+CHART_PATTERNS = {
+    "pie": [r"pie\s+chart", r"pie\s+graph", r"breakdown\s+by", r"proportion"],
+    "bar": [r"bar\s+chart", r"bar\s+graph", r"compare", r"top\s+\d+", r"ranking"],
+    "line": [r"line\s+chart", r"trend", r"over\s+time", r"per\s+week", r"per\s+month"],
+}
+
+# Maximum categories for different chart types
+MAX_PIE_SLICES = 10
+MAX_BAR_CATEGORIES = 20
+MIN_ROWS_FOR_CHART = 2
+
+
+def _detect_column_type(series: pd.Series) -> str:
+    """
+    Detect the type of a column for chart purposes.
+
+    Args:
+        series: pandas Series to analyze
+
+    Returns:
+        Column type: 'categorical', 'numeric', or 'temporal'
+    """
+    # Check for temporal data
+    if pd.api.types.is_datetime64_any_dtype(series):
+        return "temporal"
+
+    # Try parsing as datetime for string columns
+    if series.dtype == "object":
+        try:
+            # Try parsing with warnings suppressed
+            import warnings
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                pd.to_datetime(series.dropna().head(10), errors="raise")
+            return "temporal"
+        except (ValueError, TypeError):
+            pass
+        # String columns are categorical
+        return "categorical"
+
+    # Check for numeric data
+    if pd.api.types.is_numeric_dtype(series):
+        return "numeric"
+
+    # Default to categorical for other types
+    return "categorical"
+
+
+def _match_chart_pattern(query: str, chart_type: str) -> bool:
+    """
+    Check if query text matches patterns for a specific chart type.
+
+    Args:
+        query: User query text
+        chart_type: Chart type to check ('pie', 'bar', 'line')
+
+    Returns:
+        True if pattern matches
+    """
+    query_lower = query.lower()
+    patterns = CHART_PATTERNS.get(chart_type, [])
+
+    for pattern in patterns:
+        if re.search(pattern, query_lower):
+            return True
+
+    return False
+
+
+def _consolidate_small_categories(
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    max_categories: int
+) -> pd.DataFrame:
+    """
+    Consolidate small categories into 'Other' category.
+
+    Args:
+        df: Input DataFrame
+        x_col: Category column name
+        y_col: Value column name
+        max_categories: Maximum number of categories to keep
+
+    Returns:
+        DataFrame with consolidated categories
+    """
+    if len(df) <= max_categories:
+        return df
+
+    # Sort by value and keep top N-1 categories
+    df_sorted = df.sort_values(y_col, ascending=False)
+    top_categories = df_sorted.head(max_categories - 1)
+    other_categories = df_sorted.tail(len(df) - (max_categories - 1))
+
+    # Sum the 'Other' categories
+    if len(other_categories) > 0:
+        other_row = pd.DataFrame([{
+            x_col: "Other",
+            y_col: other_categories[y_col].sum()
+        }])
+        result = pd.concat([top_categories, other_row], ignore_index=True)
+    else:
+        result = top_categories
+
+    return result
+
+
+def infer_chart_type(query: str, df: pd.DataFrame) -> dict[str, Any] | None:
+    """
+    Analyze query text and DataFrame to infer appropriate chart type.
+
+    Args:
+        query: User's natural language query
+        df: Result DataFrame to visualize
+
+    Returns:
+        Chart config dict with keys: type, x_col, y_col
+        Returns None if no suitable chart can be inferred
+    """
+    # Validate minimum requirements
+    if df.empty or len(df) < MIN_ROWS_FOR_CHART:
+        logger.info("DataFrame too small for chart generation")
+        return None
+
+    if len(df.columns) < 2:
+        logger.info("Need at least 2 columns for chart generation")
+        return None
+
+    # Analyze column types
+    column_types = {col: _detect_column_type(df[col]) for col in df.columns}
+
+    categorical_cols = [col for col, typ in column_types.items() if typ == "categorical"]
+    numeric_cols = [col for col, typ in column_types.items() if typ == "numeric"]
+    temporal_cols = [col for col, typ in column_types.items() if typ == "temporal"]
+
+    # Check for explicit chart type in query
+    if _match_chart_pattern(query, "pie"):
+        # Pie chart: need 1 categorical + 1 numeric
+        if categorical_cols and numeric_cols:
+            x_col = categorical_cols[0]
+            y_col = numeric_cols[0]
+
+            # Check category count
+            if df[x_col].nunique() > MAX_PIE_SLICES:
+                logger.info(f"Too many categories ({df[x_col].nunique()}) for pie chart")
+                return None
+
+            return {"type": "pie", "x_col": x_col, "y_col": y_col}
+
+    if _match_chart_pattern(query, "line"):
+        # Line chart: need 1 temporal + 1 numeric
+        if temporal_cols and numeric_cols:
+            x_col = temporal_cols[0]
+            y_col = numeric_cols[0]
+            return {"type": "line", "x_col": x_col, "y_col": y_col}
+
+    if _match_chart_pattern(query, "bar"):
+        # Bar chart: need 1 categorical + 1 numeric
+        if categorical_cols and numeric_cols:
+            x_col = categorical_cols[0]
+            y_col = numeric_cols[0]
+
+            # Check category count
+            if df[x_col].nunique() > MAX_BAR_CATEGORIES:
+                logger.info(f"Too many categories ({df[x_col].nunique()}) for bar chart")
+                return None
+
+            return {"type": "bar", "x_col": x_col, "y_col": y_col}
+
+    # Auto-detect based on data shape if no explicit pattern
+    if temporal_cols and numeric_cols:
+        return {"type": "line", "x_col": temporal_cols[0], "y_col": numeric_cols[0]}
+
+    if categorical_cols and numeric_cols:
+        x_col = categorical_cols[0]
+        y_col = numeric_cols[0]
+        num_categories = df[x_col].nunique()
+
+        if num_categories <= MAX_PIE_SLICES:
+            return {"type": "pie", "x_col": x_col, "y_col": y_col}
+        elif num_categories <= MAX_BAR_CATEGORIES:
+            return {"type": "bar", "x_col": x_col, "y_col": y_col}
+
+    logger.info("Could not infer suitable chart type from data")
+    return None
+
+
+def configure_chart_theme(chart: alt.Chart) -> alt.Chart:
+    """
+    Apply dark theme configuration to Altair chart.
+
+    Args:
+        chart: Altair chart object
+
+    Returns:
+        Configured chart with dark theme
+    """
+    return chart.configure(
+        background="#0a0a0a"
+    ).configure_view(
+        strokeWidth=0
+    ).configure_axis(
+        labelColor="#e0e0e0",
+        titleColor="#e0e0e0",
+        gridColor="#333333",
+        domainColor="#333333",
+        labelFont="JetBrains Mono, monospace",
+        titleFont="JetBrains Mono, monospace",
+        labelFontSize=11,
+        titleFontSize=12
+    ).configure_legend(
+        labelColor="#e0e0e0",
+        titleColor="#e0e0e0",
+        labelFont="JetBrains Mono, monospace",
+        titleFont="JetBrains Mono, monospace",
+        labelFontSize=11,
+        titleFontSize=12
+    ).configure_title(
+        color="#e0e0e0",
+        font="JetBrains Mono, monospace",
+        fontSize=14
+    )
+
+
+def generate_chart(df: pd.DataFrame, chart_config: dict[str, Any]) -> alt.Chart | None:
+    """
+    Generate Altair chart based on configuration.
+
+    Args:
+        df: Data to visualize
+        chart_config: Chart configuration with keys: type, x_col, y_col
+
+    Returns:
+        Altair Chart object or None if generation fails
+    """
+    try:
+        chart_type = chart_config.get("type")
+        x_col = chart_config.get("x_col")
+        y_col = chart_config.get("y_col")
+
+        if not all([chart_type, x_col, y_col]):
+            logger.error("Invalid chart config: missing required fields")
+            return None
+
+        if x_col not in df.columns or y_col not in df.columns:
+            logger.error(f"Chart columns not found in DataFrame: {x_col}, {y_col}")
+            return None
+
+        # Validate minimum data
+        if df.empty or len(df) < MIN_ROWS_FOR_CHART:
+            logger.info("Insufficient data for chart generation")
+            return None
+
+        # Create working copy
+        chart_df = df[[x_col, y_col]].copy()
+
+        # Generate chart based on type
+        if chart_type == "pie":
+            # Consolidate categories if needed
+            if chart_df[x_col].nunique() > MAX_PIE_SLICES:
+                chart_df = _consolidate_small_categories(
+                    chart_df, x_col, y_col, MAX_PIE_SLICES
+                )
+
+            chart = alt.Chart(chart_df).mark_arc(innerRadius=50).encode(
+                theta=alt.Theta(field=y_col, type="quantitative"),
+                color=alt.Color(
+                    field=x_col,
+                    type="nominal",
+                    scale=alt.Scale(range=CHART_COLORS),
+                    legend=alt.Legend(title=x_col.replace("_", " ").title())
+                ),
+                tooltip=[
+                    alt.Tooltip(x_col, title=x_col.replace("_", " ").title()),
+                    alt.Tooltip(y_col, title=y_col.replace("_", " ").title())
+                ]
+            ).properties(
+                width=500,
+                height=400,
+                title=f"{y_col.replace('_', ' ').title()} by {x_col.replace('_', ' ').title()}"
+            )
+
+        elif chart_type == "bar":
+            # Consolidate categories if needed
+            if chart_df[x_col].nunique() > MAX_BAR_CATEGORIES:
+                chart_df = _consolidate_small_categories(
+                    chart_df, x_col, y_col, MAX_BAR_CATEGORIES
+                )
+
+            chart = alt.Chart(chart_df).mark_bar().encode(
+                x=alt.X(
+                    field=x_col,
+                    type="nominal",
+                    title=x_col.replace("_", " ").title(),
+                    sort="-y"
+                ),
+                y=alt.Y(
+                    field=y_col,
+                    type="quantitative",
+                    title=y_col.replace("_", " ").title()
+                ),
+                color=alt.Color(
+                    field=x_col,
+                    type="nominal",
+                    scale=alt.Scale(range=CHART_COLORS),
+                    legend=None
+                ),
+                tooltip=[
+                    alt.Tooltip(x_col, title=x_col.replace("_", " ").title()),
+                    alt.Tooltip(y_col, title=y_col.replace("_", " ").title())
+                ]
+            ).properties(
+                width=600,
+                height=400,
+                title=f"{y_col.replace('_', ' ').title()} by {x_col.replace('_', ' ').title()}"
+            )
+
+        elif chart_type == "line":
+            # Sort by x-axis for line chart
+            chart_df = chart_df.sort_values(x_col)
+
+            chart = alt.Chart(chart_df).mark_line(
+                point=True,
+                color=CHART_COLORS[0]
+            ).encode(
+                x=alt.X(
+                    field=x_col,
+                    type="temporal" if _detect_column_type(chart_df[x_col]) == "temporal" else "quantitative",
+                    title=x_col.replace("_", " ").title()
+                ),
+                y=alt.Y(
+                    field=y_col,
+                    type="quantitative",
+                    title=y_col.replace("_", " ").title()
+                ),
+                tooltip=[
+                    alt.Tooltip(x_col, title=x_col.replace("_", " ").title()),
+                    alt.Tooltip(y_col, title=y_col.replace("_", " ").title())
+                ]
+            ).properties(
+                width=600,
+                height=400,
+                title=f"{y_col.replace('_', ' ').title()} over {x_col.replace('_', ' ').title()}"
+            )
+
+        else:
+            logger.error(f"Unsupported chart type: {chart_type}")
+            return None
+
+        # Apply dark theme
+        chart = configure_chart_theme(chart)
+
+        logger.info(f"Generated {chart_type} chart successfully")
+        return chart
+
+    except Exception as e:
+        logger.error(f"Error generating chart: {e}")
+        return None
