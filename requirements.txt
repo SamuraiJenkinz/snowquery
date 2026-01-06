@@ -8,3 +8,7 @@ requests>=2.31.0
 onnxruntime>=1.14.1
 altair>=5.0.0
 python-certifi-win32>=1.6.1; sys_platform == 'win32'  # Windows cert store for corporate proxies
+
+# Security: Pin minimum versions to address vulnerabilities
+torch>=2.6.0  # CVE-2025-32434: RCE via torch.load()
+transformers>=4.51.0  # CVE-2025-14927, CVE-2025-14924: Code injection via checkpoint files
