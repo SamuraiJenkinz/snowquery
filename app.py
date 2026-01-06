@@ -638,11 +638,12 @@ def render_chat_history():
                         message.get("sql"),
                         message.get("query_id", ""),
                         message.get("executive_summary"),
-                        message.get("chart")
+                        message.get("chart"),
+                        message.get("chart_feedback")
                     )
 
 
-def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None, chart=None):
+def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None, chart=None, chart_feedback: str | None = None):
     """Display query results with formatting and export."""
     # Executive summary
     if executive_summary:
@@ -653,8 +654,14 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
     # Chart display
     if chart is not None:
         st.markdown("### VISUALIZATION")
+        # Show feedback about chart adjustments (e.g., "Switched to bar chart")
+        if chart_feedback:
+            st.info(f"📊 {chart_feedback}")
         st.altair_chart(chart, use_container_width=True)
         st.divider()
+    elif chart_feedback:
+        # Show feedback when chart couldn't be generated
+        st.warning(f"📊 {chart_feedback}")
 
     # Results table
     display_df = format_dataframe_for_display(df)
@@ -734,15 +741,21 @@ def process_query(user_query: str, mode: str):
 
         # Generate chart if requested and we have results
         chart = None
+        chart_feedback = None
         if chart_requested and result.get("results") is not None:
             df = result["results"]
             if not df.empty:
                 chart_config = infer_chart_type(user_query, df)
                 if chart_config:
-                    # Override with explicit type if provided
-                    if chart_type:
-                        chart_config["type"] = chart_type
-                    chart = generate_chart(df, chart_config)
+                    # Capture any feedback about chart generation
+                    chart_feedback = chart_config.get("feedback")
+
+                    # Only generate if we have a valid chart type
+                    if chart_config.get("type"):
+                        # Override with explicit type if provided
+                        if chart_type:
+                            chart_config["type"] = chart_type
+                        chart = generate_chart(df, chart_config)
 
         # Route badge colors
         route_colors = {
@@ -781,7 +794,8 @@ def process_query(user_query: str, mode: str):
             "results": result.get("results"),
             "sql": result.get("sql"),
             "executive_summary": executive_summary,
-            "chart": chart
+            "chart": chart,
+            "chart_feedback": chart_feedback
         }
 
     except Exception as e:
@@ -882,7 +896,8 @@ def render_main_content():
                     response["sql"],
                     query_id,
                     response.get("executive_summary"),
-                    response.get("chart")
+                    response.get("chart"),
+                    response.get("chart_feedback")
                 )
 
         st.session_state.messages.append({
@@ -892,7 +907,8 @@ def render_main_content():
             "sql": response["sql"],
             "query_id": query_id,
             "executive_summary": response.get("executive_summary"),
-            "chart": response.get("chart")
+            "chart": response.get("chart"),
+            "chart_feedback": response.get("chart_feedback")
         })
 
     # Clear chat button

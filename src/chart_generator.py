@@ -145,17 +145,17 @@ def infer_chart_type(query: str, df: pd.DataFrame) -> dict[str, Any] | None:
         df: Result DataFrame to visualize
 
     Returns:
-        Chart config dict with keys: type, x_col, y_col
+        Chart config dict with keys: type, x_col, y_col, feedback (optional)
         Returns None if no suitable chart can be inferred
     """
     # Validate minimum requirements
     if df.empty or len(df) < MIN_ROWS_FOR_CHART:
         logger.info("DataFrame too small for chart generation")
-        return None
+        return {"type": None, "feedback": f"Chart requires at least {MIN_ROWS_FOR_CHART} rows of data."}
 
     if len(df.columns) < 2:
         logger.info("Need at least 2 columns for chart generation")
-        return None
+        return {"type": None, "feedback": "Chart requires at least 2 columns (one category, one value)."}
 
     # Analyze column types
     column_types = {col: _detect_column_type(df[col]) for col in df.columns}
@@ -170,13 +170,31 @@ def infer_chart_type(query: str, df: pd.DataFrame) -> dict[str, Any] | None:
         if categorical_cols and numeric_cols:
             x_col = categorical_cols[0]
             y_col = numeric_cols[0]
+            num_categories = df[x_col].nunique()
 
-            # Check category count
-            if df[x_col].nunique() > MAX_PIE_SLICES:
-                logger.info(f"Too many categories ({df[x_col].nunique()}) for pie chart")
-                return None
+            # Auto-switch to bar if too many categories for pie
+            if num_categories > MAX_PIE_SLICES:
+                if num_categories <= MAX_BAR_CATEGORIES:
+                    logger.info(f"Switched from pie to bar chart ({num_categories} categories)")
+                    return {
+                        "type": "bar",
+                        "x_col": x_col,
+                        "y_col": y_col,
+                        "feedback": f"Switched to bar chart: {num_categories} categories exceeds pie chart limit of {MAX_PIE_SLICES}."
+                    }
+                else:
+                    # Too many even for bar - consolidate
+                    logger.info(f"Too many categories ({num_categories}), will consolidate to top {MAX_BAR_CATEGORIES}")
+                    return {
+                        "type": "bar",
+                        "x_col": x_col,
+                        "y_col": y_col,
+                        "feedback": f"Showing top {MAX_BAR_CATEGORIES - 1} categories (of {num_categories}) with remaining grouped as 'Other'."
+                    }
 
             return {"type": "pie", "x_col": x_col, "y_col": y_col}
+        else:
+            return {"type": None, "feedback": "Pie chart requires one text column and one numeric column."}
 
     if _match_chart_pattern(query, "line"):
         # Line chart: need 1 temporal + 1 numeric
@@ -184,19 +202,29 @@ def infer_chart_type(query: str, df: pd.DataFrame) -> dict[str, Any] | None:
             x_col = temporal_cols[0]
             y_col = numeric_cols[0]
             return {"type": "line", "x_col": x_col, "y_col": y_col}
+        else:
+            return {"type": None, "feedback": "Line chart requires one date/time column and one numeric column."}
 
     if _match_chart_pattern(query, "bar"):
         # Bar chart: need 1 categorical + 1 numeric
         if categorical_cols and numeric_cols:
             x_col = categorical_cols[0]
             y_col = numeric_cols[0]
+            num_categories = df[x_col].nunique()
 
             # Check category count
-            if df[x_col].nunique() > MAX_BAR_CATEGORIES:
-                logger.info(f"Too many categories ({df[x_col].nunique()}) for bar chart")
-                return None
+            if num_categories > MAX_BAR_CATEGORIES:
+                logger.info(f"Too many categories ({num_categories}), will consolidate to top {MAX_BAR_CATEGORIES}")
+                return {
+                    "type": "bar",
+                    "x_col": x_col,
+                    "y_col": y_col,
+                    "feedback": f"Showing top {MAX_BAR_CATEGORIES - 1} categories (of {num_categories}) with remaining grouped as 'Other'."
+                }
 
             return {"type": "bar", "x_col": x_col, "y_col": y_col}
+        else:
+            return {"type": None, "feedback": "Bar chart requires one text column and one numeric column."}
 
     # Auto-detect based on data shape if no explicit pattern
     if temporal_cols and numeric_cols:
@@ -211,9 +239,23 @@ def infer_chart_type(query: str, df: pd.DataFrame) -> dict[str, Any] | None:
             return {"type": "pie", "x_col": x_col, "y_col": y_col}
         elif num_categories <= MAX_BAR_CATEGORIES:
             return {"type": "bar", "x_col": x_col, "y_col": y_col}
+        else:
+            # Consolidate for very large category counts
+            return {
+                "type": "bar",
+                "x_col": x_col,
+                "y_col": y_col,
+                "feedback": f"Showing top {MAX_BAR_CATEGORIES - 1} categories (of {num_categories}) with remaining grouped as 'Other'."
+            }
+
+    # No suitable columns found
+    if not categorical_cols and not temporal_cols:
+        return {"type": None, "feedback": "Chart requires at least one text or date column for the axis."}
+    if not numeric_cols:
+        return {"type": None, "feedback": "Chart requires at least one numeric column for values."}
 
     logger.info("Could not infer suitable chart type from data")
-    return None
+    return {"type": None, "feedback": "Unable to determine suitable chart type for this data."}
 
 
 def configure_chart_theme(chart: alt.Chart) -> alt.Chart:
