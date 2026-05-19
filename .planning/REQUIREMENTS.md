@@ -1,0 +1,194 @@
+# Requirements: snow_query — Multi-Provider LLM Integration
+
+**Defined:** 2026-05-19
+**Core Value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
+
+## v1 Requirements
+
+Requirements for this milestone (adding Anthropic Claude as a selectable provider alongside Azure OpenAI). Each maps to a roadmap phase.
+
+### Abstraction (ABS)
+
+- [ ] **ABS-01**: `src/llm/` subpackage exists with `__init__.py`, `base.py`, `errors.py`, `azure_openai.py`, `anthropic_mgti.py`
+- [ ] **ABS-02**: `LLMClient` ABC defines exactly two methods: `complete(system, messages, **kwargs) -> str` and `classify_with_tool(system, messages, tool, **kwargs) -> ToolCall`
+- [ ] **ABS-03**: `ToolSchema`, `ToolCall`, and `IntentResult` are `@dataclass(frozen=True, slots=True)` types used at the adapter boundary
+- [ ] **ABS-04**: `get_llm(provider: str) -> LLMClient` factory with module-level instance cache; resolution order is explicit kwarg > Streamlit session state > `LLM_PROVIDER_DEFAULT` env var
+- [ ] **ABS-05**: Adapters return only `str` or `ToolCall` — raw HTTP JSON never crosses the adapter boundary
+- [ ] **ABS-06**: `_call_azure_openai` is removed from `src/query_router.py` and `src/sql_generator.py`; all three LLM call sites consume `LLMClient` via dependency injection
+
+### Adapters (ADP)
+
+- [ ] **ADP-01**: `AzureOpenAIClient` implements both `LLMClient` methods; `complete` preserves byte-identical output to today's `_call_azure_openai` for the same input (parity gate)
+- [ ] **ADP-02**: `AzureOpenAIClient.classify_with_tool` initially uses prompt-based JSON parsing to preserve existing Azure OpenAI behavior — no provider-side strict-tools requirement on the OpenAI path in v1
+- [ ] **ADP-03**: `AnthropicMGTIClient.complete` calls `POST {base_url}/model/{model}/messages` with `X-Api-Key`, `Content-Type: application/json`, `X-Correlation-Id`, and a fresh UUID per call
+- [ ] **ADP-04**: `AnthropicMGTIClient` body shape is correct: `anthropic_version: "bedrock-2023-05-31"`, top-level `system`, `max_tokens` required, `temperature` honored
+- [ ] **ADP-05**: `AnthropicMGTIClient` validates the configured model name starts with `eu.anthropic.claude-` and raises `LLMConfigError` at construction otherwise
+- [ ] **ADP-06**: `AnthropicMGTIClient` omits `temperature`, `top_p`, and `top_k` from the request body when the model name matches `eu.anthropic.claude-opus-4-7*`
+- [ ] **ADP-07**: `AnthropicMGTIClient.classify_with_tool` uses Anthropic strict-tools: `tools=[tool]`, `tool_choice={"type": "tool", "name": tool.name, "disable_parallel_tool_use": True}`
+- [ ] **ADP-08**: `AnthropicMGTIClient` translates `stop_reason == "guardrail_intervened"` into `LLMGuardrailError` (HTTP 200 response with empty content does NOT count as success)
+- [ ] **ADP-09**: `AnthropicMGTIClient` extracts `tool_use` block input from a strict-tools response and returns it as a `ToolCall`; missing tool_use block raises `LLMSchemaError`
+
+### Configuration (CFG)
+
+- [ ] **CFG-01**: `config.py` exposes a `Settings` object (or equivalent module-level constants) with all existing Azure OpenAI fields plus new Anthropic fields
+- [ ] **CFG-02**: New env vars: `LLM_PROVIDER_DEFAULT`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_VERSION`, `ANTHROPIC_MAX_TOKENS`, `ANTHROPIC_TEMPERATURE`, `ANTHROPIC_TIMEOUT_S`, `ANTHROPIC_TOOLS_SUPPORTED`
+- [ ] **CFG-03**: `validate_config(provider)` is called at app boot for the default provider; raises `LLMConfigError` with a human-readable list of missing variables
+- [ ] **CFG-04**: `.env.example` (or equivalent template) is updated with the new variables and documented defaults
+- [ ] **CFG-05**: `LLM_PROVIDER_DEFAULT` defaults to `azure_openai` so existing deployments are byte-identical after upgrade
+- [ ] **CFG-06**: `jsonschema>=4.26.0,<5` is added to `requirements.txt`
+
+### Errors (ERR)
+
+- [ ] **ERR-01**: `src/llm/errors.py` defines `LLMError` plus `LLMAuthError`, `LLMTransientError`, `LLMGuardrailError`, `LLMSchemaError`, `LLMTimeoutError`, `LLMConfigError`
+- [ ] **ERR-02**: Adapters map HTTP responses to these typed errors at the adapter boundary (401/403 → `LLMAuthError`; 429/5xx → `LLMTransientError`; `requests.Timeout` → `LLMTimeoutError`; missing/invalid response shape → `LLMSchemaError`)
+- [ ] **ERR-03**: Anthropic MGTI proxy error envelope `{"error": {"title", "detail", "status"}}` is handled (not assumed to match the native Anthropic SDK shape)
+- [ ] **ERR-04**: Call sites in `query_router.py` and `sql_generator.py` catch `LLMError` and re-raise as the existing `QueryError` — preserving the current exception contract
+
+### Tools & Schema (TOOL)
+
+- [ ] **TOOL-01**: `ClassificationResultV1` dataclass (frozen, slotted) is the single Python source of truth for intent-classification output; `IntentResult` is built from it
+- [ ] **TOOL-02**: `INTENT_TOOL` (`ToolSchema`) is derived programmatically from `ClassificationResultV1` — no hand-written JSON schema duplication
+- [ ] **TOOL-03**: `chart_requested` and `chart_type` are NOT in the LLM tool's `input_schema`; they continue to be populated by the heuristic `_detect_chart_request()` before the LLM call
+- [ ] **TOOL-04**: `classify_intent` receives the heuristic-populated `chart_requested`/`chart_type` and merges them with the LLM result; LLM output cannot overwrite the heuristic for these two fields
+- [ ] **TOOL-05**: When `ANTHROPIC_TOOLS_SUPPORTED=false`, `AnthropicMGTIClient.classify_with_tool` falls back to text mode + JSON parse — escape hatch if MGTI proxy regresses on tool pass-through
+- [ ] **TOOL-06**: Strict-tools responses are validated with `jsonschema.validate` against the same `INTENT_TOOL.input_schema` before being returned as a `ToolCall` (defence-in-depth)
+- [ ] **TOOL-07**: `generate_sql` and `generate_executive_summary` use only `complete()` (text mode) on both providers — no tool-use wrapping
+
+### Observability (OBS)
+
+- [ ] **OBS-01**: Every Anthropic request includes a freshly generated `X-Correlation-Id` header; the same UUID is logged with the app-side request log via `logger.info`
+- [ ] **OBS-02**: Adapters log a single structured event per call: provider name, model, latency in ms, input/output token counts when available, correlation ID, outcome (success / typed-error-class)
+- [ ] **OBS-03**: API keys are NEVER logged (no full key, no key prefix, no `repr(Settings)` that includes keys)
+- [ ] **OBS-04**: Configured base URL is logged once at app startup (helps catch stage-vs-prod misconfiguration)
+
+### UI (UI)
+
+- [ ] **UI-01**: Sidebar contains an `st.selectbox` labeled "LLM provider" with options "Azure OpenAI" and "Anthropic Claude (MGTI)"
+- [ ] **UI-02**: Selected provider is stored in `st.session_state["llm_provider"]` and initialized from `LLM_PROVIDER_DEFAULT` env on first session
+- [ ] **UI-03**: Currently active model name is displayed under the provider selector (read-only)
+- [ ] **UI-04**: Switching the provider mid-session takes effect on the next user query (not retroactively on in-flight or historical results)
+- [ ] **UI-05**: Selecting a provider whose required env vars are missing shows a clear inline warning in the sidebar and prevents query submission while the warning is active
+- [ ] **UI-06**: `@st.cache_resource`-decorated adapter instances are keyed on `(provider, base_url, model, api_key_fingerprint)`; selecting a different provider re-resolves the adapter
+- [ ] **UI-07**: Every assistant message displays which provider produced it (e.g. small caption with provider + model)
+
+### Smoke Test (SMK)
+
+- [ ] **SMK-01**: `scripts/smoke_llm.py` exists; runnable as `python scripts/smoke_llm.py [--provider azure_openai|anthropic_mgti|both]`
+- [ ] **SMK-02**: For each selected provider, smoke test exercises BOTH `complete()` and `classify_with_tool()` against the live endpoint using credentials from `.env`
+- [ ] **SMK-03**: For Anthropic, smoke test additionally hits the service-info `GET /coreapi/llm/anthropic/v1/` endpoint to confirm gateway reachability (the kbroles-validated first-step diagnostic)
+- [ ] **SMK-04**: Smoke test prints clear pass/fail per check with the captured response shape; exits non-zero on any failure
+- [ ] **SMK-05**: Smoke test must pass for both providers before the sidebar dropdown is wired (gates Phase 5)
+
+### Documentation (DOC)
+
+- [ ] **DOC-01**: README updated with the provider selection feature, sidebar location, default behavior, and supported Claude models
+- [ ] **DOC-02**: USER_GUIDE updated with how to switch providers, expected behavior differences, and what to do when a provider warning appears
+- [ ] **DOC-03**: Document the MGTI-only constraint (no direct Anthropic API in this app context) and the Hubble onboarding link for future operators
+- [ ] **DOC-04**: Document how to run the smoke test and when to do it (any time `.env` Anthropic vars change; before every prod deploy)
+
+## v2 Requirements
+
+Deferred to a future milestone. Tracked but not in current roadmap.
+
+### Resilience (RES)
+
+- **RES-01**: Retry with exponential backoff on `LLMTransientError` (429 / 5xx) — defer until production logs show signal
+- **RES-02**: Sidebar "test connection" button that runs a minimal Create Message call and reports latency — depends on smoke test stability
+
+### Provider features (PRV)
+
+- **PRV-01**: Per-call-site model selection (e.g. Haiku for `classify_intent`, Sonnet for `generate_executive_summary`) — needs production cost/latency data before scoping
+- **PRV-02**: Opus 4.7 support with `thinking.type: "adaptive"` — pending Hubble entitlement and tested use case
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Direct `api.anthropic.com` access | Not authorized in MMC corporate app context; MGTI proxy only |
+| Claude models below 4.5 | MGTI proxy returns `404 Model not supported`; not a snow_query choice |
+| Per-call automatic provider routing | Adds complexity with no proven payoff; user picks one provider per session |
+| Removing Azure OpenAI | Both providers stay first-class; no migration |
+| Streaming responses (Server-Sent Events) | Current call sites are request/response; streaming would require new UI plumbing |
+| Official `anthropic` Python SDK | Incompatible with `X-Api-Key` auth + MGTI URL shape; raw `requests` is the correct path |
+| Auto-failover between providers | Would silently bypass content policy (guardrails); user must consciously switch |
+| OpenAI-shape translation layer | Each adapter speaks its provider's native shape; no compatibility middleware |
+| Cost dashboard / usage analytics across providers | Token logging via `logger.info` is sufficient for v1; defer dashboards |
+| Semantic cache of LLM responses | App-level caching would compromise data-privacy invariants |
+| Streamlit plugin system for additional providers | Two providers only; YAGNI |
+| OpenTelemetry trace export | Log-based correlation IDs are sufficient for single-user local-first app |
+| Mid-session provider switching mid-query (e.g. retry with the other provider) | Confusing behavior; user-initiated swap-then-resend is the explicit pattern |
+| Free-form `chat(message)` method on the interface | Not what the existing call sites need; would invite shape drift |
+| Embedding-model swap to Bedrock embeddings | Local `sentence-transformers` stays for data-privacy reasons |
+| Async LLM calls | Streamlit is synchronous; no benefit until we move off it |
+| Async migration of `query_router.py` | Out of scope for this milestone |
+| Porting `app_brutalist.py` / `fixedapp.py` / `designui.py` variants | They may consume the new abstraction later; not in scope here |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| ABS-01 | TBD | Pending |
+| ABS-02 | TBD | Pending |
+| ABS-03 | TBD | Pending |
+| ABS-04 | TBD | Pending |
+| ABS-05 | TBD | Pending |
+| ABS-06 | TBD | Pending |
+| ADP-01 | TBD | Pending |
+| ADP-02 | TBD | Pending |
+| ADP-03 | TBD | Pending |
+| ADP-04 | TBD | Pending |
+| ADP-05 | TBD | Pending |
+| ADP-06 | TBD | Pending |
+| ADP-07 | TBD | Pending |
+| ADP-08 | TBD | Pending |
+| ADP-09 | TBD | Pending |
+| CFG-01 | TBD | Pending |
+| CFG-02 | TBD | Pending |
+| CFG-03 | TBD | Pending |
+| CFG-04 | TBD | Pending |
+| CFG-05 | TBD | Pending |
+| CFG-06 | TBD | Pending |
+| ERR-01 | TBD | Pending |
+| ERR-02 | TBD | Pending |
+| ERR-03 | TBD | Pending |
+| ERR-04 | TBD | Pending |
+| TOOL-01 | TBD | Pending |
+| TOOL-02 | TBD | Pending |
+| TOOL-03 | TBD | Pending |
+| TOOL-04 | TBD | Pending |
+| TOOL-05 | TBD | Pending |
+| TOOL-06 | TBD | Pending |
+| TOOL-07 | TBD | Pending |
+| OBS-01 | TBD | Pending |
+| OBS-02 | TBD | Pending |
+| OBS-03 | TBD | Pending |
+| OBS-04 | TBD | Pending |
+| UI-01 | TBD | Pending |
+| UI-02 | TBD | Pending |
+| UI-03 | TBD | Pending |
+| UI-04 | TBD | Pending |
+| UI-05 | TBD | Pending |
+| UI-06 | TBD | Pending |
+| UI-07 | TBD | Pending |
+| SMK-01 | TBD | Pending |
+| SMK-02 | TBD | Pending |
+| SMK-03 | TBD | Pending |
+| SMK-04 | TBD | Pending |
+| SMK-05 | TBD | Pending |
+| DOC-01 | TBD | Pending |
+| DOC-02 | TBD | Pending |
+| DOC-03 | TBD | Pending |
+| DOC-04 | TBD | Pending |
+
+**Coverage:**
+- v1 requirements: 52 total
+- Mapped to phases: 0 (filled during roadmap creation)
+- Unmapped: 52 ⚠️ (resolved by ROADMAP creation)
+
+---
+*Requirements defined: 2026-05-19*
+*Last updated: 2026-05-19 after initial definition*
