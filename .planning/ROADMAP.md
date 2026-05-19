@@ -12,7 +12,7 @@ This milestone adds Anthropic Claude (via MGTI Apigee/Bedrock proxy) as a sessio
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Abstraction Seam** — Build `src/llm/` interface, typed errors, dataclasses, config foundation (no behavior change)
+- [x] **Phase 1: Abstraction Seam** — Build `src/llm/` interface, typed errors, dataclasses, config foundation (no behavior change)
 - [ ] **Phase 2: Azure Extraction + Parity Gate** — Extract existing Azure OpenAI flow into adapter; swap call sites; verify byte-identical output
 - [ ] **Phase 3: Anthropic MGTI Adapter** — Add Anthropic adapter with text-mode `complete()`, correlation IDs, typed error mapping (no UI exposure)
 - [ ] **Phase 4: Strict-Tools + Smoke Test** — Strict-tools mode for intent classification; live-credential smoke test gating Phase 5
@@ -36,9 +36,9 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. No log line or `repr()` output across the package exposes an API key in any form (full, prefix, or fingerprint pre-image)
 
 **Plans**:
-- [ ] 01-PLAN-01-package-skeleton.md - Create src/llm/ package skeleton: __init__.py, base.py (LLMClient ABC), errors.py (6 typed errors), types.py (4 frozen+slots dataclasses)
-- [ ] 01-PLAN-02-config-factory-stubs.md - Wire LLMSettings + validate_config (src/llm/config.py), get_llm factory with lazy-import registry (src/llm/__init__.py), adapter stubs (azure_openai.py, anthropic_mgti.py), add jsonschema to requirements.txt
-- [ ] 01-PLAN-03-smoke-verification.md - tests/test_llm_seam.py: pytest module proving all 5 Phase 1 success criteria with zero live external dependencies
+- [x] 01-PLAN-01-package-skeleton.md - Create src/llm/ package skeleton: __init__.py, base.py (LLMClient ABC), errors.py (6 typed errors), types.py (4 frozen+slots dataclasses)
+- [x] 01-PLAN-02-config-factory-stubs.md - Wire LLMSettings + validate_config (src/llm/config.py), get_llm factory with lazy-import registry (src/llm/__init__.py), adapter stubs (azure_openai.py, anthropic_mgti.py), add jsonschema to requirements.txt
+- [x] 01-PLAN-03-smoke-verification.md - tests/test_llm_seam.py: pytest module proving all 5 Phase 1 success criteria with zero live external dependencies
 
 ### Phase 2: Azure Extraction + Parity Gate
 
@@ -114,7 +114,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Abstraction Seam | 0/TBD | Not started | - |
+| 1. Abstraction Seam | 3/3 | Complete ✓ | 2026-05-19 |
 | 2. Azure Extraction + Parity Gate | 0/TBD | Not started | - |
 | 3. Anthropic MGTI Adapter | 0/TBD | Not started | - |
 | 4. Strict-Tools + Smoke Test | 0/TBD | Not started | - |

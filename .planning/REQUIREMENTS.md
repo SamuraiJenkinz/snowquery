@@ -9,11 +9,11 @@ Requirements for this milestone (adding Anthropic Claude as a selectable provide
 
 ### Abstraction (ABS)
 
-- [ ] **ABS-01**: `src/llm/` subpackage exists with `__init__.py`, `base.py`, `errors.py`, `azure_openai.py`, `anthropic_mgti.py`
-- [ ] **ABS-02**: `LLMClient` ABC defines exactly two methods: `complete(messages: list[dict], *, max_tokens: int = 500, temperature: float = 0.1, **kwargs) -> str` and `classify_with_tool(messages: list[dict], tool: ToolSchema, *, tool_name: str, **kwargs) -> ToolCall` — `system` prompts stay inline in `messages` with `role: "system"` (Anthropic adapter extracts and promotes to top-level internally; preserves parity with current Azure call sites)
-- [ ] **ABS-03**: `ToolSchema`, `ToolCall`, and `IntentResult` are `@dataclass(frozen=True, slots=True)` types used at the adapter boundary
-- [ ] **ABS-04**: `get_llm(provider: str) -> LLMClient` factory with module-level instance cache; resolution order is explicit kwarg > Streamlit session state > `LLM_PROVIDER_DEFAULT` env var
-- [ ] **ABS-05**: Adapters return only `str` or `ToolCall` — raw HTTP JSON never crosses the adapter boundary
+- [x] **ABS-01**: `src/llm/` subpackage exists with `__init__.py`, `base.py`, `errors.py`, `azure_openai.py`, `anthropic_mgti.py`
+- [x] **ABS-02**: `LLMClient` ABC defines exactly two methods: `complete(messages: list[dict], *, max_tokens: int = 500, temperature: float = 0.1, **kwargs) -> str` and `classify_with_tool(messages: list[dict], tool: ToolSchema, *, tool_name: str, **kwargs) -> ToolCall` — `system` prompts stay inline in `messages` with `role: "system"` (Anthropic adapter extracts and promotes to top-level internally; preserves parity with current Azure call sites)
+- [x] **ABS-03**: `ToolSchema`, `ToolCall`, and `IntentResult` are `@dataclass(frozen=True, slots=True)` types used at the adapter boundary
+- [x] **ABS-04**: `get_llm(provider: str) -> LLMClient` factory with module-level instance cache; resolution order is explicit kwarg > Streamlit session state > `LLM_PROVIDER_DEFAULT` env var
+- [x] **ABS-05**: Adapters return only `str` or `ToolCall` — raw HTTP JSON never crosses the adapter boundary
 - [ ] **ABS-06**: `_call_azure_openai` is removed from `src/query_router.py` and `src/sql_generator.py`; all three LLM call sites consume `LLMClient` via dependency injection
 
 ### Adapters (ADP)
@@ -30,23 +30,23 @@ Requirements for this milestone (adding Anthropic Claude as a selectable provide
 
 ### Configuration (CFG)
 
-- [ ] **CFG-01**: `config.py` exposes a `Settings` object (or equivalent module-level constants) with all existing Azure OpenAI fields plus new Anthropic fields
+- [x] **CFG-01**: `config.py` exposes a `Settings` object (or equivalent module-level constants) with all existing Azure OpenAI fields plus new Anthropic fields
 - [ ] **CFG-02**: New env vars: `LLM_PROVIDER_DEFAULT`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_VERSION`, `ANTHROPIC_MAX_TOKENS`, `ANTHROPIC_TEMPERATURE`, `ANTHROPIC_TIMEOUT_S`, `ANTHROPIC_TOOLS_SUPPORTED`
-- [ ] **CFG-03**: `validate_config(provider)` is called at app boot for the default provider; raises `LLMConfigError` with a human-readable list of missing variables
+- [x] **CFG-03**: `validate_config(provider)` is called at app boot for the default provider; raises `LLMConfigError` with a human-readable list of missing variables
 - [ ] **CFG-04**: `.env.example` (or equivalent template) is updated with the new variables and documented defaults
-- [ ] **CFG-05**: `LLM_PROVIDER_DEFAULT` defaults to `azure_openai` so existing deployments are byte-identical after upgrade
-- [ ] **CFG-06**: `jsonschema>=4.26.0,<5` is added to `requirements.txt`
+- [x] **CFG-05**: `LLM_PROVIDER_DEFAULT` defaults to `azure_openai` so existing deployments are byte-identical after upgrade
+- [x] **CFG-06**: `jsonschema>=4.26.0,<5` is added to `requirements.txt`
 
 ### Errors (ERR)
 
-- [ ] **ERR-01**: `src/llm/errors.py` defines `LLMError` plus `LLMAuthError`, `LLMTransientError`, `LLMGuardrailError`, `LLMSchemaError`, `LLMTimeoutError`, `LLMConfigError`
+- [x] **ERR-01**: `src/llm/errors.py` defines `LLMError` plus `LLMAuthError`, `LLMTransientError`, `LLMGuardrailError`, `LLMSchemaError`, `LLMTimeoutError`, `LLMConfigError`
 - [ ] **ERR-02**: Adapters map HTTP responses to these typed errors at the adapter boundary (401/403 → `LLMAuthError`; 429/5xx → `LLMTransientError`; `requests.Timeout` → `LLMTimeoutError`; missing/invalid response shape → `LLMSchemaError`)
 - [ ] **ERR-03**: Anthropic MGTI proxy error envelope `{"error": {"title", "detail", "status"}}` is handled (not assumed to match the native Anthropic SDK shape)
 - [ ] **ERR-04**: Call sites in `query_router.py` and `sql_generator.py` catch `LLMError` and re-raise as the existing `QueryError` — preserving the current exception contract
 
 ### Tools & Schema (TOOL)
 
-- [ ] **TOOL-01**: `ClassificationResultV1` dataclass (frozen, slotted) is the single Python source of truth for intent-classification output; `IntentResult` is built from it
+- [x] **TOOL-01**: `ClassificationResultV1` dataclass (frozen, slotted) is the single Python source of truth for intent-classification output; `IntentResult` is built from it
 - [ ] **TOOL-02**: `INTENT_TOOL` (`ToolSchema`) is derived programmatically from `ClassificationResultV1` — no hand-written JSON schema duplication
 - [ ] **TOOL-03**: `chart_requested` and `chart_type` are NOT in the LLM tool's `input_schema`; they continue to be populated by the heuristic `_detect_chart_request()` before the LLM call
 - [ ] **TOOL-04**: `classify_intent` receives the heuristic-populated `chart_requested`/`chart_type` and merges them with the LLM result; LLM output cannot overwrite the heuristic for these two fields
@@ -58,7 +58,7 @@ Requirements for this milestone (adding Anthropic Claude as a selectable provide
 
 - [ ] **OBS-01**: Every Anthropic request includes a freshly generated `X-Correlation-Id` header; the same UUID is logged with the app-side request log via `logger.info`
 - [ ] **OBS-02**: Adapters log a single structured event per call: provider name, model, latency in ms, input/output token counts when available, correlation ID, outcome (success / typed-error-class)
-- [ ] **OBS-03**: API keys are NEVER logged (no full key, no key prefix, no `repr(Settings)` that includes keys)
+- [x] **OBS-03**: API keys are NEVER logged (no full key, no key prefix, no `repr(Settings)` that includes keys)
 - [ ] **OBS-04**: Configured base URL is logged once at app startup (helps catch stage-vs-prod misconfiguration)
 
 ### UI (UI)
@@ -131,11 +131,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ABS-01 | Phase 1 | Pending |
-| ABS-02 | Phase 1 | Pending |
-| ABS-03 | Phase 1 | Pending |
-| ABS-04 | Phase 1 | Pending |
-| ABS-05 | Phase 1 | Pending |
+| ABS-01 | Phase 1 | Complete |
+| ABS-02 | Phase 1 | Complete |
+| ABS-03 | Phase 1 | Complete |
+| ABS-04 | Phase 1 | Complete |
+| ABS-05 | Phase 1 | Complete |
 | ABS-06 | Phase 2 | Pending |
 | ADP-01 | Phase 2 | Pending |
 | ADP-02 | Phase 2 | Pending |
@@ -146,17 +146,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADP-07 | Phase 4 | Pending |
 | ADP-08 | Phase 3 | Pending |
 | ADP-09 | Phase 4 | Pending |
-| CFG-01 | Phase 1 | Pending |
+| CFG-01 | Phase 1 | Complete |
 | CFG-02 | Phase 3 | Pending |
-| CFG-03 | Phase 1 | Pending |
+| CFG-03 | Phase 1 | Complete |
 | CFG-04 | Phase 3 | Pending |
-| CFG-05 | Phase 1 | Pending |
-| CFG-06 | Phase 1 | Pending |
-| ERR-01 | Phase 1 | Pending |
+| CFG-05 | Phase 1 | Complete |
+| CFG-06 | Phase 1 | Complete |
+| ERR-01 | Phase 1 | Complete |
 | ERR-02 | Phase 3 | Pending |
 | ERR-03 | Phase 3 | Pending |
 | ERR-04 | Phase 2 | Pending |
-| TOOL-01 | Phase 1 | Pending |
+| TOOL-01 | Phase 1 | Complete |
 | TOOL-02 | Phase 4 | Pending |
 | TOOL-03 | Phase 4 | Pending |
 | TOOL-04 | Phase 4 | Pending |
@@ -165,7 +165,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOOL-07 | Phase 3 | Pending |
 | OBS-01 | Phase 3 | Pending |
 | OBS-02 | Phase 2 | Pending |
-| OBS-03 | Phase 1 | Pending |
+| OBS-03 | Phase 1 | Complete |
 | OBS-04 | Phase 3 | Pending |
 | UI-01 | Phase 5 | Pending |
 | UI-02 | Phase 5 | Pending |
@@ -198,4 +198,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-19*
-*Last updated: 2026-05-19 — traceability populated by roadmap creation*
+*Last updated: 2026-05-19 — Phase 1 (Abstraction Seam) requirements marked Complete*
