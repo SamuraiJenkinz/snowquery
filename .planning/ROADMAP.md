@@ -35,7 +35,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. `validate_config(provider)` raises `LLMConfigError` listing every missing variable for the requested provider when called at app boot
   5. No log line or `repr()` output across the package exposes an API key in any form (full, prefix, or fingerprint pre-image)
 
-**Plans**: TBD
+**Plans**:
+- [ ] 01-PLAN-01-package-skeleton.md - Create src/llm/ package skeleton: __init__.py, base.py (LLMClient ABC), errors.py (6 typed errors), types.py (4 frozen+slots dataclasses)
+- [ ] 01-PLAN-02-config-factory-stubs.md - Wire LLMSettings + validate_config (src/llm/config.py), get_llm factory with lazy-import registry (src/llm/__init__.py), adapter stubs (azure_openai.py, anthropic_mgti.py), add jsonschema to requirements.txt
+- [ ] 01-PLAN-03-smoke-verification.md - tests/test_llm_seam.py: pytest module proving all 5 Phase 1 success criteria with zero live external dependencies
 
 ### Phase 2: Azure Extraction + Parity Gate
 
