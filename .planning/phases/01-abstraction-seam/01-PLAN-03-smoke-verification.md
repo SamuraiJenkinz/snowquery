@@ -14,7 +14,7 @@ must_haves:
     - "The ABC contract enforcement (success criterion #2) is verified by a test that instantiates an incomplete subclass and asserts TypeError"
     - "The resolution-order chain (success criterion #3) is verified by tests that set/unset env vars and check which adapter class get_llm returns"
     - "validate_config gap-listing (success criterion #4) is verified by clearing env vars and asserting the exception message contains every required var name"
-    - "API-key repr safety (success criterion #5 / OBS-03) is verified by a test that constructs LLMSettings with sentinel secrets and asserts they do NOT appear in repr"
+    - "API-key repr safety (success criterion #5 / OBS-03) is verified across the full Phase 1 package surface — LLMSettings, LLMConfigError, AND the AzureOpenAIClient / AnthropicMGTIClient stubs — by constructing each with sentinel secrets / inspecting their repr() and asserting the sentinels never appear; load_settings() is verified key-free by code inspection of src/llm/config.py (no logger.info, no print, no key-bearing format strings)"
   artifacts:
     - path: "tests/test_llm_seam.py"
       provides: "Pytest module asserting all 5 Phase 1 success criteria via unit-test-shaped functions"
@@ -308,7 +308,18 @@ def test_validate_config_partial_missing(monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_no_api_keys_in_repr():
-    """Success criterion #5: api_key fields are excluded from repr via field(repr=False)."""
+    """Success criterion #5: api_key fields are excluded from repr via field(repr=False).
+
+    This is the regression guard for the full package surface across Phases 1-3:
+    LLMSettings + LLMConfigError + stub clients today, and the real adapters as
+    they gain key-bearing state in Phase 2/3.
+
+    Note: ``load_settings()`` itself is verified key-free by code inspection of
+    ``src/llm/config.py`` (no ``logger.info``, no ``print``, no key-bearing
+    format strings) — it is a pure read of ``os.environ`` into the dataclass
+    fields. If that property is ever violated, this test docstring must be
+    updated and a live log-capture assertion added here.
+    """
     SENTINEL_AZURE = "AZURE_SECRET_DO_NOT_LEAK_AAAA"
     SENTINEL_ANTHROPIC = "ANTHROPIC_SECRET_DO_NOT_LEAK_BBBB"
 
@@ -342,6 +353,21 @@ def test_no_api_keys_in_repr():
     )
     assert SENTINEL_AZURE not in repr(err)
     assert SENTINEL_AZURE not in str(err)
+
+    # Regression guard for Phase 2/3 across the full package surface:
+    # stub clients today carry no key material, but when they gain real
+    # config in later phases, their repr() must continue to redact.
+    # Asserting against the sentinels now means a Phase 2/3 commit that
+    # accidentally stores the raw key on the instance and falls back to
+    # the default dataclass/object repr would be caught here.
+    azure_repr = repr(AzureOpenAIClient())
+    anthropic_repr = repr(AnthropicMGTIClient())
+    assert SENTINEL_AZURE not in azure_repr, (
+        f"azure stub repr leaked sentinel: {azure_repr}"
+    )
+    assert SENTINEL_ANTHROPIC not in anthropic_repr, (
+        f"anthropic stub repr leaked sentinel: {anthropic_repr}"
+    )
 ```
 
 Requirements:
@@ -417,7 +443,7 @@ Must print `all locked files intact`.
   - #2 (ABC contract enforced) → `test_abc_contract_enforced`
   - #3 (factory + cache + resolution order + default azure_openai) → `test_resolution_order`
   - #4 (validate_config lists ALL missing vars) → `test_validate_config_lists_all_missing` + `test_validate_config_partial_missing`
-  - #5 (no API keys in repr/log output) → `test_no_api_keys_in_repr`
+  - #5 (no API keys in repr/log output across the package) → `test_no_api_keys_in_repr` (covers LLMSettings, LLMConfigError, AzureOpenAIClient stub, AnthropicMGTIClient stub; load_settings code-inspected per its docstring)
 - No live HTTP call is made by the test suite.
 - LOCKED files (`app.py`, top-level `config.py`, `src/query_router.py`, `src/sql_generator.py`) are NOT modified by this plan.
 
