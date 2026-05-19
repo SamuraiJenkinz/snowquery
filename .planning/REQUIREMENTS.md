@@ -131,64 +131,71 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ABS-01 | TBD | Pending |
-| ABS-02 | TBD | Pending |
-| ABS-03 | TBD | Pending |
-| ABS-04 | TBD | Pending |
-| ABS-05 | TBD | Pending |
-| ABS-06 | TBD | Pending |
-| ADP-01 | TBD | Pending |
-| ADP-02 | TBD | Pending |
-| ADP-03 | TBD | Pending |
-| ADP-04 | TBD | Pending |
-| ADP-05 | TBD | Pending |
-| ADP-06 | TBD | Pending |
-| ADP-07 | TBD | Pending |
-| ADP-08 | TBD | Pending |
-| ADP-09 | TBD | Pending |
-| CFG-01 | TBD | Pending |
-| CFG-02 | TBD | Pending |
-| CFG-03 | TBD | Pending |
-| CFG-04 | TBD | Pending |
-| CFG-05 | TBD | Pending |
-| CFG-06 | TBD | Pending |
-| ERR-01 | TBD | Pending |
-| ERR-02 | TBD | Pending |
-| ERR-03 | TBD | Pending |
-| ERR-04 | TBD | Pending |
-| TOOL-01 | TBD | Pending |
-| TOOL-02 | TBD | Pending |
-| TOOL-03 | TBD | Pending |
-| TOOL-04 | TBD | Pending |
-| TOOL-05 | TBD | Pending |
-| TOOL-06 | TBD | Pending |
-| TOOL-07 | TBD | Pending |
-| OBS-01 | TBD | Pending |
-| OBS-02 | TBD | Pending |
-| OBS-03 | TBD | Pending |
-| OBS-04 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| UI-06 | TBD | Pending |
-| UI-07 | TBD | Pending |
-| SMK-01 | TBD | Pending |
-| SMK-02 | TBD | Pending |
-| SMK-03 | TBD | Pending |
-| SMK-04 | TBD | Pending |
-| SMK-05 | TBD | Pending |
-| DOC-01 | TBD | Pending |
-| DOC-02 | TBD | Pending |
-| DOC-03 | TBD | Pending |
-| DOC-04 | TBD | Pending |
+| ABS-01 | Phase 1 | Pending |
+| ABS-02 | Phase 1 | Pending |
+| ABS-03 | Phase 1 | Pending |
+| ABS-04 | Phase 1 | Pending |
+| ABS-05 | Phase 1 | Pending |
+| ABS-06 | Phase 2 | Pending |
+| ADP-01 | Phase 2 | Pending |
+| ADP-02 | Phase 2 | Pending |
+| ADP-03 | Phase 3 | Pending |
+| ADP-04 | Phase 3 | Pending |
+| ADP-05 | Phase 3 | Pending |
+| ADP-06 | Phase 3 | Pending |
+| ADP-07 | Phase 4 | Pending |
+| ADP-08 | Phase 3 | Pending |
+| ADP-09 | Phase 4 | Pending |
+| CFG-01 | Phase 1 | Pending |
+| CFG-02 | Phase 3 | Pending |
+| CFG-03 | Phase 1 | Pending |
+| CFG-04 | Phase 3 | Pending |
+| CFG-05 | Phase 1 | Pending |
+| CFG-06 | Phase 1 | Pending |
+| ERR-01 | Phase 1 | Pending |
+| ERR-02 | Phase 3 | Pending |
+| ERR-03 | Phase 3 | Pending |
+| ERR-04 | Phase 2 | Pending |
+| TOOL-01 | Phase 1 | Pending |
+| TOOL-02 | Phase 4 | Pending |
+| TOOL-03 | Phase 4 | Pending |
+| TOOL-04 | Phase 4 | Pending |
+| TOOL-05 | Phase 4 | Pending |
+| TOOL-06 | Phase 4 | Pending |
+| TOOL-07 | Phase 3 | Pending |
+| OBS-01 | Phase 3 | Pending |
+| OBS-02 | Phase 2 | Pending |
+| OBS-03 | Phase 1 | Pending |
+| OBS-04 | Phase 3 | Pending |
+| UI-01 | Phase 5 | Pending |
+| UI-02 | Phase 5 | Pending |
+| UI-03 | Phase 5 | Pending |
+| UI-04 | Phase 5 | Pending |
+| UI-05 | Phase 5 | Pending |
+| UI-06 | Phase 5 | Pending |
+| UI-07 | Phase 5 | Pending |
+| SMK-01 | Phase 4 | Pending |
+| SMK-02 | Phase 4 | Pending |
+| SMK-03 | Phase 4 | Pending |
+| SMK-04 | Phase 4 | Pending |
+| SMK-05 | Phase 4 | Pending |
+| DOC-01 | Phase 5 | Pending |
+| DOC-02 | Phase 5 | Pending |
+| DOC-03 | Phase 5 | Pending |
+| DOC-04 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 52 total
-- Mapped to phases: 0 (filled during roadmap creation)
-- Unmapped: 52 ⚠️ (resolved by ROADMAP creation)
+- Mapped to phases: 52
+- Unmapped: 0
+
+**Per-phase totals:**
+- Phase 1 (Abstraction Seam): 12 requirements
+- Phase 2 (Azure Extraction + Parity Gate): 5 requirements
+- Phase 3 (Anthropic MGTI Adapter): 12 requirements
+- Phase 4 (Strict-Tools + Smoke Test): 12 requirements
+- Phase 5 (Sidebar UI Toggle + Documentation): 11 requirements
 
 ---
 *Requirements defined: 2026-05-19*
-*Last updated: 2026-05-19 after initial definition*
+*Last updated: 2026-05-19 — traceability populated by roadmap creation*
