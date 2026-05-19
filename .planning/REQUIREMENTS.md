@@ -10,7 +10,7 @@ Requirements for this milestone (adding Anthropic Claude as a selectable provide
 ### Abstraction (ABS)
 
 - [ ] **ABS-01**: `src/llm/` subpackage exists with `__init__.py`, `base.py`, `errors.py`, `azure_openai.py`, `anthropic_mgti.py`
-- [ ] **ABS-02**: `LLMClient` ABC defines exactly two methods: `complete(system, messages, **kwargs) -> str` and `classify_with_tool(system, messages, tool, **kwargs) -> ToolCall`
+- [ ] **ABS-02**: `LLMClient` ABC defines exactly two methods: `complete(messages: list[dict], *, max_tokens: int = 500, temperature: float = 0.1, **kwargs) -> str` and `classify_with_tool(messages: list[dict], tool: ToolSchema, *, tool_name: str, **kwargs) -> ToolCall` — `system` prompts stay inline in `messages` with `role: "system"` (Anthropic adapter extracts and promotes to top-level internally; preserves parity with current Azure call sites)
 - [ ] **ABS-03**: `ToolSchema`, `ToolCall`, and `IntentResult` are `@dataclass(frozen=True, slots=True)` types used at the adapter boundary
 - [ ] **ABS-04**: `get_llm(provider: str) -> LLMClient` factory with module-level instance cache; resolution order is explicit kwarg > Streamlit session state > `LLM_PROVIDER_DEFAULT` env var
 - [ ] **ABS-05**: Adapters return only `str` or `ToolCall` — raw HTTP JSON never crosses the adapter boundary
