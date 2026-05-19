@@ -12,3 +12,6 @@ python-certifi-win32>=1.6.1; sys_platform == 'win32'  # Windows cert store for c
 # Security: Pin minimum versions to address vulnerabilities
 torch>=2.6.0  # CVE-2025-32434: RCE via torch.load()
 transformers>=4.51.0  # CVE-2025-14927, CVE-2025-14924: Code injection via checkpoint files
+
+# LLM tool schema validation (Phase 4 strict-tools defence-in-depth, TOOL-06)
+jsonschema>=4.26.0,<5
