@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** Phase 1 — Abstraction Seam
+**Current focus:** Phase 2 — Azure Extraction
 
 ## Current Position
 
-Phase: 1 of 5 (Abstraction Seam)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-05-19 — Completed 01-PLAN-02-config-factory-stubs.md
+Phase: 1 of 5 (Abstraction Seam) — COMPLETE
+Plan: 3 of 3 in Phase 1 (all complete)
+Status: Phase 1 complete — ready for Phase 2
+Last activity: 2026-05-19 — Completed 01-PLAN-03-smoke-verification.md
 
-Progress: [██░░░░░░░░] 13% (2/15 plans estimated)
+Progress: [██░░░░░░░░] 20% (3/15 plans estimated)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 3 min
-- Total execution time: 6 min
+- Total plans completed: 3
+- Average duration: 4 min
+- Total execution time: 11 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. Abstraction Seam | 2 | 6 min | 3 min |
+| 1. Abstraction Seam | 3 | 11 min | ~4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (3 min)
-- Trend: consistent 3 min/plan
+- Last 5 plans: 01-01 (3 min), 01-02 (3 min), 01-03 (5 min)
+- Trend: consistent 3-5 min/plan
 
 *Updated after each plan completion*
 
@@ -60,9 +60,19 @@ Decisions from 01-02 (config + factory + stubs):
 - Adapter __init__ is no-op in Phase 1 (no raise) so factory cache can store instance
 - st.session_state wrapped in try/except Exception (not hasattr) per RESEARCH.md verified pattern
 
+Decisions from 01-03 (smoke verification):
+- pytest 9.0.2 already installed — no requirements.txt change needed (dev-only)
+- tests/ directory created without __init__.py (pytest discovers by collection)
+- Acceptance gate pattern established: one pytest module per phase proves each numbered success criterion
+- Cache-clear autouse fixture required for module-level singletons in get_llm
+
+### Phase 1 Sign-Off
+
+Phase 1 (Abstraction Seam) is complete. All 5 ROADMAP.md success criteria are proven by the acceptance gate at tests/test_llm_seam.py (6 tests, 0.42s, zero live HTTP calls). The seam is stable for Phase 2 to plug AzureOpenAIClient into.
+
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
@@ -71,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-19T23:18:14Z
-Stopped at: Completed 01-PLAN-02-config-factory-stubs.md (Plan 2 of 3 in Phase 1)
+Last session: 2026-05-19T23:23:35Z
+Stopped at: Completed 01-PLAN-03-smoke-verification.md (Plan 3 of 3 in Phase 1 — Phase 1 COMPLETE)
 Resume file: None
