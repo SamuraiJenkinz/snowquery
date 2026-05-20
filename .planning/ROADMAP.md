@@ -13,7 +13,7 @@ This milestone adds Anthropic Claude (via MGTI Apigee/Bedrock proxy) as a sessio
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Abstraction Seam** — Build `src/llm/` interface, typed errors, dataclasses, config foundation (no behavior change)
-- [ ] **Phase 2: Azure Extraction + Parity Gate** — Extract existing Azure OpenAI flow into adapter; swap call sites; verify byte-identical output
+- [x] **Phase 2: Azure Extraction + Parity Gate** — Extract existing Azure OpenAI flow into adapter; swap call sites; verify byte-identical output
 - [ ] **Phase 3: Anthropic MGTI Adapter** — Add Anthropic adapter with text-mode `complete()`, correlation IDs, typed error mapping (no UI exposure)
 - [ ] **Phase 4: Strict-Tools + Smoke Test** — Strict-tools mode for intent classification; live-credential smoke test gating Phase 5
 - [ ] **Phase 5: Sidebar UI Toggle + Documentation** — User-facing provider dropdown; README + USER_GUIDE updated
@@ -55,10 +55,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Adapter emits one structured log event per call containing provider name, model, latency in ms, outcome, and (when available) token counts
 
 **Plans**:
-- [ ] 02-PLAN-01-azure-adapter-implementation.md - Implement AzureOpenAIClient.complete() + classify_with_tool() in src/llm/azure_openai.py with typed-error mapping, structured log helper, and prompt-based JSON parsing (ADP-01, ADP-02, ERR-02, OBS-02)
-- [ ] 02-PLAN-02-error-translation-seam.md - Create src/llm/_compat.py with llm_to_query_error() context manager — the single LLMError→QueryError translation point (ERR-04)
-- [ ] 02-PLAN-03-call-site-migration.md - Delete _call_azure_openai from src/query_router.py + src/sql_generator.py; route all 3 call sites through get_llm() + llm_to_query_error(); remove unused imports (ABS-06)
-- [ ] 02-PLAN-04-acceptance-gate.md - tests/test_phase2_parity.py + 5 fixtures in tests/fixtures/parity/: pytest module proving all 4 Phase 2 success criteria, headlined by the five-fixture parity test
+- [x] 02-PLAN-01-azure-adapter-implementation.md - Implement AzureOpenAIClient.complete() + classify_with_tool() in src/llm/azure_openai.py with typed-error mapping, structured log helper, and prompt-based JSON parsing (ADP-01, ADP-02, ERR-02, OBS-02)
+- [x] 02-PLAN-02-error-translation-seam.md - Create src/llm/_compat.py with llm_to_query_error() context manager — the single LLMError→QueryError translation point (ERR-04)
+- [x] 02-PLAN-03-call-site-migration.md - Delete _call_azure_openai from src/query_router.py + src/sql_generator.py; route all 3 call sites through get_llm() + llm_to_query_error(); remove unused imports (ABS-06)
+- [x] 02-PLAN-04-acceptance-gate.md - tests/test_phase2_parity.py + 5 fixtures in tests/fixtures/parity/: pytest module proving all 4 Phase 2 success criteria, headlined by the five-fixture parity test
 
 ### Phase 3: Anthropic MGTI Adapter
 
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Abstraction Seam | 3/3 | Complete ✓ | 2026-05-19 |
-| 2. Azure Extraction + Parity Gate | 0/4 | Not started | - |
+| 2. Azure Extraction + Parity Gate | 4/4 | Complete ✓ | 2026-05-20 |
 | 3. Anthropic MGTI Adapter | 0/TBD | Not started | - |
 | 4. Strict-Tools + Smoke Test | 0/TBD | Not started | - |
 | 5. Sidebar UI Toggle + Documentation | 0/TBD | Not started | - |

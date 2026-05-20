@@ -136,9 +136,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ABS-03 | Phase 1 | Complete |
 | ABS-04 | Phase 1 | Complete |
 | ABS-05 | Phase 1 | Complete |
-| ABS-06 | Phase 2 | Pending |
-| ADP-01 | Phase 2 | Pending |
-| ADP-02 | Phase 2 | Pending |
+| ABS-06 | Phase 2 | Complete |
+| ADP-01 | Phase 2 | Complete |
+| ADP-02 | Phase 2 | Complete |
 | ADP-03 | Phase 3 | Pending |
 | ADP-04 | Phase 3 | Pending |
 | ADP-05 | Phase 3 | Pending |
@@ -155,7 +155,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ERR-01 | Phase 1 | Complete |
 | ERR-02 | Phase 3 | Pending |
 | ERR-03 | Phase 3 | Pending |
-| ERR-04 | Phase 2 | Pending |
+| ERR-04 | Phase 2 | Complete |
 | TOOL-01 | Phase 1 | Complete |
 | TOOL-02 | Phase 4 | Pending |
 | TOOL-03 | Phase 4 | Pending |
@@ -164,7 +164,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TOOL-06 | Phase 4 | Pending |
 | TOOL-07 | Phase 3 | Pending |
 | OBS-01 | Phase 3 | Pending |
-| OBS-02 | Phase 2 | Pending |
+| OBS-02 | Phase 2 | Complete |
 | OBS-03 | Phase 1 | Complete |
 | OBS-04 | Phase 3 | Pending |
 | UI-01 | Phase 5 | Pending |
