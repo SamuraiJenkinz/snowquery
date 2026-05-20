@@ -8,14 +8,10 @@ import json
 from typing import Any, Optional
 
 import pandas as pd
-import requests
 
-from config import (
-    API_VERSION,
-    AZURE_OPENAI_API_KEY,
-    AZURE_OPENAI_ENDPOINT,
-    TOP_K_SEMANTIC,
-)
+from config import TOP_K_SEMANTIC
+from src.llm import get_llm
+from src.llm._compat import llm_to_query_error
 from src.semantic_search import semantic_query
 from src.sql_generator import query_with_sql
 from src.utils import QueryError, format_schema_for_llm, logger
@@ -102,45 +98,6 @@ def _detect_chart_request(query: str) -> tuple[bool, str | None]:
     return False, None
 
 
-def _call_azure_openai(messages: list[dict]) -> str:
-    """Call Azure OpenAI API."""
-    if not AZURE_OPENAI_API_KEY:
-        raise QueryError(
-            "Azure OpenAI API key not configured",
-            "Set the AZURE_OPENAI_API_KEY environment variable."
-        )
-
-    if not AZURE_OPENAI_ENDPOINT:
-        raise QueryError(
-            "Azure OpenAI endpoint not configured",
-            "Set the AZURE_OPENAI_ENDPOINT environment variable."
-        )
-
-    headers = {
-        "Content-Type": "application/json",
-        "api-key": AZURE_OPENAI_API_KEY,
-    }
-
-    payload = {
-        "messages": messages,
-        "temperature": 0.1,
-        "max_tokens": 500,
-    }
-
-    try:
-        response = requests.post(
-            f"{AZURE_OPENAI_ENDPOINT}?api-version={API_VERSION}",
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Azure OpenAI API error: {e}")
-        raise QueryError("Azure OpenAI API call failed", str(e))
-
-
 def classify_intent(
     user_query: str,
     schema_summary: dict[str, Any]
@@ -177,7 +134,9 @@ def classify_intent(
             }
         ]
 
-        content = _call_azure_openai(messages).strip()
+        client = get_llm()
+        with llm_to_query_error():
+            content = client.complete(messages, max_tokens=500).strip()
 
         # Parse JSON response
         try:
@@ -539,7 +498,9 @@ Please provide an executive summary of these results."""
             }
         ]
 
-        summary = _call_azure_openai(messages).strip()
+        client = get_llm()
+        with llm_to_query_error():
+            summary = client.complete(messages, max_tokens=500).strip()
         logger.info("Executive summary generated successfully")
         return summary
 
