@@ -13,7 +13,7 @@ must_haves:
     - "src/llm/_compat.py exists and exports a single public function: llm_to_query_error() — a contextlib.contextmanager that catches LLMError subclasses and re-raises as QueryError (success criterion #3, ERR-04)"
     - "The LLMError→QueryError translation table appears EXACTLY ONCE in the codebase (CONTEXT.md decision 2)"
     - "LLMConfigError is translated by passing str(e) through as QueryError.message — the compat layer does NOT hardcode 'Azure' or 'Anthropic' in the message (RESEARCH.md OQ-1 — Phase-3-clean)"
-    - "LLMAuthError is translated to QueryError with the historic remediation text 'Set the AZURE_OPENAI_API_KEY environment variable.' so users see the same error UI today (success criterion #3 preserves user-visible contract)"
+    - "LLMAuthError is translated to QueryError with the historic remediation text 'Set the AZURE_OPENAI_API_KEY environment variable.' so users see the same error UI today (success criterion #3 preserves user-visible contract). KNOWN PHASE 3 DEBT: this branch hardcodes Azure-specific remediation text and is intentionally NOT provider-neutral — Phase 3 must update it when AnthropicMGTIClient lands (e.g. dispatch on `e.provider` to emit 'Set the ANTHROPIC_API_KEY environment variable.' for Anthropic). The Azure-specific text is correct and required for Phase 2 byte-identical parity; do not generalize it prematurely."
     - "LLMTimeoutError / LLMTransientError / generic LLMError all translate to QueryError('Azure OpenAI API call failed', str(e)) — same first-arg string the old _call_azure_openai produced"
     - "Translation uses 'raise QueryError(...) from e' to preserve the LLMError as __cause__ for debugging (Python exception-chaining convention)"
   artifacts:

@@ -15,18 +15,18 @@ autonomous: true
 
 must_haves:
   truths:
-    - "tests/test_phase2_parity.py exists and contains the FIVE-FIXTURE PARITY TEST as the headline — five representative queries spanning structured/semantic/hybrid intents + SQL generation + executive-summary path each prove byte-identical adapter extraction vs the fixture content (success criterion #2 — THE Phase 2 gate)"
+    - "tests/test_phase2_parity.py exists and contains the FIVE-FIXTURE PARITY TEST as the headline — five representative queries spanning structured/semantic/hybrid intents + SQL generation + executive-summary path each prove byte-identical adapter extraction vs the fixture content (success criterion #2 — THE Phase 2 gate); the chain is ALSO proven end-to-end through each call site (`test_parity_end_to_end_classify_intent` / `_generate_sql` / `_exec_summary`) so the call-site `.strip()` + downstream JSON parse are part of the parity assertion (RESEARCH.md Pitfall 1)"
     - "Test proves success criterion #1 by grep-asserting `_call_azure_openai` absent from src/query_router.py and src/sql_generator.py"
-    - "Test proves success criterion #3 by mocking the adapter to raise LLMTimeoutError, LLMTransientError, LLMAuthError, LLMConfigError and asserting each surfaces at the call-site boundary as QueryError with the historic message/details text"
+    - "Test proves success criterion #3 by mocking the adapter to raise LLMTimeoutError, LLMTransientError, LLMAuthError, LLMConfigError at CS1 (classify_intent) — and BOTH LLMTimeoutError + LLMTransientError at CS2 (generate_sql) — asserting each surfaces at the call-site boundary as QueryError with the historic message/details text; the CS2 LLMTransientError assertion specifically locks out the regression path where a compat-layer catch-order break would let the error fall into CS2's broad `except Exception` and produce 'Failed to generate SQL' instead of 'Azure OpenAI API call failed'"
     - "Test proves success criterion #4 by capturing the logger.info('llm_call', extra={...}) record and asserting all required fields (llm_provider, llm_model, llm_latency_ms, llm_outcome, llm_prompt_tokens, llm_completion_tokens, llm_correlation_id) are present with correct types"
     - "Test runs offline — no live Azure HTTP call. All HTTP is mocked via unittest.mock.patch('requests.post', return_value=fixture_mock_response) per RESEARCH.md Decision 1"
     - "Test uses the same _clear_factory_cache + _strip_llm_env autouse fixture pattern established by tests/test_llm_seam.py for Phase 1 — load-bearing for module-level singleton isolation"
     - "Phase 1 acceptance gate (tests/test_llm_seam.py) still runs green alongside Phase 2 — both test modules pass in the same pytest invocation"
   artifacts:
     - path: "tests/test_phase2_parity.py"
-      provides: "Pytest module proving all 4 Phase 2 success criteria; the five-fixture parity test is the headline."
-      min_lines: 200
-      exports: ["test_call_azure_openai_eliminated", "test_parity_q1_structured", "test_parity_q2_semantic", "test_parity_q3_hybrid", "test_parity_q4_sql_generation", "test_parity_q5_exec_summary", "test_error_translation_at_call_site", "test_log_event_shape"]
+      provides: "Pytest module proving all 4 Phase 2 success criteria; the five-fixture parity test + three call-site end-to-end tests are the headline."
+      min_lines: 250
+      exports: ["test_call_azure_openai_eliminated", "test_parity_q1_structured", "test_parity_q2_semantic", "test_parity_q3_hybrid", "test_parity_q4_sql_generation", "test_parity_q5_exec_summary", "test_parity_end_to_end_classify_intent", "test_parity_end_to_end_generate_sql", "test_parity_end_to_end_exec_summary", "test_error_translation_at_call_site", "test_log_event_shape", "test_log_event_on_error_path"]
     - path: "tests/fixtures/parity/q1_structured_classification.json"
       provides: "Synthetic Azure response for the structured-count classification query (CS1, max_tokens=500)"
       contains: "structured"
@@ -286,12 +286,12 @@ Must print one `OK` line per fixture and end with `all 5 fixtures OK`.
   <name>Task 2: Create tests/test_phase2_parity.py — the Phase 2 acceptance gate</name>
   <files>tests/test_phase2_parity.py</files>
   <action>
-Create `tests/test_phase2_parity.py`. The module has eight test functions, organized by success criterion:
+Create `tests/test_phase2_parity.py`. The module has twelve test functions, organized by success criterion:
 
 - Success criterion #1 (`_call_azure_openai` eliminated, DI at all 3 call sites) → `test_call_azure_openai_eliminated`
-- Success criterion #2 (five-fixture parity gate — THE HEADLINE) → `test_parity_q1_structured` through `test_parity_q5_exec_summary`
-- Success criterion #3 (LLMError → QueryError at call-site boundary, all four LLMError subclasses) → `test_error_translation_at_call_site`
-- Success criterion #4 (one structured log event per call with the full extra-field shape) → `test_log_event_shape`
+- Success criterion #2 (five-fixture parity gate — THE HEADLINE) → `test_parity_q1_structured` through `test_parity_q5_exec_summary` + three end-to-end tests through the call sites (`test_parity_end_to_end_classify_intent`, `test_parity_end_to_end_generate_sql`, `test_parity_end_to_end_exec_summary`) that prove the full chain including the call-site `.strip()` + downstream JSON parse
+- Success criterion #3 (LLMError → QueryError at call-site boundary, all four LLMError subclasses; both CS1 and CS2 covered) → `test_error_translation_at_call_site`
+- Success criterion #4 (one structured log event per call with the full extra-field shape) → `test_log_event_shape` + `test_log_event_on_error_path`
 
 Use the SAME autouse-fixture pattern from `tests/test_llm_seam.py` — `_clear_factory_cache` (for the module-level `_cache` dict in `src/llm/__init__.py`) and `_strip_llm_env` (for env var isolation) — plus a new `_set_azure_env` fixture for the tests that need the adapter to construct without LLMConfigError.
 
@@ -532,6 +532,74 @@ def test_parity_end_to_end_classify_intent(azure_env):
     assert "chart_type" in result
 
 
+def test_parity_end_to_end_generate_sql(azure_env):
+    """Success criterion #2 — end-to-end CS2 parity through generate_sql.
+
+    Exercises the full Q4 call-site path: mocked requests.post →
+    AzureOpenAIClient.complete (max_tokens=1000) → llm_to_query_error context
+    manager → generate_sql's .strip() + JSON parse + dangerous-keyword check →
+    returned dict. Proves that after extraction the SQL string the user gets
+    back is byte-identical to what the fixture contains. The adapter-direct
+    parity tests above do NOT cover this — the .strip() and downstream JSON
+    parse live at the CALL SITE, not in the adapter (RESEARCH.md Pitfall 1).
+    """
+    from src.sql_generator import generate_sql
+
+    fixture = _load_fixture("q4_sql_generation.json")
+    fixture_content = fixture["response_json"]["choices"][0]["message"]["content"]
+    expected_parsed = json.loads(fixture_content)  # the call site JSON-parses
+    mock_resp = _make_mock_response(fixture)
+    schema = {
+        "table_name": "incidents",
+        "row_count": 10,
+        "columns": [
+            {"name": "assignment_group", "type": "VARCHAR", "sample": "Network Ops"},
+        ],
+    }
+    with patch("requests.post", return_value=mock_resp) as mp:
+        result = generate_sql("Top 5 assignment groups by incident count", schema)
+
+    # The returned dict carries the SQL string verbatim from the fixture
+    # (post-strip-and-JSON-parse). This is the call-site-level "byte-identical"
+    # contract that success criterion #2 actually requires.
+    assert result["sql"] == expected_parsed["sql"]
+    assert result["explanation"] == expected_parsed["explanation"]
+    assert result["confidence"] == expected_parsed["confidence"]
+
+    # Belt-and-suspenders: max_tokens=1000 reached the request body (load-bearing
+    # diff between CS1 and CS2).
+    call_kwargs = mp.call_args.kwargs
+    assert call_kwargs["json"]["max_tokens"] == 1000
+
+
+def test_parity_end_to_end_exec_summary(azure_env):
+    """Success criterion #2 — end-to-end CS3 parity through generate_executive_summary.
+
+    Exercises the full Q5 call-site path: mocked requests.post →
+    AzureOpenAIClient.complete → llm_to_query_error context manager →
+    generate_executive_summary's .strip() → returned string. CS3 is the only
+    free-text (non-JSON) call site, so the proof is that the call site returns
+    fixture_content.strip() verbatim. The adapter-direct test does not cover
+    the call-site .strip() (RESEARCH.md Pitfall 1).
+    """
+    import pandas as pd
+    from src.query_router import generate_executive_summary
+
+    fixture = _load_fixture("q5_exec_summary.json")
+    fixture_content = fixture["response_json"]["choices"][0]["message"]["content"]
+    mock_resp = _make_mock_response(fixture)
+    df = pd.DataFrame({"id": [1, 2, 3], "priority": ["P1", "P1", "P2"]})
+
+    with patch("requests.post", return_value=mock_resp):
+        result = generate_executive_summary(
+            "What are the top incidents?", df, "structured"
+        )
+
+    # Byte-identical to fixture_content.strip() — proves the call-site .strip()
+    # still runs after extraction (the adapter does NOT strip).
+    assert result == fixture_content.strip()
+
+
 # ---------------------------------------------------------------------------
 # Success criterion #3 — LLMError subclasses translate to QueryError at the
 # call-site boundary via llm_to_query_error(). Preserves the user-visible
@@ -547,7 +615,7 @@ def test_error_translation_at_call_site(monkeypatch):
     surfaces with the historic message/details text.
     """
     import src.llm as llm_pkg
-    from src.query_router import classify_intent, _heuristic_classify
+    from src.query_router import classify_intent
     from src.sql_generator import generate_sql
 
     schema = {
@@ -609,11 +677,34 @@ def test_error_translation_at_call_site(monkeypatch):
     assert exc_info.value.details == "Check your .env configuration."
 
     # --- Same exception types must translate at CS2 (generate_sql) too ---
+    # CS2's exception-handler structure differs from CS1: it has
+    # `except QueryError: raise` followed by a broad `except Exception as e:
+    # raise QueryError("Failed to generate SQL", ...)`. If a regression in the
+    # compat-layer catch order ever lets an LLMError leak past
+    # llm_to_query_error(), it would be caught by the broad-except and the
+    # user would see "Failed to generate SQL" instead of the required
+    # "Azure OpenAI API call failed". We assert BOTH LLMTimeoutError AND
+    # LLMTransientError at CS2 to lock that down.
     llm_pkg._cache.clear()
     _install_raising_client(LLMTimeoutError("timeout", provider="azure_openai"))
     with pytest.raises(QueryError) as exc_info:
         generate_sql("test", schema)
-    assert exc_info.value.message == "Azure OpenAI API call failed"
+    assert exc_info.value.message == "Azure OpenAI API call failed", (
+        f"CS2 LLMTimeoutError leaked past compat manager — got "
+        f"{exc_info.value.message!r}, expected 'Azure OpenAI API call failed'"
+    )
+
+    llm_pkg._cache.clear()
+    _install_raising_client(
+        LLMTransientError("HTTP 503", provider="azure_openai", status_code=503)
+    )
+    with pytest.raises(QueryError) as exc_info:
+        generate_sql("test", schema)
+    assert exc_info.value.message == "Azure OpenAI API call failed", (
+        f"CS2 LLMTransientError leaked past compat manager into the broad "
+        f"except — got {exc_info.value.message!r}, expected "
+        f"'Azure OpenAI API call failed' (NOT 'Failed to generate SQL')"
+    )
 
     # --- CS3 (generate_executive_summary) silently swallows the error and
     # returns None — this is INTENTIONAL behavior preserved from the old code
@@ -725,7 +816,7 @@ Run from project root:
 python -m pytest tests/test_phase2_parity.py -v
 ```
 
-Expected output (8 tests, all PASS):
+Expected output (12 tests, all PASS):
 
 ```
 tests/test_phase2_parity.py::test_call_azure_openai_eliminated PASSED
@@ -735,14 +826,16 @@ tests/test_phase2_parity.py::test_parity_q3_hybrid PASSED
 tests/test_phase2_parity.py::test_parity_q4_sql_generation PASSED
 tests/test_phase2_parity.py::test_parity_q5_exec_summary PASSED
 tests/test_phase2_parity.py::test_parity_end_to_end_classify_intent PASSED
+tests/test_phase2_parity.py::test_parity_end_to_end_generate_sql PASSED
+tests/test_phase2_parity.py::test_parity_end_to_end_exec_summary PASSED
 tests/test_phase2_parity.py::test_error_translation_at_call_site PASSED
 tests/test_phase2_parity.py::test_log_event_shape PASSED
 tests/test_phase2_parity.py::test_log_event_on_error_path PASSED
 
-========== 10 passed in <X>s ==========
+========== 12 passed in <X>s ==========
 ```
 
-All 10 tests must pass. If any fails, Phase 2 has a regression — the failing test name points at the regressed success criterion.
+All 12 tests must pass. If any fails, Phase 2 has a regression — the failing test name points at the regressed success criterion.
 
 **Critical**: run BOTH test modules together to confirm Phase 1 stays green:
 
@@ -750,16 +843,16 @@ All 10 tests must pass. If any fails, Phase 2 has a regression — the failing t
 python -m pytest tests/ -v
 ```
 
-Expected: 6 (Phase 1) + 10 (Phase 2) = 16 tests passing.
+Expected: 6 (Phase 1) + 12 (Phase 2) = 18 tests passing.
   </verify>
   <done>
-- `tests/test_phase2_parity.py` exists with 10 test functions (2 of them collapsed test classes — count by `pytest --collect-only`).
-- All 10 tests pass when run via `python -m pytest tests/test_phase2_parity.py -v`.
+- `tests/test_phase2_parity.py` exists with 12 standalone test functions (no test classes; verify with `pytest tests/test_phase2_parity.py --collect-only`).
+- All 12 tests pass when run via `python -m pytest tests/test_phase2_parity.py -v`.
 - Each test docstring cites the Phase 2 success criterion it proves.
-- The five-fixture parity test is the headline: `test_parity_q1_structured` through `test_parity_q5_exec_summary` plus the end-to-end CS1 test.
+- The five-fixture parity test is the headline: `test_parity_q1_structured` through `test_parity_q5_exec_summary` plus three end-to-end tests (`test_parity_end_to_end_classify_intent`, `test_parity_end_to_end_generate_sql`, `test_parity_end_to_end_exec_summary`) that exercise the full call-site chain (mocked `requests.post` → adapter → compat manager → call-site `.strip()` + downstream parse).
 - The OBS-02 log shape is asserted via a `logging.Handler` that captures `llm_call` records — all required `llm_*` extra fields are checked.
-- Error-translation tests cover all four LLMError subclasses that the compat layer maps (`LLMTimeoutError`, `LLMTransientError`, `LLMAuthError`, `LLMConfigError`) at both CS1 (classify_intent) and CS2 (generate_sql); CS3 (generate_executive_summary) is verified to silently return None on LLM error (intentional).
-- Both Phase 1 (`tests/test_llm_seam.py`) and Phase 2 (`tests/test_phase2_parity.py`) tests pass together (16 total).
+- Error-translation tests cover all four LLMError subclasses that the compat layer maps (`LLMTimeoutError`, `LLMTransientError`, `LLMAuthError`, `LLMConfigError`) at CS1 (`classify_intent`) and BOTH `LLMTimeoutError` AND `LLMTransientError` at CS2 (`generate_sql`) — the LLMTransientError CS2 assertion locks out a regression where a compat-layer catch-order break would let the error fall into CS2's broad `except Exception` and produce "Failed to generate SQL" instead of "Azure OpenAI API call failed"; CS3 (`generate_executive_summary`) is verified to silently return None on LLM error (intentional).
+- Both Phase 1 (`tests/test_llm_seam.py`) and Phase 2 (`tests/test_phase2_parity.py`) tests pass together (18 total).
 - The acceptance gate runs offline — zero live HTTP calls.
   </done>
 </task>
@@ -770,7 +863,7 @@ Expected: 6 (Phase 1) + 10 (Phase 2) = 16 tests passing.
 End-of-phase verification — this IS the Phase 2 acceptance gate:
 
 ```
-# 1. Phase 2 acceptance gate — 10 tests, all green
+# 1. Phase 2 acceptance gate — 12 tests, all green
 python -m pytest tests/test_phase2_parity.py -v
 
 # 2. Phase 1 acceptance gate still green
@@ -781,7 +874,7 @@ python -m pytest tests/test_llm_seam.py -v
 python -m pytest tests/ -v
 ```
 
-All three commands must show 0 failures. The combined run must show 16 tests passing.
+All three commands must show 0 failures. The combined run must show 18 tests passing.
 
 Final cross-cutting checks (verifying the four ROADMAP success criteria from a different angle):
 
@@ -804,11 +897,11 @@ Must produce no output (no diff to any source file or config — this plan adds 
 </verification>
 
 <success_criteria>
-- `tests/test_phase2_parity.py` exists and `python -m pytest tests/test_phase2_parity.py -v` exits 0 with 10/10 passing.
+- `tests/test_phase2_parity.py` exists and `python -m pytest tests/test_phase2_parity.py -v` exits 0 with 12/12 passing.
 - All four Phase 2 success criteria from ROADMAP.md are proven by at least one executable test:
   - #1 (`_call_azure_openai` gone + DI at all 3 sites) → `test_call_azure_openai_eliminated`
-  - #2 (five-fixture parity) → `test_parity_q1_structured`, `test_parity_q2_semantic`, `test_parity_q3_hybrid`, `test_parity_q4_sql_generation`, `test_parity_q5_exec_summary`, `test_parity_end_to_end_classify_intent`
-  - #3 (LLMError → QueryError at call site, historic remediation text preserved) → `test_error_translation_at_call_site`
+  - #2 (five-fixture parity) → adapter-direct: `test_parity_q1_structured`, `test_parity_q2_semantic`, `test_parity_q3_hybrid`, `test_parity_q4_sql_generation`, `test_parity_q5_exec_summary`; full-chain end-to-end through the call sites: `test_parity_end_to_end_classify_intent` (CS1), `test_parity_end_to_end_generate_sql` (CS2), `test_parity_end_to_end_exec_summary` (CS3)
+  - #3 (LLMError → QueryError at call site, historic remediation text preserved; CS1 + CS2 both covered, including `LLMTransientError` at CS2 to lock out the broad-except regression path) → `test_error_translation_at_call_site`
   - #4 (one log event per call, full extra-field shape) → `test_log_event_shape`, `test_log_event_on_error_path`
 - Five fixture files exist under `tests/fixtures/parity/` with valid JSON content.
 - No live HTTP call is made by the test suite (all `requests.post` calls are patched).
@@ -820,9 +913,9 @@ Maps to: All 4 ROADMAP.md Phase 2 success criteria (executable verification). Re
 
 <output>
 After completion, create `.planning/phases/02-azure-extraction-parity-gate/02-04-SUMMARY.md` documenting:
-- pytest command + exit code + per-test pass/fail for `tests/test_phase2_parity.py` (10 tests expected).
+- pytest command + exit code + per-test pass/fail for `tests/test_phase2_parity.py` (12 tests expected).
 - pytest command + exit code for `tests/test_llm_seam.py` (6 tests expected, must still be green).
-- Combined run `pytest tests/` showing 16 tests passing.
+- Combined run `pytest tests/` showing 18 tests passing.
 - Confirmation that the 4 ROADMAP.md Phase 2 success criteria each map to a passing test (table form: criterion → test function name).
 - Confirmation that the test suite runs offline (no live HTTP, all `requests.post` patched).
 - Confirmation that this plan modified ONLY `tests/` files — `git diff --name-only HEAD src/ app.py config.py` is empty.
