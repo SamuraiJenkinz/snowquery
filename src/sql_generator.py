@@ -9,16 +9,14 @@ from typing import Any, Optional
 
 import duckdb
 import pandas as pd
-import requests
 
 from config import (
-    API_VERSION,
-    AZURE_OPENAI_API_KEY,
-    AZURE_OPENAI_ENDPOINT,
     DEFAULT_QUERY_LIMIT,
     DUCKDB_PATH,
     MAX_QUERY_LIMIT,
 )
+from src.llm import get_llm
+from src.llm._compat import llm_to_query_error
 from src.utils import QueryError, format_schema_for_llm, logger
 
 # System prompt for SQL generation
@@ -83,56 +81,6 @@ FEW_SHOT_EXAMPLES = [
 ]
 
 
-def _call_azure_openai(messages: list[dict]) -> str:
-    """
-    Call Azure OpenAI API.
-
-    Args:
-        messages: List of message dicts
-
-    Returns:
-        Response content string
-
-    Raises:
-        QueryError: If API call fails
-    """
-    if not AZURE_OPENAI_API_KEY:
-        raise QueryError(
-            "Azure OpenAI API key not configured",
-            "Set the AZURE_OPENAI_API_KEY environment variable."
-        )
-
-    if not AZURE_OPENAI_ENDPOINT:
-        raise QueryError(
-            "Azure OpenAI endpoint not configured",
-            "Set the AZURE_OPENAI_ENDPOINT environment variable."
-        )
-
-    headers = {
-        "Content-Type": "application/json",
-        "api-key": AZURE_OPENAI_API_KEY,
-    }
-
-    payload = {
-        "messages": messages,
-        "temperature": 0.1,
-        "max_tokens": 1000,
-    }
-
-    try:
-        response = requests.post(
-            f"{AZURE_OPENAI_ENDPOINT}?api-version={API_VERSION}",
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Azure OpenAI API error: {e}")
-        raise QueryError("Azure OpenAI API call failed", str(e))
-
-
 def _build_prompt(user_query: str, schema_summary: dict[str, Any]) -> list[dict]:
     """
     Build the prompt messages for OpenAI.
@@ -191,7 +139,9 @@ def generate_sql(
 
     try:
         messages = _build_prompt(user_query, schema_summary)
-        content = _call_azure_openai(messages).strip()
+        client = get_llm()
+        with llm_to_query_error():
+            content = client.complete(messages, max_tokens=1000).strip()
 
         # Parse JSON response
         try:
