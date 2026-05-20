@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** Phase 2 — Azure Extraction
+**Current focus:** Phase 3 — Anthropic MGTI Adapter
 
 ## Current Position
 
-Phase: 2 of 5 (Azure Extraction + Parity Gate) — In progress
-Plan: 3 of 4 in Phase 2 (02-01, 02-02, 02-03 complete — wave 2 done; 02-04 remains)
-Status: In progress — 02-03 complete (_call_azure_openai deleted, all 3 call sites rewired)
-Last activity: 2026-05-20 — Completed 02-PLAN-03-call-site-migration.md
+Phase: 2 of 5 (Azure Extraction + Parity Gate) — COMPLETE
+Plan: 4 of 4 in Phase 2 (02-01, 02-02, 02-03, 02-04 all complete)
+Status: Phase 2 COMPLETE — parity gate green (18/18 tests passing; 12 Phase 2 + 6 Phase 1)
+Last activity: 2026-05-20 — Completed 02-PLAN-04-acceptance-gate.md
 
-Progress: [████░░░░░░] 40% (6/15 plans estimated)
+Progress: [█████░░░░░] 47% (7/15 plans estimated)
 
 ## Performance Metrics
 
@@ -28,11 +28,11 @@ Progress: [████░░░░░░] 40% (6/15 plans estimated)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Abstraction Seam | 3 | 11 min | ~4 min |
-| 2. Azure Extraction (partial) | 3 | ~10 min | ~3 min |
+| 2. Azure Extraction | 4 | ~16 min | ~4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (3 min), 01-03 (5 min), 02-01 (3 min), 02-02 (2 min), 02-03 (5 min)
-- Trend: consistent 2-5 min/plan
+- Last 5 plans: 02-01 (3 min), 02-02 (2 min), 02-03 (5 min), 02-04 (6 min)
+- Trend: consistent 2-6 min/plan
 
 *Updated after each plan completion*
 
@@ -86,9 +86,19 @@ Decisions from 02-03 (call-site migration):
 - generate_executive_summary broad except Exception: return None intentionally NOT changed (Pitfall 4 — QueryError swallowed here silently; non-fatal exec summary path unchanged)
 - grep -rn _call_azure_openai src/query_router.py src/sql_generator.py → zero hits (ABS-06 complete; comments in locked src/llm/ files are documentary, not code)
 
+Decisions from 02-04 (acceptance gate):
+- Test module is self-contained — no conftest.py or pytest.ini added; matches Phase 1 gate pattern
+- Level A patching (requests.post) for adapter-direct parity tests; Level B (factory cache injection) for error-translation tests — separation of concerns
+- CS3 (generate_executive_summary) tested to silently return None on LLM error — INTENTIONAL invariant (RESEARCH.md Pitfall 4), not a bug; Phase 3 must not add `except QueryError: raise` to CS3
+- chromadb installed (was already in requirements.txt but not in test env); Rule 3 blocker
+
 ### Phase 1 Sign-Off
 
 Phase 1 (Abstraction Seam) is complete. All 5 ROADMAP.md success criteria are proven by the acceptance gate at tests/test_llm_seam.py (6 tests, 0.42s, zero live HTTP calls). The seam is stable for Phase 2 to plug AzureOpenAIClient into.
+
+### Phase 2 Sign-Off
+
+Phase 2 (Azure Extraction + Parity Gate) is complete. All four ROADMAP success criteria proven by tests/test_phase2_parity.py (12 tests, ~8s, zero live HTTP calls). Azure adapter extraction verified byte-identical across 5 fixtures covering all 3 call sites. Combined suite: 18 tests, 0 failures. Phase 3 (Anthropic MGTI Adapter) is unblocked.
 
 ### Pending Todos
 
@@ -101,6 +111,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-05-20T18:11:00Z
-Stopped at: Completed 02-PLAN-03-call-site-migration.md (Plan 3 of 4 in Phase 2 — wave 2 complete; 02-04 parity gate remains)
+Last session: 2026-05-20T18:20:40Z
+Stopped at: Completed 02-PLAN-04-acceptance-gate.md — Phase 2 COMPLETE
 Resume file: None
