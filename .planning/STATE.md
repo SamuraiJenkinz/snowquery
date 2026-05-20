@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 ## Current Position
 
 Phase: 2 of 5 (Azure Extraction + Parity Gate) — In progress
-Plan: 2 of 4 in Phase 2 (02-01 and 02-02 complete)
-Status: In progress — 02-02 complete (error-translation seam done)
-Last activity: 2026-05-20 — Completed 02-PLAN-02-error-translation-seam.md
+Plan: 2 of 4 in Phase 2 (02-01 and 02-02 complete — wave 1 done; 02-03 and 02-04 remain)
+Status: In progress — 02-01 + 02-02 complete (azure adapter + error-translation seam done)
+Last activity: 2026-05-20 — Completed 02-PLAN-01-azure-adapter-implementation.md
 
-Progress: [███░░░░░░░] 27% (4/15 plans estimated — counting 02-01 + 02-02 in wave 1)
+Progress: [███░░░░░░░] 27% (5/15 plans estimated)
 
 ## Performance Metrics
 
@@ -30,7 +30,7 @@ Progress: [███░░░░░░░] 27% (4/15 plans estimated — countin
 | 1. Abstraction Seam | 3 | 11 min | ~4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (3 min), 01-03 (5 min), 02-02 (2 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (3 min), 01-03 (5 min), 02-02 (2 min), 02-01 (3 min)
 - Trend: consistent 2-5 min/plan
 
 *Updated after each plan completion*
@@ -66,6 +66,12 @@ Decisions from 01-03 (smoke verification):
 - Acceptance gate pattern established: one pytest module per phase proves each numbered success criterion
 - Cache-clear autouse fixture required for module-level singletons in get_llm
 
+Decisions from 02-01 (azure adapter implementation):
+- No .strip() in adapter — call sites strip; double-strip is idempotent but breaks byte-identity parity (Pitfall 1 guard locked)
+- LLMConfigError embeds provider-specific remediation text at raise time so _compat.py uses str(e) for QueryError.message — Phase-3-clean (OQ-1 resolved)
+- classify_with_tool uses prompt-based JSON parsing (ADP-02) — Azure stays on prompt+parse; provider-side strict-tools reserved for Anthropic in Phase 4
+- _log_llm_call() is module-level in azure_openai.py; Phase 3 copies it verbatim to anthropic_mgti.py (intentional duplication — no premature extraction)
+
 Decisions from 02-02 (error-translation seam):
 - LLMConfigError branch passes str(e) through to QueryError.message — provider embeds remediation text at raise time; compat layer stays provider-agnostic (Phase-3-clean, no "Azure"/"Anthropic" text here)
 - LLMAuthError branch hardcodes Azure remediation text for byte-identical Phase 2 parity — KNOWN Phase 3 debt: revisit when Anthropic adapter lands to dispatch on e.provider
@@ -87,6 +93,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-05-20T00:05:19Z
-Stopped at: Completed 02-PLAN-02-error-translation-seam.md (Plan 2 of 4 in Phase 2 — wave 1 of 2 in progress)
+Last session: 2026-05-20T18:05:57Z
+Stopped at: Completed 02-PLAN-01-azure-adapter-implementation.md (Plan 1 of 4 in Phase 2 — wave 1 complete with 02-02)
 Resume file: None
