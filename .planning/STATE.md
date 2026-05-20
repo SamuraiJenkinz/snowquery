@@ -10,27 +10,28 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 ## Current Position
 
 Phase: 2 of 5 (Azure Extraction + Parity Gate) — In progress
-Plan: 2 of 4 in Phase 2 (02-01 and 02-02 complete — wave 1 done; 02-03 and 02-04 remain)
-Status: In progress — 02-01 + 02-02 complete (azure adapter + error-translation seam done)
-Last activity: 2026-05-20 — Completed 02-PLAN-01-azure-adapter-implementation.md
+Plan: 3 of 4 in Phase 2 (02-01, 02-02, 02-03 complete — wave 2 done; 02-04 remains)
+Status: In progress — 02-03 complete (_call_azure_openai deleted, all 3 call sites rewired)
+Last activity: 2026-05-20 — Completed 02-PLAN-03-call-site-migration.md
 
-Progress: [███░░░░░░░] 27% (5/15 plans estimated)
+Progress: [████░░░░░░] 40% (6/15 plans estimated)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 4 min
-- Total execution time: 11 min
+- Total plans completed: 4 (through 02-03)
+- Average duration: ~4 min
+- Total execution time: ~16 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1. Abstraction Seam | 3 | 11 min | ~4 min |
+| 2. Azure Extraction (partial) | 3 | ~10 min | ~3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (3 min), 01-03 (5 min), 02-02 (2 min), 02-01 (3 min)
+- Last 5 plans: 01-02 (3 min), 01-03 (5 min), 02-01 (3 min), 02-02 (2 min), 02-03 (5 min)
 - Trend: consistent 2-5 min/plan
 
 *Updated after each plan completion*
@@ -78,6 +79,13 @@ Decisions from 02-02 (error-translation seam):
 - src/llm/_compat.py NOT re-exported from src/llm/__init__.py — call sites import directly from src.llm._compat (leading underscore = package-internal signal)
 - Catch-all except LLMError is final branch — future subclasses (LLMGuardrailError etc.) never leak past the seam; Phase 3 can add dedicated branch above catch-all or rely on it
 
+Decisions from 02-03 (call-site migration):
+- Call-site DI pattern locked in: client = get_llm() inline at top of function; no function-parameter ripple; no module-level singleton
+- .strip() kept at call site (adapter returns raw content — double-strip is idempotent but breaks byte-identity parity guarantee; Pitfall 1 guard confirmed)
+- max_tokens=500 at classify_intent+generate_executive_summary; max_tokens=1000 at generate_sql — load-bearing difference preserved across extraction
+- generate_executive_summary broad except Exception: return None intentionally NOT changed (Pitfall 4 — QueryError swallowed here silently; non-fatal exec summary path unchanged)
+- grep -rn _call_azure_openai src/query_router.py src/sql_generator.py → zero hits (ABS-06 complete; comments in locked src/llm/ files are documentary, not code)
+
 ### Phase 1 Sign-Off
 
 Phase 1 (Abstraction Seam) is complete. All 5 ROADMAP.md success criteria are proven by the acceptance gate at tests/test_llm_seam.py (6 tests, 0.42s, zero live HTTP calls). The seam is stable for Phase 2 to plug AzureOpenAIClient into.
@@ -93,6 +101,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-05-20T18:05:57Z
-Stopped at: Completed 02-PLAN-01-azure-adapter-implementation.md (Plan 1 of 4 in Phase 2 — wave 1 complete with 02-02)
+Last session: 2026-05-20T18:11:00Z
+Stopped at: Completed 02-PLAN-03-call-site-migration.md (Plan 3 of 4 in Phase 2 — wave 2 complete; 02-04 parity gate remains)
 Resume file: None
