@@ -1,0 +1,20 @@
+{
+  "request_messages": [
+    {"role": "system", "content": "[CLASSIFICATION_PROMPT + schema text]"},
+    {"role": "user", "content": "How many P1 incidents were opened this week?"}
+  ],
+  "response_json": {
+    "choices": [
+      {
+        "message": {
+          "content": "{\"intent\": \"structured\", \"confidence\": 0.95, \"reasoning\": \"Count aggregation query with priority and date-range filters\", \"detected_filters\": {\"priority\": [\"P1\"], \"assignment_group\": null, \"date_range\": \"this week\"}}"
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 312,
+      "completion_tokens": 52,
+      "total_tokens": 364
+    }
+  }
+}

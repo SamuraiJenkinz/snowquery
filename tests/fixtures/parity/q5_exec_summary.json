@@ -1,0 +1,20 @@
+{
+  "request_messages": [
+    {"role": "system", "content": "[SUMMARY_PROMPT]"},
+    {"role": "user", "content": "Question: What are the top incidents?\n\nQuery Type: structured\n\nResults (3 results):\n[short dataframe text]\n\nPlease provide an executive summary of these results."}
+  ],
+  "response_json": {
+    "choices": [
+      {
+        "message": {
+          "content": "The top three incidents are concentrated in the Network Operations group and were opened within the last 24 hours. Two are flagged as P1 priority and relate to VPN gateway failures; the third is a P2 user-impact issue. All three remain in the In Progress state with no resolution timestamp yet."
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 218,
+      "completion_tokens": 65,
+      "total_tokens": 283
+    }
+  }
+}

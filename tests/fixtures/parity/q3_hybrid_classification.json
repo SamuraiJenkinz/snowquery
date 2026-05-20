@@ -1,0 +1,20 @@
+{
+  "request_messages": [
+    {"role": "system", "content": "[CLASSIFICATION_PROMPT + schema text]"},
+    {"role": "user", "content": "P1 incidents similar to database outages"}
+  ],
+  "response_json": {
+    "choices": [
+      {
+        "message": {
+          "content": "{\"intent\": \"hybrid\", \"confidence\": 0.88, \"reasoning\": \"Structured priority filter combined with semantic similarity\", \"detected_filters\": {\"priority\": [\"P1\"], \"assignment_group\": null, \"date_range\": null}}"
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 305,
+      "completion_tokens": 48,
+      "total_tokens": 353
+    }
+  }
+}

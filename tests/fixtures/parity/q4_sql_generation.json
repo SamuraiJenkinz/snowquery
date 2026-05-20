@@ -1,0 +1,20 @@
+{
+  "request_messages": [
+    {"role": "system", "content": "[SYSTEM_PROMPT + schema text]"},
+    {"role": "user", "content": "Top 5 assignment groups by incident count"}
+  ],
+  "response_json": {
+    "choices": [
+      {
+        "message": {
+          "content": "{\"sql\": \"SELECT assignment_group, COUNT(*) as incident_count FROM incidents WHERE assignment_group IS NOT NULL GROUP BY assignment_group ORDER BY incident_count DESC LIMIT 5\", \"explanation\": \"Counts incidents per assignment group and returns the top 5.\", \"confidence\": 0.97}"
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 425,
+      "completion_tokens": 78,
+      "total_tokens": 503
+    }
+  }
+}

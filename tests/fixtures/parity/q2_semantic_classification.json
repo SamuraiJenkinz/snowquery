@@ -1,0 +1,20 @@
+{
+  "request_messages": [
+    {"role": "system", "content": "[CLASSIFICATION_PROMPT + schema text]"},
+    {"role": "user", "content": "Find incidents similar to VPN connection failures"}
+  ],
+  "response_json": {
+    "choices": [
+      {
+        "message": {
+          "content": "{\"intent\": \"semantic\", \"confidence\": 0.92, \"reasoning\": \"Similarity search using descriptive phrasing\", \"detected_filters\": {\"priority\": null, \"assignment_group\": null, \"date_range\": null}}"
+        }
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 298,
+      "completion_tokens": 44,
+      "total_tokens": 342
+    }
+  }
+}
