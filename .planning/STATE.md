@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 ## Current Position
 
 Phase: 3 of 5 (Anthropic MGTI Adapter) — IN PROGRESS
-Plan: 1 of 4 in Phase 3 (03-01 complete; 03-02 in parallel Wave 1; 03-03, 03-04 pending)
-Status: Wave 1 partially landed — env template + Azure startup log in place; 18/18 Phase 1+2 tests still green
-Last activity: 2026-05-21 — Completed 03-PLAN-01-env-and-startup-log.md
+Plan: 2 of 4 in Phase 3 (03-01 + 03-02 complete — Wave 1 done; 03-03, 03-04 pending)
+Status: Wave 1 COMPLETE — env template + Azure startup log in place AND _compat.py dispatches on e.provider (Phase 2 known debt resolved); 18/18 Phase 1+2 tests still green
+Last activity: 2026-05-21 — Completed 03-PLAN-02-compat-provider-dispatch.md
 
-Progress: [█████░░░░░] 53% (8/15 plans estimated)
+Progress: [██████░░░░] 60% (9/15 plans estimated)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8 (through 03-01)
+- Total plans completed: 9 (through 03-02)
 - Average duration: ~4 min
-- Total execution time: ~19 min
+- Total execution time: ~21 min
 
 **By Phase:**
 
@@ -29,10 +29,10 @@ Progress: [█████░░░░░] 53% (8/15 plans estimated)
 |-------|-------|-------|----------|
 | 1. Abstraction Seam | 3 | 11 min | ~4 min |
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
-| 3. Anthropic Adapter | 1 (of 4) | ~3 min | ~3 min |
+| 3. Anthropic Adapter | 2 (of 4) | ~5 min | ~2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (2 min), 02-03 (5 min), 02-04 (6 min), 03-01 (3 min)
+- Last 5 plans: 02-03 (5 min), 02-04 (6 min), 03-01 (3 min), 03-02 (2 min)
 - Trend: consistent 2-6 min/plan
 
 *Updated after each plan completion*
@@ -101,6 +101,15 @@ Decisions from 03-01 (env + startup log):
 - .env.example default LLM_PROVIDER_DEFAULT=azure_openai locked from Phase 5 — Phase 3 does NOT flip the default; existing deployments remain byte-identical until an operator opts in
 - Plan 03 contract: mirror this __init__ logger.info block verbatim in AnthropicMGTIClient.__init__ with provider="anthropic_mgti" and base_url=self._base_url to satisfy SC #5 fully
 
+Decisions from 03-02 (compat provider dispatch):
+- Phase 2 KNOWN DEBT (LLMAuthError hardcoded Azure remediation) RESOLVED — _compat.py now dispatches on e.provider in 4 branches (LLMAuthError, LLMTimeoutError, LLMTransientError, catch-all LLMError); LLMConfigError branch UNCHANGED (Phase 2 OQ-1 lock holds)
+- getattr(e, "provider", None) used (not e.provider) — defensive against any third-party LLMError subclass that bypasses our __init__; three extra characters, zero behavior cost
+- Azure path is unconditional fallback in every dispatched branch — covers provider=None, provider="azure_openai", AND any future adapter not yet wired into dispatch; Phase 2 acceptance gate (which injects provider="azure_openai") still passes byte-identically
+- Dispatch extended beyond originally-debted LLMAuthError to also cover LLMTimeoutError, LLMTransientError, catch-all LLMError (per orchestrator OQ-2) — prevents wrong-product-label UX bug where Anthropic timeout would surface as "Azure OpenAI API call failed"; 12 additional lines, no Phase 2 test asserts non-Azure text so safe to land
+- Anthropic-named QueryError wording locked: "Anthropic API key not configured or not authorised" (auth) / "Anthropic API call failed" (timeout/transient/catch-all) — Plan 04 acceptance gate will grep-assert these strings
+- Module docstring updated from "Phase 3 may revisit this branch" to "Phase 3 dispatches on e.provider — see if-branches below"; debt note in code is now closed
+- No helper extraction — the file's value is being a single, readable translation table; repetition is the point
+
 ### Phase 1 Sign-Off
 
 Phase 1 (Abstraction Seam) is complete. All 5 ROADMAP.md success criteria are proven by the acceptance gate at tests/test_llm_seam.py (6 tests, 0.42s, zero live HTTP calls). The seam is stable for Phase 2 to plug AzureOpenAIClient into.
@@ -120,6 +129,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-05-21T15:00:17Z
-Stopped at: Completed 03-PLAN-01-env-and-startup-log.md — Wave 1 plan 1 of 2 landed
+Last session: 2026-05-21T15:00:28Z
+Stopped at: Completed 03-PLAN-02-compat-provider-dispatch.md — Wave 1 COMPLETE (03-01 + 03-02 both landed); Plan 03 (AnthropicMGTIClient implementation) unblocked
 Resume file: None
