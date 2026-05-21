@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 ## Current Position
 
 Phase: 3 of 5 (Anthropic MGTI Adapter) — IN PROGRESS
-Plan: 2 of 4 in Phase 3 (03-01 + 03-02 complete — Wave 1 done; 03-03, 03-04 pending)
-Status: Wave 1 COMPLETE — env template + Azure startup log in place AND _compat.py dispatches on e.provider (Phase 2 known debt resolved); 18/18 Phase 1+2 tests still green
-Last activity: 2026-05-21 — Completed 03-PLAN-02-compat-provider-dispatch.md
+Plan: 3 of 4 in Phase 3 (03-01 + 03-02 + 03-03 complete; 03-04 acceptance-gate pending)
+Status: Wave 2 mid-flight — AnthropicMGTIClient real adapter shipped (442 lines, was 47-line stub); manual X-Correlation-Id observation script in place; classify_with_tool preserved as Phase 4 stub; 18/18 Phase 1+2 acceptance gates still green
+Last activity: 2026-05-21 — Completed 03-PLAN-03-anthropic-adapter.md
 
-Progress: [██████░░░░] 60% (9/15 plans estimated)
+Progress: [███████░░░] 67% (10/15 plans estimated)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9 (through 03-02)
+- Total plans completed: 10 (through 03-03)
 - Average duration: ~4 min
-- Total execution time: ~21 min
+- Total execution time: ~29 min
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [██████░░░░] 60% (9/15 plans estimated)
 |-------|-------|-------|----------|
 | 1. Abstraction Seam | 3 | 11 min | ~4 min |
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
-| 3. Anthropic Adapter | 2 (of 4) | ~5 min | ~2.5 min |
+| 3. Anthropic Adapter | 3 (of 4) | ~13 min | ~4.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 (5 min), 02-04 (6 min), 03-01 (3 min), 03-02 (2 min)
-- Trend: consistent 2-6 min/plan
+- Last 5 plans: 02-04 (6 min), 03-01 (3 min), 03-02 (2 min), 03-03 (8 min)
+- Trend: consistent 2-8 min/plan; 03-03 was the centerpiece adapter rewrite (~442-line implementation)
 
 *Updated after each plan completion*
 
@@ -110,6 +110,20 @@ Decisions from 03-02 (compat provider dispatch):
 - Module docstring updated from "Phase 3 may revisit this branch" to "Phase 3 dispatches on e.provider — see if-branches below"; debt note in code is now closed
 - No helper extraction — the file's value is being a single, readable translation table; repetition is the point
 
+Decisions from 03-03 (Anthropic adapter implementation):
+- Init-time vs HTTP-time validation split: non-empty bad-prefix model raises at __init__ (catches typos before factory cache fills); missing env (api_key/base_url/model) raises at first complete() with provider-specific remediation text (preserves Phase 1 no-op factory pattern)
+- startswith('eu.anthropic.claude-opus-4-7') used for sampling-param omission match — NOT a regex; CONTEXT.md "matching opus-4-7*" is satisfied by startswith which covers opus-4-7-20251201-v1:0 and any future opus-4-7 variant
+- _log_llm_call COPIED VERBATIM from src/llm/azure_openai.py — intentional duplication per Phase 2 decision 02-01; no premature extraction. If both adapters ever unify, helper moves to src/llm/_log.py
+- response.ok-based HTTP-error dispatch (NOT raise_for_status) — MGTI error envelope {error: {title, detail, status}} parsed BEFORE raising typed error so title/detail embed in LLMError message (RESEARCH.md Pitfall 1)
+- correlation_id = str(uuid.uuid4()) generated BEFORE the try block — guarantees finally's _log_llm_call has it even if requests.post raises immediately (e.g. DNS failure firing RequestException before response is created) — Pitfall 5
+- system key OMITTED entirely from request body when no system messages present (NOT sent as empty string) — Anthropic Messages API distinguishes absent from empty
+- max_tokens stop_reason returns text WITH outcome='truncated' (does NOT raise) — caller chose max_tokens, truncation is a known outcome, not a failure
+- Guardrail check BEFORE content-emptiness check in HTTP 200 dispatcher — the single biggest source of latent bugs per RESEARCH.md Pitfall 4; locked order documented as inline numbered comment block
+- Field-name normalization at log boundary: Anthropic's usage.input_tokens/output_tokens → extra['llm_prompt_tokens']/extra['llm_completion_tokens'] (matches Azure's prompt_tokens/completion_tokens semantics) so dashboards aggregate across providers without per-provider field maps
+- X-Correlation-Id echo verification deferred to OPERATOR (manual script at tests/manual/observe_correlation_echo.py) — observation step, not runtime dependency; STATE.md blocker resolved-by-observation (OQ-3); no adapter code path depends on a particular echo outcome
+- __repr__ override returns 'AnthropicMGTIClient()' — OBS-03 regression guard symmetric with Azure; API key cannot leak via repr/Streamlit session inspection
+- classify_with_tool stub body BYTE-IDENTICAL to Phase 1 — Phase 4 territory; raise NotImplementedError("AnthropicMGTIClient.classify_with_tool is implemented in Phase 4")
+
 ### Phase 1 Sign-Off
 
 Phase 1 (Abstraction Seam) is complete. All 5 ROADMAP.md success criteria are proven by the acceptance gate at tests/test_llm_seam.py (6 tests, 0.42s, zero live HTTP calls). The seam is stable for Phase 2 to plug AzureOpenAIClient into.
@@ -125,10 +139,10 @@ None.
 ### Blockers/Concerns
 
 - Phase 4: MGTI proxy strict-tools support is "works as of 2026-05-12 but undocumented" — `ANTHROPIC_TOOLS_SUPPORTED=false` escape hatch must be verified against staging before relying on tools in prod
-- Phase 3: MGTI `usage` block pass-through and `X-Correlation-Id` echo unverified — capture a real stage response during Phase 3 to inform observability design
+- Phase 3: MGTI `usage` block pass-through and `X-Correlation-Id` echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — deferred to Phase 4 smoke test per ROADMAP.md. No adapter code path depends on the outcome.
 
 ## Session Continuity
 
-Last session: 2026-05-21T15:00:28Z
-Stopped at: Completed 03-PLAN-02-compat-provider-dispatch.md — Wave 1 COMPLETE (03-01 + 03-02 both landed); Plan 03 (AnthropicMGTIClient implementation) unblocked
+Last session: 2026-05-21T15:14:35Z
+Stopped at: Completed 03-PLAN-03-anthropic-adapter.md — Wave 2 mid-flight; AnthropicMGTIClient fully wired (442 lines); only 03-04 acceptance-gate remains in Phase 3
 Resume file: None
