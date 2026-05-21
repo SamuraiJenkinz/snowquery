@@ -155,6 +155,7 @@ Output: One file modified (`app.py`); three contributions — (1) a new sidebar 
 13. **Imports to add to `app.py`:**
     - `from src.llm import missing_vars, load_settings` — `load_settings` is needed for the active-model display.
     - Existing `import os` is already at the top; verify.
+    - **Note for Plan 05-03:** This module-level `from src.llm import ...` line is the ONLY src.llm import line in `app.py`. Plan 05-03 (Wave 3) will EXTEND this same line to add `get_llm` (per Plan 05-03 decision §14, Option B). Do NOT create a second `from src.llm import ...` line and do NOT add `get_llm` here — Plan 05-03 owns that extension.
 
 14. **Test plan integration:** Plan 05-05 (acceptance gate) will test this with `unittest.mock.patch('streamlit.selectbox', ...)`, `patch('streamlit.warning', ...)`, etc. The render functions are NOT refactored to take dependency-injected arguments — testing happens via `patch` against the `streamlit` module. Code under test is the function bodies of `render_sidebar` and `render_main_content`.
 
@@ -177,7 +178,7 @@ Output: One file modified (`app.py`); three contributions — (1) a new sidebar 
 from src.llm import missing_vars, load_settings
 ```
 
-(If `app.py` already imports from `src.llm`, append the names; if not, add the line near the other `from src...` imports.)
+(If `app.py` already imports from `src.llm`, append the names; if not, add the line near the other `from src...` imports. Per locked decision §13, do NOT include `get_llm` here — Plan 05-03 owns that extension.)
 
 **Step 2 — Module-level constants** near the existing `MODE_OPTIONS` dict at `app.py:354-358`. Insert AFTER `MODE_OPTIONS` and BEFORE the next function definition:
 
@@ -298,6 +299,7 @@ grep -nE '_llm_provider_blocked' app.py
 # Imports added
 grep -nE 'from src\.llm import' app.py | grep -E 'missing_vars|load_settings'
 # Expected: both names imported
+# (get_llm is NOT in this line yet — Plan 05-03 will extend it)
 
 # Streamlit syntax check via Python import (catches typos that would crash render_sidebar)
 python -c "
@@ -321,7 +323,7 @@ pytest tests/ -v --tb=short
 ```
   </verify>
   <done>
-`app.py` has module-level `_PROVIDER_OPTIONS`, `_PROVIDER_LABELS`, `_PROVIDER_KEYS` near the existing `MODE_OPTIONS`. `render_sidebar()` contains a new `### LLM PROVIDER` block between EMBEDDINGS and CONFIG with the locked label, options, session-state init (clamp-to-known), index-driven selectbox, model caption, missing-vars warning naming each missing variable, and `_llm_provider_blocked` flag. Imports for `missing_vars` and `load_settings` are present. `app.py` parses cleanly. All 69 prior tests still pass.
+`app.py` has module-level `_PROVIDER_OPTIONS`, `_PROVIDER_LABELS`, `_PROVIDER_KEYS` near the existing `MODE_OPTIONS`. `render_sidebar()` contains a new `### LLM PROVIDER` block between EMBEDDINGS and CONFIG with the locked label, options, session-state init (clamp-to-known), index-driven selectbox, model caption, missing-vars warning naming each missing variable, and `_llm_provider_blocked` flag. Imports for `missing_vars` and `load_settings` are present (single `from src.llm import ...` line — Plan 05-03 will extend it to add `get_llm`). `app.py` parses cleanly. All 69 prior tests still pass.
   </done>
 </task>
 
@@ -523,6 +525,7 @@ Plan-level verification:
 - [ ] `_llm_provider_blocked=False` set when `missing_vars()` returns `[]`
 - [ ] `st.chat_input` reads `_blocked` from session_state, passes `disabled=_blocked`, swaps placeholder to `"QUERY DISABLED — see sidebar warning"` when blocked
 - [ ] `main()` docstring documents load-bearing sidebar-before-main-content order
+- [ ] Module-level `from src.llm import ...` line includes exactly `missing_vars` and `load_settings` (Plan 05-03 will extend it to add `get_llm`)
 - [ ] No deletions of existing sidebar blocks or main-content widgets
 - [ ] Only `app.py` modified — no src/, no tests/, no docs touched in this plan
 - [ ] Full 69-test suite still green
@@ -533,7 +536,8 @@ After completion, create `.planning/phases/05-sidebar-ui-toggle-documentation/05
 - Lines modified in `app.py` (block insertion line, chat_input line, main() docstring)
 - The exact strings now present (label, options, warning template, placeholder texts)
 - Confirmation: only `app.py` modified; `_REGISTRY` keys match selectbox internal values
+- The module-level `from src.llm import ...` line as written (so Plan 05-03 knows what to extend)
 - 69-test suite still green
-- Unblocks: Plan 05-05 (acceptance gate can now test the sidebar behavior via mocks)
-- Surfaces: Plan 05-03 (per-message caption) consumes the same `_PROVIDER_LABELS` dict for human-name display
+- Unblocks: Plan 05-03 (will extend the import line + read `_PROVIDER_LABELS`), Plan 05-05 (acceptance gate can now test the sidebar behavior via mocks)
+</output>
 </output>

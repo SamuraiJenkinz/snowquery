@@ -3,8 +3,8 @@ phase: 5
 plan: 3
 name: per-message-provenance-caption
 type: execute
-wave: 2
-depends_on: [1]
+wave: 3
+depends_on: [1, 2]
 files_modified:
   - app.py
 autonomous: true
@@ -62,7 +62,9 @@ Output: One file modified (`app.py`); three contributions — (1) write-time cap
 @.planning/phases/05-sidebar-ui-toggle-documentation/05-RESEARCH.md
 
 # This plan depends on Plan 05-01's outputs (provider_name property)
+# AND Plan 05-02's outputs (_PROVIDER_LABELS dict + the from src.llm import line that 05-03 EXTENDS to add get_llm)
 @.planning/phases/05-sidebar-ui-toggle-documentation/05-01-SUMMARY.md
+@.planning/phases/05-sidebar-ui-toggle-documentation/05-02-SUMMARY.md
 
 # Files modified
 @app.py
@@ -80,7 +82,6 @@ Output: One file modified (`app.py`); three contributions — (1) write-time cap
 
 3. **Defensive `getattr` for `provider_name` and `_model`:**
    ```python
-   from src.llm import get_llm
    _client = get_llm()
    _provider = getattr(_client, "provider_name", st.session_state.get("llm_provider", "unknown"))
    _model = getattr(_client, "_model", "unknown")
@@ -158,20 +159,84 @@ Output: One file modified (`app.py`); three contributions — (1) write-time cap
 
 13. **Test plan integration:** Plan 05-05 will patch `get_llm` to return a mock client with controlled `provider_name` and `_model`, write messages with one provider, switch session_state to the other, render history, and assert the historical caption still names the ORIGINAL provider. This is the SC #4 load-bearing test.
 
-14. **NO file imports added in this plan.** `from src.llm import get_llm` already exists in `app.py` (Phase 2 work).
+14. **`get_llm` import strategy — EXTEND the Plan 05-02 module-level import line (Option B).**
+
+    **Premise check (run before editing):**
+    ```bash
+    grep -nE "^from src\.llm import" app.py
+    grep -nE "get_llm" app.py
+    ```
+    Pre-Phase-5 / pre-Plan-05-02 state: `app.py` does NOT import `from src.llm` at all (only `route_query` from `src.query_router` exists, line 20). It also does NOT reference `get_llm` directly. The earlier draft of this plan claimed `from src.llm import get_llm` "already exists in app.py (Phase 2 work)" — that was WRONG. The actual Phase 2 wiring lives behind `route_query` / `src.query_router`, which is a different seam.
+
+    **Approach (Option B — chosen):** Plan 05-02 introduces the module-level line `from src.llm import missing_vars, load_settings`. Plan 05-03 EXTENDS that line to `from src.llm import get_llm, missing_vars, load_settings`. This keeps all `src.llm` imports on a single module-level line (matches the prevailing import style in `app.py`) and avoids redundant inline imports inside `process_query`.
+
+    **Alternatives considered:**
+    - Option A (inline `from src.llm import get_llm` inside `process_query`): clean local scope but inconsistent with the file's prevailing module-level import style.
+    - Option C (Plan 05-03 adds its own separate top-of-file `from src.llm import get_llm` independent of Plan 05-02): two separate `from src.llm import ...` lines in the same file = stylistic clutter.
+
+    **Trade-off:** Option B requires Plan 05-03 to depend on Plan 05-02 (the `from src.llm import ...` line must exist before 05-03 can extend it). This pushes 05-03 from Wave 2 → Wave 3 — see locked decision §16. The benefit: one canonical import line, zero redundant inline imports, matches `app.py`'s prevailing style.
+
+    **Concrete edit in Plan 05-03 Task 3.1:** Locate the line added by Plan 05-02:
+    ```python
+    from src.llm import missing_vars, load_settings
+    ```
+    Replace with:
+    ```python
+    from src.llm import get_llm, missing_vars, load_settings
+    ```
+    (Names alphabetized: `get_llm`, `load_settings`, `missing_vars`. Adjust order to your prevailing style if `app.py` uses a different convention — match what Plan 05-02 wrote.)
 
 15. **NO interaction with the `_llm_provider_blocked` flag** — that's Plan 05-02's domain. This plan is purely the provenance caption.
+
+16. **Wave 3 placement — dependency on Plan 05-02.**
+
+    **Why Wave 3, not Wave 2:** Prior phases (1–4) never had two plans in the same wave touching the same file. Plan 05-02 and Plan 05-03 both modify `app.py`, AND Plan 05-03 depends on two artifacts introduced by Plan 05-02:
+    1. The module-level `_PROVIDER_LABELS` dict (decision §5 — used by `_render_provenance_caption`).
+    2. The module-level `from src.llm import ...` line (decision §14 — extended to include `get_llm`).
+
+    Either dependency is genuine; together they make Wave-2 parallelism with Plan 05-02 unsafe even under a "serializes-within-wave" executor convention. Plan 05-03 therefore declares `depends_on: [1, 2]` and `wave: 3`, matching prior-phase convention.
+
+    **Downstream impact:** Plan 05-05 (acceptance gate, formerly Wave 3) becomes Wave 4. Plan 05-04 (docs) stays in Wave 2 in parallel with Plan 05-02 — it has no code dependencies.
 </decisions>
 
 <tasks>
 
 <task type="auto">
-  <name>Task 3.1: Add _render_provenance_caption helper + capture provider/model in process_query</name>
+  <name>Task 3.1: Extend src.llm import to include get_llm + Add _render_provenance_caption helper + capture provider/model in process_query</name>
   <files>app.py</files>
   <action>
-**Goal:** Add the shared rendering helper at module scope, and capture `(provider, model)` at the bottom of `process_query()` so the return dict carries the metadata into the append block.
+**Goal:** Extend the Plan-05-02 `from src.llm import ...` line to include `get_llm`, add the shared rendering helper at module scope, and capture `(provider, model)` at the bottom of `process_query()` so the return dict carries the metadata into the append block.
 
-**Step 1 — Add the helper at module scope.** Place it AFTER Plan 05-02's `_PROVIDER_LABELS` definition. Concretely, find this line (added by Plan 05-02):
+**Step 0 — VERIFY THE PRE-CONDITION (premise check, run BEFORE editing):**
+
+```bash
+# Confirm Plan 05-02 already landed its import line
+grep -nE "^from src\.llm import" app.py
+# Expected: 1 match, exactly: `from src.llm import missing_vars, load_settings`
+# (or whatever order Plan 05-02 used)
+
+# Confirm get_llm is NOT yet imported (Plan 05-03's job)
+grep -nE "\\bget_llm\\b" app.py
+# Expected: 0 matches
+```
+
+If the Plan 05-02 line is missing, STOP and report — Plan 05-03 depends on it (wave 2 → wave 3 ordering). If `get_llm` is already imported, the line was extended by a prior partial run — verify and skip Step 1.
+
+**Step 1 — Extend the Plan 05-02 import line.** Locate the module-level line added by Plan 05-02 (near the other `from src...` imports at the top of `app.py`):
+
+```python
+from src.llm import missing_vars, load_settings
+```
+
+Replace it with (names alphabetized — match Plan 05-02's prevailing style):
+
+```python
+from src.llm import get_llm, load_settings, missing_vars
+```
+
+(If Plan 05-02 used a different name order, preserve that order and INSERT `get_llm` in the alphabetical-ish slot — e.g. `from src.llm import get_llm, missing_vars, load_settings`. The exact order is a style preference; the load-bearing requirement is that `get_llm` is on the line.)
+
+**Step 2 — Add the helper at module scope.** Place it AFTER Plan 05-02's `_PROVIDER_LABELS` definition. Concretely, find this line (added by Plan 05-02):
 
 ```python
 _PROVIDER_KEYS: tuple[str, ...] = tuple(_PROVIDER_OPTIONS.values())
@@ -207,7 +272,7 @@ def _render_provenance_caption(provider: str, model: str | None) -> None:
         st.caption(f"via **{human_name}**")
 ```
 
-**Step 2 — Capture provider/model in `process_query()`.** Locate the function at `app.py:701`. Find the FINAL `return {...}` (the happy-path return — search for the line with `chart_feedback` in it; that's the final return's dict). It looks approximately like:
+**Step 3 — Capture provider/model in `process_query()`.** Locate the function at `app.py:701`. Find the FINAL `return {...}` (the happy-path return — search for the line with `chart_feedback` in it; that's the final return's dict). It looks approximately like:
 
 ```python
         return {
@@ -231,7 +296,6 @@ IMMEDIATELY BEFORE this `return {...}` statement, add the capture block:
         # hit, no extra HTTP, no extra startup log. Defensive getattr keeps
         # the path crash-free even if a future adapter forgets to set _model
         # or override provider_name.
-        from src.llm import get_llm
         _client = get_llm()
         _provider = getattr(
             _client, "provider_name", st.session_state.get("llm_provider", "unknown")
@@ -239,6 +303,8 @@ IMMEDIATELY BEFORE this `return {...}` statement, add the capture block:
         _model = getattr(_client, "_model", "unknown")
 
 ```
+
+Note: NO inline `from src.llm import get_llm` here — it was added at module scope in Step 1. If you find an inline import was added by mistake, delete it (single module-level import is the locked decision §14 choice).
 
 Then ADD the two new keys to the return dict:
 
@@ -257,14 +323,35 @@ Then ADD the two new keys to the return dict:
 
 (Use whatever keys are currently in the dict — `provider` and `model` go at the END so diffs are minimal.)
 
-**Step 3 — Do NOT modify the early-return dicts.** The "NO DATA LOADED" and "NO EMBEDDINGS" early returns stay exactly as they are. Locked decision §4: error returns don't carry provider/model; caption guard skips them.
+**Step 4 — Do NOT modify the early-return dicts.** The "NO DATA LOADED" and "NO EMBEDDINGS" early returns stay exactly as they are. Locked decision §4: error returns don't carry provider/model; caption guard skips them.
 
-**Step 4 — Do NOT modify any error-return inside the `try` block.** The `if result.get("error"):` branch at `app.py:726-731` also stays as-is — no LLM produced that content for the failure case.
+**Step 5 — Do NOT modify any error-return inside the `try` block.** The `if result.get("error"):` branch at `app.py:726-731` also stays as-is — no LLM produced that content for the failure case.
 
-**Step 5 — Verify the `from src.llm import get_llm` import works.** If `get_llm` is already imported at module scope (Phase 2), the inline `from src.llm import get_llm` is redundant but harmless. Either keep it (defensive — explicit at the capture site) or rely on the module-level import (preference if it already exists). Choose based on what already exists in `app.py` — match the project's prevailing style.
+**Step 6 — Final verification: the import line is the SINGLE source of `get_llm` in app.py.** Grep:
+
+```bash
+grep -nE "from src\.llm import" app.py
+# Expected: 1 match — the extended Plan-05-02 line
+grep -nE "import get_llm|from src\.llm import.*get_llm" app.py
+# Expected: 1 match (the same line)
+```
+
+If there are multiple `from src.llm import` lines, consolidate them.
   </action>
   <verify>
 ```bash
+# Premise check satisfied: get_llm imported at module scope
+grep -nE "from src\.llm import.*get_llm" app.py
+# Expected: 1 match (the extended Plan-05-02 line)
+
+# Single from-src-llm import line
+grep -cE "^from src\.llm import" app.py
+# Expected: 1
+
+# NO inline import of get_llm inside any function body
+grep -nE "    from src\.llm import get_llm" app.py
+# Expected: 0 matches (must be module-level only)
+
 # Helper defined at module scope
 grep -nE "^def _render_provenance_caption" app.py
 # Expected: 1 match
@@ -300,7 +387,7 @@ pytest tests/ -v --tb=short
 ```
   </verify>
   <done>
-`_render_provenance_caption(provider, model)` exists at `app.py` module scope, takes explicit args, NEVER reads session_state (locked by docstring invariant). `process_query()` captures `_provider` and `_model` via `get_llm() + getattr` BEFORE the happy-path `return`; the return dict has new `"provider"` and `"model"` keys. Early-return dicts (error paths) UNTOUCHED. `app.py` parses cleanly. All 69 prior tests still pass.
+`from src.llm import get_llm, ...` exists at module scope in `app.py` (the Plan-05-02 import line was extended to include `get_llm`). NO inline `from src.llm import get_llm` inside any function body. `_render_provenance_caption(provider, model)` exists at `app.py` module scope, takes explicit args, NEVER reads session_state (locked by docstring invariant). `process_query()` captures `_provider` and `_model` via `get_llm() + getattr` BEFORE the happy-path `return`; the return dict has new `"provider"` and `"model"` keys. Early-return dicts (error paths) UNTOUCHED. `app.py` parses cleanly. All 69 prior tests still pass.
   </done>
 </task>
 
@@ -473,7 +560,17 @@ Plan-level verification:
    # Expected: ONLY app.py
    ```
 
-2. **Helper defined once, called twice:**
+2. **`get_llm` imported at module scope (single from-src-llm line):**
+   ```bash
+   grep -cE "^from src\.llm import" app.py
+   # Expected: 1
+   grep -nE "from src\.llm import.*get_llm" app.py
+   # Expected: 1 match
+   grep -nE "    from src\.llm import get_llm" app.py
+   # Expected: 0 (no inline imports inside functions)
+   ```
+
+3. **Helper defined once, called twice:**
    ```bash
    grep -nE "def _render_provenance_caption" app.py
    # Expected: 1
@@ -481,7 +578,7 @@ Plan-level verification:
    # Expected: 3 (1 def + 2 calls)
    ```
 
-3. **No accidental session_state read inside the helper:**
+4. **No accidental session_state read inside the helper:**
    ```bash
    # Extract helper body and check it doesn't reference session_state
    python -c "
@@ -498,21 +595,21 @@ Plan-level verification:
    # Expected: Helper invariant OK
    ```
 
-4. **process_query happy-path return carries provider+model:**
+5. **process_query happy-path return carries provider+model:**
    ```bash
    grep -nE '"provider": _provider' app.py
    grep -nE '"model": _model' app.py
    # Each: 1 match
    ```
 
-5. **Append dict has both new keys:**
+6. **Append dict has both new keys:**
    ```bash
    grep -nE '"provider": response\.get\("provider"\)' app.py
    grep -nE '"model": response\.get\("model"\)' app.py
    # Each: 1 match (in the append block)
    ```
 
-6. **Caption render position (above markdown):**
+7. **Caption render position (above markdown):**
    The caption call must appear BEFORE `st.markdown(...)` inside each `with st.chat_message("assistant"):` block. Visual inspection of the diff for app.py confirms this — the regex check below does a coarse ordering test:
    ```bash
    python -c "
@@ -534,22 +631,24 @@ Plan-level verification:
    # Expected: order OK
    ```
 
-7. **User messages do NOT render a caption** (verified by the guard regex above and Plan 05-05's mock-based test).
+8. **User messages do NOT render a caption** (verified by the guard regex above and Plan 05-05's mock-based test).
 
-8. **No new src/ or doc edits:**
+9. **No new src/ or doc edits:**
    ```bash
    git diff --stat HEAD -- src/ scripts/ tests/ README.md USER_GUIDE.md .env.example
    # Expected: ZERO output
    ```
 
-9. **Full test suite green:**
-   ```bash
-   pytest tests/ -v --tb=short
-   # Expected: 69 passed
-   ```
+10. **Full test suite green:**
+    ```bash
+    pytest tests/ -v --tb=short
+    # Expected: 69 passed
+    ```
 </verification>
 
 <success_criteria>
+- [ ] Plan-05-02 import line extended to include `get_llm` — single module-level `from src.llm import ...` line in `app.py` covers `get_llm`, `load_settings`, `missing_vars`
+- [ ] NO inline `from src.llm import get_llm` inside any function body
 - [ ] `_render_provenance_caption(provider, model)` defined at module scope; docstring locks the "MUST NOT read session_state" invariant
 - [ ] Helper handles `model=None`/empty (caption degrades to "via **<Name>**" without the model half)
 - [ ] `process_query` happy-path return dict carries `"provider"` and `"model"` keys captured via `getattr(client, "provider_name", ...)` / `getattr(client, "_model", "unknown")`
@@ -564,9 +663,10 @@ Plan-level verification:
 
 <output>
 After completion, create `.planning/phases/05-sidebar-ui-toggle-documentation/05-03-SUMMARY.md` documenting:
-- Lines modified in `app.py` (helper def, process_query capture, append block, both render sites)
-- Confirmation: helper takes explicit args (no session_state read); two render sites both above-markdown
+- Lines modified in `app.py` (extended import line, helper def, process_query capture, append block, both render sites)
+- Confirmation: `get_llm` imported at module scope (Option B from decision §14); helper takes explicit args (no session_state read); two render sites both above-markdown
 - 69-test suite still green
 - Unblocks: Plan 05-05 (acceptance gate's SC #4 test can now assert history-survives-switch)
 - Note for Plan 05-04 (docs): the per-message caption format is `via **<Human Name>** · \`<model>\`` — quote this exact format in the USER_GUIDE explanation
+</output>
 </output>
