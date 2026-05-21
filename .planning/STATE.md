@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 ## Current Position
 
 Phase: 4 of 5 (Strict-Tools + Smoke Test) — In Progress
-Plan: 2 of ~4 in Phase 4 (04-02 complete)
-Status: classify_with_tool fully implemented (strict-tools + text-mode fallback + _post_messages helper); 39/39 tests green. Plan 04-03 (Azure parity) and 04-04 (acceptance gate) unblocked.
-Last activity: 2026-05-21 — Completed 04-PLAN-02-classify-with-tool-strict-tools-and-fallback.md
+Plan: 3 of ~4 in Phase 4 (04-03 complete)
+Status: scripts/smoke_llm.py operator smoke gate created; load_dotenv-before-src.llm ordering verified; dev-box exit-code matrix confirmed (both=0, anth=1, az=1); 39/39 tests green. Plan 04-04 (acceptance gate) unblocked.
+Last activity: 2026-05-21 — Completed 04-PLAN-03-smoke-script.md
 
-Progress: [████████░░] 78% (13/16 plans estimated)
+Progress: [████████░░] 81% (14/16 plans estimated)
 
 ## Performance Metrics
 
@@ -134,6 +134,12 @@ Decisions from 04-02 (classify_with_tool strict-tools + fallback):
 - tools_supported added at END of llm_provider_loaded extra dict (order-of-definition lock)
 - jsonschema upgraded from 4.25.1 -> 4.26.0 (requirements.txt pin >=4.26.0,<5 now satisfied)
 
+Decisions from 04-03 (smoke-script):
+- load_dotenv() on module line 49, before src.llm imports on lines 52-54 — RESEARCH.md Pitfall 5 guard; load order is load-bearing for adapter __init__ env reading
+- sys.stdout.reconfigure(encoding='utf-8') added — Rule 1 bug fix for Windows CP1252 crash on → arrow character; silently skipped on non-reconfigurable streams
+- Synthetic shape strings for complete() checks — adapters return str not raw dict; Anthropic={id,type,role,content,model,stop_reason,usage}, Azure={id,object,choices,usage}
+- Azure classify_with_tool signature confirmed identical to Anthropic (messages, tool, *, tool_name, **kwargs) — no adapter alignment needed; both adapters callable via same smoke script pattern
+
 Decisions from 04-01 (INTENT_TOOL + classify_intent migration):
 - INTENT_TOOL derived from ClassificationResultV1 via typing.get_type_hints() — NOT fields().type (which returns strings under `from __future__ import annotations`); this is the critical RESEARCH.md Pitfall 1 guard
 - version: str stays plain string (no Literal["v1"]/const/enum) per locked decision §2 — future v2 updates dataclass + derivation helper together
@@ -173,6 +179,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-05-21T18:52:10Z
-Stopped at: Completed 04-PLAN-02-classify-with-tool-strict-tools-and-fallback.md — classify_with_tool implemented (strict + text-mode); _post_messages extracted; 39/39 tests green; Plan 04-03 (Azure parity) unblocked
+Last session: 2026-05-21T19:01:07Z
+Stopped at: Completed 04-PLAN-03-smoke-script.md — scripts/smoke_llm.py created (470 lines); CONTINUE-ON-FAILURE per-check isolation; missing-cred matrix verified; Windows UTF-8 reconfigure added (Rule 1 bug fix); 39/39 tests green; Plan 04-04 (acceptance gate) unblocked
 Resume file: None
