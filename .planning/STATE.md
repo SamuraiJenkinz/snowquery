@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 ## Current Position
 
 Phase: 4 of 5 (Strict-Tools + Smoke Test) — In Progress
-Plan: 1 of ~4 in Phase 4 (04-01 complete)
-Status: INTENT_TOOL constant live in src/llm/types.py; classify_intent migrated to classify_with_tool; 39/39 tests green. Plan 04-02 (AnthropicMGTIClient.classify_with_tool implementation) and 04-02 (parallel Azure parity) unblocked.
-Last activity: 2026-05-21 — Completed 04-PLAN-01-intent-tool-and-classify-intent-migration.md
+Plan: 2 of ~4 in Phase 4 (04-02 complete)
+Status: classify_with_tool fully implemented (strict-tools + text-mode fallback + _post_messages helper); 39/39 tests green. Plan 04-03 (Azure parity) and 04-04 (acceptance gate) unblocked.
+Last activity: 2026-05-21 — Completed 04-PLAN-02-classify-with-tool-strict-tools-and-fallback.md
 
-Progress: [████████░░] 75% (12/16 plans estimated)
+Progress: [████████░░] 78% (13/16 plans estimated)
 
 ## Performance Metrics
 
@@ -32,8 +32,8 @@ Progress: [████████░░] 75% (12/16 plans estimated)
 | 3. Anthropic Adapter | 4 (of 4) | ~16 min | ~4 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (3 min), 03-02 (2 min), 03-03 (8 min), 03-04 (3 min)
-- Trend: consistent 2-8 min/plan; 03-04 (acceptance gate, test-only deliverable) shipped in 3 min once preconditions were verified
+- Last 5 plans: 03-02 (2 min), 03-03 (8 min), 03-04 (3 min), 04-01 (~3 min), 04-02 (7 min)
+- Trend: consistent 2-8 min/plan; 04-02 (classify_with_tool implementation + _post_messages extraction) shipped in 7 min
 
 *Updated after each plan completion*
 
@@ -124,6 +124,16 @@ Decisions from 03-03 (Anthropic adapter implementation):
 - __repr__ override returns 'AnthropicMGTIClient()' — OBS-03 regression guard symmetric with Azure; API key cannot leak via repr/Streamlit session inspection
 - classify_with_tool stub body BYTE-IDENTICAL to Phase 1 — Phase 4 territory; raise NotImplementedError("AnthropicMGTIClient.classify_with_tool is implemented in Phase 4")
 
+Decisions from 04-02 (classify_with_tool strict-tools + fallback):
+- _post_messages extracted intra-module (NOT to src/llm/_log.py): owns HTTP + 4xx/5xx envelope; shared by complete() and classify_with_tool(); does NOT own timing or log emission
+- Env-flag-only fallback: self._tools_supported False->_classify_via_text_mode; NO runtime auto-fallback (loud signal if proxy regresses on tools)
+- max_tokens during tool_use raises LLMSchemaError (DIVERGES from complete()'s truncated-as-success); message mentions "raise ANTHROPIC_MAX_TOKENS"
+- Guardrail check BEFORE missing-tool_use check — load-bearing order lock: guardrail -> max_tokens -> tool_use extraction -> input validation -> schema validation
+- _emit_log: bool = True kwarg on complete(); text-mode wrapper passes _emit_log=False to suppress delegate's event; ONE event per classify_with_tool in both paths
+- _classify_via_text_mode self-contained (no cross-adapter import); system-prompt mirrors azure_openai.py:254-264; fence-stripping mirrors query_router.py:144-148
+- tools_supported added at END of llm_provider_loaded extra dict (order-of-definition lock)
+- jsonschema upgraded from 4.25.1 -> 4.26.0 (requirements.txt pin >=4.26.0,<5 now satisfied)
+
 Decisions from 04-01 (INTENT_TOOL + classify_intent migration):
 - INTENT_TOOL derived from ClassificationResultV1 via typing.get_type_hints() — NOT fields().type (which returns strings under `from __future__ import annotations`); this is the critical RESEARCH.md Pitfall 1 guard
 - version: str stays plain string (no Literal["v1"]/const/enum) per locked decision §2 — future v2 updates dataclass + derivation helper together
@@ -163,6 +173,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-05-21T18:42:43Z
-Stopped at: Completed 04-PLAN-01-intent-tool-and-classify-intent-migration.md — INTENT_TOOL live, classify_intent migrated; 39/39 tests green; Phase 4 Plan 02 (AnthropicMGTIClient.classify_with_tool) unblocked
+Last session: 2026-05-21T18:52:10Z
+Stopped at: Completed 04-PLAN-02-classify-with-tool-strict-tools-and-fallback.md — classify_with_tool implemented (strict + text-mode); _post_messages extracted; 39/39 tests green; Plan 04-03 (Azure parity) unblocked
 Resume file: None
