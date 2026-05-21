@@ -75,7 +75,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. `.env.example` lists every new Anthropic variable (`ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_VERSION`, `ANTHROPIC_MAX_TOKENS`, `ANTHROPIC_TEMPERATURE`, `ANTHROPIC_TIMEOUT_S`, `ANTHROPIC_TOOLS_SUPPORTED`, `LLM_PROVIDER_DEFAULT`) with documented defaults
   5. App startup logs the configured base URL for each loadable provider exactly once; `generate_sql` and `generate_executive_summary` call only `complete()` on whichever provider is active (no tool-use wrapping on either side)
 
-**Plans**: TBD
+**Plans**:
+- [ ] 03-PLAN-01-env-and-startup-log.md - Extend .env.example with the 9 Phase 3 variables (LLM_PROVIDER_DEFAULT + 8 ANTHROPIC_*); add llm_provider_loaded startup log to AzureOpenAIClient.__init__ — the SC #4 file shape + Azure half of SC #5 (CFG-02, CFG-04, OBS-01, OBS-04)
+- [ ] 03-PLAN-02-compat-provider-dispatch.md - Add per-provider dispatch on e.provider in src/llm/_compat.py for LLMAuthError, LLMTimeoutError, LLMTransientError, and the catch-all LLMError branch — pays down Phase 2 known debt; Anthropic timeouts no longer surface as "Azure OpenAI API call failed" (ERR-02, ERR-03 — call-site half)
+- [ ] 03-PLAN-03-anthropic-adapter.md - Replace the Phase 1 stub src/llm/anthropic_mgti.py with full AnthropicMGTIClient: __init__ with model-prefix validation + startup log, complete() with MGTI HTTP + correlation UUID + structured log + guardrail-before-emptiness response handling, classify_with_tool stub preserved; plus tests/manual/observe_correlation_echo.py for the X-Correlation-Id echo observation (ADP-03, ADP-04, ADP-05, ADP-06, ADP-08, ERR-02, ERR-03, OBS-01, OBS-04, TOOL-07)
+- [ ] 03-PLAN-04-acceptance-gate.md - tests/test_phase3_adapter.py: pytest module proving all 5 Phase 3 success criteria + end-to-end Plan 02 dispatch (21 tests, zero live HTTP, inline mock responses, no fixture files)
 
 ### Phase 4: Strict-Tools + Smoke Test
 
@@ -120,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Abstraction Seam | 3/3 | Complete ✓ | 2026-05-19 |
 | 2. Azure Extraction + Parity Gate | 4/4 | Complete ✓ | 2026-05-20 |
-| 3. Anthropic MGTI Adapter | 0/TBD | Not started | - |
+| 3. Anthropic MGTI Adapter | 0/4 | Planned | - |
 | 4. Strict-Tools + Smoke Test | 0/TBD | Not started | - |
 | 5. Sidebar UI Toggle + Documentation | 0/TBD | Not started | - |
 
