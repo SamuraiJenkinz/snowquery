@@ -96,7 +96,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. `classify_intent` merges the heuristic-populated `chart_requested`/`chart_type` AFTER receiving the LLM result — the LLM cannot overwrite the heuristic for these two fields (covered by an explicit verification query)
   5. `python scripts/smoke_llm.py --provider both` exits zero against the staging gateway, exercising `complete()` and `classify_with_tool()` plus the Anthropic `GET /coreapi/llm/anthropic/v1/` service-info diagnostic; pass/fail per check is printed with the captured response shape
 
-**Plans**: TBD
+**Plans**:
+- [ ] 04-PLAN-01-intent-tool-and-classify-intent-migration.md - Derive INTENT_TOOL from ClassificationResultV1 (single source of truth, TOOL-02); tighten ClassificationResultV1.intent to Literal enum; migrate src/query_router.py::classify_intent from complete()+json.loads to classify_with_tool() with heuristic-merge AFTER LLM result (TOOL-04)
+- [ ] 04-PLAN-02-classify-with-tool-strict-tools-and-fallback.md - Replace AnthropicMGTIClient.classify_with_tool NotImplementedError stub with strict-tools path (tools + tool_choice + jsonschema.validate); add env-flag-gated _classify_via_text_mode escape hatch; extract shared _post_messages helper; add tools_supported + llm_tool_mode log fields (ADP-07, ADP-09, TOOL-05, TOOL-06)
+- [ ] 04-PLAN-03-smoke-script.md - Create scripts/smoke_llm.py operator-run live-credential gate: 3 checks for Anthropic (service-info GET + complete + classify_with_tool), 2 for Azure; CONTINUE-ON-FAILURE; missing-cred SKIP/FAIL matrix per CONTEXT.md (SMK-01, SMK-02, SMK-03, SMK-04, SMK-05)
+- [ ] 04-PLAN-04-acceptance-gate.md - tests/test_phase4_strict_tools.py: pytest module proving all 5 Phase 4 success criteria + 9 error-matrix rows + COMPAT-DISPATCH pair (LLMSchemaError, LLMGuardrailError); zero live HTTP, no conftest.py, py_compile-only SC #5 check
 
 ### Phase 5: Sidebar UI Toggle + Documentation
 
@@ -125,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Abstraction Seam | 3/3 | Complete ✓ | 2026-05-19 |
 | 2. Azure Extraction + Parity Gate | 4/4 | Complete ✓ | 2026-05-20 |
 | 3. Anthropic MGTI Adapter | 4/4 | Complete ✓ | 2026-05-21 |
-| 4. Strict-Tools + Smoke Test | 0/TBD | Not started | - |
+| 4. Strict-Tools + Smoke Test | 0/4 | Planned | - |
 | 5. Sidebar UI Toggle + Documentation | 0/TBD | Not started | - |
 
 ---
