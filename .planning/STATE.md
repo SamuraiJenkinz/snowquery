@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** Phase 4 — Strict-Tools + Smoke Test (Phase 3 complete)
+**Current focus:** Phase 5 — Sidebar UI Toggle (Phase 4 complete — pending operator-run smoke gate)
 
 ## Current Position
 
-Phase: 4 of 5 (Strict-Tools + Smoke Test) — In Progress
-Plan: 3 of ~4 in Phase 4 (04-03 complete)
-Status: scripts/smoke_llm.py operator smoke gate created; load_dotenv-before-src.llm ordering verified; dev-box exit-code matrix confirmed (both=0, anth=1, az=1); 39/39 tests green. Plan 04-04 (acceptance gate) unblocked.
-Last activity: 2026-05-21 — Completed 04-PLAN-03-smoke-script.md
+Phase: 4 of 5 (Strict-Tools + Smoke Test) — COMPLETE (all 4 plans done)
+Plan: 4 of 4 in Phase 4 (04-04 complete)
+Status: All 5 Phase 4 SCs proven; 69/69 tests green; Phase 4 acceptance gate shipped. Phase 5 (Sidebar UI Toggle) unblocked pending operator-run smoke gate against stage gateway (python scripts/smoke_llm.py --provider both --verbose).
+Last activity: 2026-05-21 — Completed 04-PLAN-04-acceptance-gate.md
 
-Progress: [████████░░] 81% (14/16 plans estimated)
+Progress: [█████████░] 94% (16/17 plans estimated — Phase 5 unblocked)
 
 ## Performance Metrics
 
@@ -32,8 +32,8 @@ Progress: [████████░░] 81% (14/16 plans estimated)
 | 3. Anthropic Adapter | 4 (of 4) | ~16 min | ~4 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (2 min), 03-03 (8 min), 03-04 (3 min), 04-01 (~3 min), 04-02 (7 min)
-- Trend: consistent 2-8 min/plan; 04-02 (classify_with_tool implementation + _post_messages extraction) shipped in 7 min
+- Last 5 plans: 03-04 (3 min), 04-01 (~3 min), 04-02 (7 min), 04-03 (~4 min), 04-04 (4 min)
+- Trend: consistent 3-7 min/plan; Phase 4 (4 plans) fully complete
 
 *Updated after each plan completion*
 
@@ -147,6 +147,14 @@ Decisions from 04-01 (INTENT_TOOL + classify_intent migration):
 - result["intent"] used directly in return dict (not .get("intent","structured")) — schema required+enum guarantees presence; defaulting silently masks contract violation
 - test_phase2_parity.py updated (Rule 1 deviation): 3 tests tested old complete() call path in classify_intent; updated to mock classify_with_tool and ToolCall directly; all 39 tests green
 
+Decisions from 04-04 (acceptance gate):
+- Test module self-contained — no conftest.py, no pytest.ini, no new tests/fixtures/ files (matches Phase 1/2/3 acceptance-gate pattern; four phases consistent now)
+- Inline mock-response builders used INSTEAD of fixture files — RESEARCH.md "Mock Response Builder Pattern" applied (same as Phase 3 gate)
+- _RecordCapturer mirrors test_phase3_adapter.py:412-420 VERBATIM — locked decision §3; subclass logging.Handler, override emit()
+- COMPAT-DISPATCH covers LLMSchemaError + LLMGuardrailError — no _compat.py edits needed; catch-all `except LLMError` branch already dispatches by e.provider since Phase 3-02
+- SC #4 test patches get_llm + classify_with_tool to inject chart_requested=True into ToolCall.input, then asserts classify_intent reads from heuristic locals (False) — strongest TOOL-04 regression guard without live HTTP
+- Combined suite: 69 tests (39 prior + 30 Phase 4), all passing, 8.05s, zero live HTTP
+
 Decisions from 03-04 (acceptance gate):
 - Test module self-contained — no conftest.py, no pytest.ini added; matches Phase 1/Phase 2 gate pattern across all three phases now
 - Inline mock-response builders (_make_anthropic_response, _make_error_response) used INSTEAD of fixture files — Phase 3 has no parity baseline so the Phase 2 fixture-file pattern does not apply (CONTEXT.md decision); RESEARCH.md "Mock Response Builder Pattern" applied
@@ -168,17 +176,21 @@ Phase 2 (Azure Extraction + Parity Gate) is complete. All four ROADMAP success c
 
 Phase 3 (Anthropic MGTI Adapter) is complete. All 5 ROADMAP success criteria proven by tests/test_phase3_adapter.py (21 tests, ~8s, zero live HTTP calls). Anthropic adapter is wired against the MGTI Apigee proxy with full typed-error mapping (401/403/429/5xx/Timeout/Guardrail/Schema), structured logging (llm_provider_loaded + llm_call), and per-provider QueryError dispatch through Plan 02's _compat layer. Adapter reachable via get_llm('anthropic_mgti'). classify_with_tool intentionally remains a NotImplementedError stub — Phase 4 territory. Combined suite: 39 tests, 0 failures. Phase 4 (Strict-Tools + Smoke Test) is unblocked.
 
+### Phase 4 Sign-Off
+
+Phase 4 (Strict-Tools + Smoke Test) is complete. All 5 ROADMAP success criteria proven by tests/test_phase4_strict_tools.py (30 tests, ~8s, zero live HTTP calls). classify_intent uses strict-tools when ANTHROPIC_TOOLS_SUPPORTED=true and JSON-parse text-mode fallback when false; INTENT_TOOL is derived programmatically from ClassificationResultV1 (single source of truth, chart fields excluded by design); heuristic-merge regression locked by SC #4 test; COMPAT-DISPATCH pair covers LLMSchemaError + LLMGuardrailError; smoke script exists and compiles cleanly. Combined suite: 69 tests (39 + 30), 0 failures, 8.05s. Phase 5 (Sidebar UI Toggle) is unblocked pending operator-run smoke gate against stage gateway.
+
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-- Phase 4: MGTI proxy strict-tools support is "works as of 2026-05-12 but undocumented" — `ANTHROPIC_TOOLS_SUPPORTED=false` escape hatch must be verified against staging before relying on tools in prod
-- Phase 4: MGTI `usage` block pass-through and `X-Correlation-Id` echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — to be combined with Phase 4 smoke test per ROADMAP.md. No adapter code path depends on the outcome.
+- Phase 5: Requires operator-run smoke gate before starting (python scripts/smoke_llm.py --provider both --verbose against stage ANTHROPIC_API_KEY). Without this, Phase 5 work should not begin (per SMK-05 / CONTEXT.md §Smoke script credential).
+- Phase 4 MGTI usage block pass-through and X-Correlation-Id echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — to be combined with smoke gate run.
 
 ## Session Continuity
 
-Last session: 2026-05-21T19:01:07Z
-Stopped at: Completed 04-PLAN-03-smoke-script.md — scripts/smoke_llm.py created (470 lines); CONTINUE-ON-FAILURE per-check isolation; missing-cred matrix verified; Windows UTF-8 reconfigure added (Rule 1 bug fix); 39/39 tests green; Plan 04-04 (acceptance gate) unblocked
+Last session: 2026-05-21T19:08:39Z
+Stopped at: Completed 04-PLAN-04-acceptance-gate.md — tests/test_phase4_strict_tools.py (30 tests, 869 lines); all 5 Phase 4 SCs proven; 9 error-matrix rows covered; COMPAT-DISPATCH pair; 69/69 combined tests green; Phase 4 COMPLETE; Phase 5 unblocked pending operator smoke gate
 Resume file: None
