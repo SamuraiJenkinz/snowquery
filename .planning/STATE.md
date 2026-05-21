@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 
 ## Current Position
 
-Phase: 2 of 5 (Azure Extraction + Parity Gate) — COMPLETE
-Plan: 4 of 4 in Phase 2 (02-01, 02-02, 02-03, 02-04 all complete)
-Status: Phase 2 COMPLETE — parity gate green (18/18 tests passing; 12 Phase 2 + 6 Phase 1)
-Last activity: 2026-05-20 — Completed 02-PLAN-04-acceptance-gate.md
+Phase: 3 of 5 (Anthropic MGTI Adapter) — IN PROGRESS
+Plan: 1 of 4 in Phase 3 (03-01 complete; 03-02 in parallel Wave 1; 03-03, 03-04 pending)
+Status: Wave 1 partially landed — env template + Azure startup log in place; 18/18 Phase 1+2 tests still green
+Last activity: 2026-05-21 — Completed 03-PLAN-01-env-and-startup-log.md
 
-Progress: [█████░░░░░] 47% (7/15 plans estimated)
+Progress: [█████░░░░░] 53% (8/15 plans estimated)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4 (through 02-03)
+- Total plans completed: 8 (through 03-01)
 - Average duration: ~4 min
-- Total execution time: ~16 min
+- Total execution time: ~19 min
 
 **By Phase:**
 
@@ -29,9 +29,10 @@ Progress: [█████░░░░░] 47% (7/15 plans estimated)
 |-------|-------|-------|----------|
 | 1. Abstraction Seam | 3 | 11 min | ~4 min |
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
+| 3. Anthropic Adapter | 1 (of 4) | ~3 min | ~3 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3 min), 02-02 (2 min), 02-03 (5 min), 02-04 (6 min)
+- Last 5 plans: 02-02 (2 min), 02-03 (5 min), 02-04 (6 min), 03-01 (3 min)
 - Trend: consistent 2-6 min/plan
 
 *Updated after each plan completion*
@@ -92,6 +93,14 @@ Decisions from 02-04 (acceptance gate):
 - CS3 (generate_executive_summary) tested to silently return None on LLM error — INTENTIONAL invariant (RESEARCH.md Pitfall 4), not a bug; Phase 3 must not add `except QueryError: raise` to CS3
 - chromadb installed (was already in requirements.txt but not in test env); Rule 3 blocker
 
+Decisions from 03-01 (env + startup log):
+- Startup log lives in adapter __init__ (not in factory __init__.py) — each adapter owns its own observability contract; factory cache handles "once per process" idempotence at the consumer boundary, not the producer
+- Distinct event tag llm_provider_loaded vs llm_call — two different lifecycle events deserve two different tags; field-name namespaces also kept disjoint (provider/base_url vs llm_provider/llm_model) so dashboards can filter cleanly
+- Log fires UNCONDITIONALLY (even when base_url is empty) — operator wants the signal "I tried to load <provider> and got base_url=''", not a silent skip
+- ANTHROPIC_MODEL placeholder is a concrete eu.anthropic.claude-sonnet-4-5-20250929-v1:0 (not a generic stub) so cp .env.example .env produces a config that constructs without LLMConfigError; SC #2's prefix check passes against the template
+- .env.example default LLM_PROVIDER_DEFAULT=azure_openai locked from Phase 5 — Phase 3 does NOT flip the default; existing deployments remain byte-identical until an operator opts in
+- Plan 03 contract: mirror this __init__ logger.info block verbatim in AnthropicMGTIClient.__init__ with provider="anthropic_mgti" and base_url=self._base_url to satisfy SC #5 fully
+
 ### Phase 1 Sign-Off
 
 Phase 1 (Abstraction Seam) is complete. All 5 ROADMAP.md success criteria are proven by the acceptance gate at tests/test_llm_seam.py (6 tests, 0.42s, zero live HTTP calls). The seam is stable for Phase 2 to plug AzureOpenAIClient into.
@@ -111,6 +120,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-05-20T18:20:40Z
-Stopped at: Completed 02-PLAN-04-acceptance-gate.md — Phase 2 COMPLETE
+Last session: 2026-05-21T15:00:17Z
+Stopped at: Completed 03-PLAN-01-env-and-startup-log.md — Wave 1 plan 1 of 2 landed
 Resume file: None
