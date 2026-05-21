@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** Phase 3 — Anthropic MGTI Adapter
+**Current focus:** Phase 4 — Strict-Tools + Smoke Test (Phase 3 complete)
 
 ## Current Position
 
-Phase: 3 of 5 (Anthropic MGTI Adapter) — IN PROGRESS
-Plan: 3 of 4 in Phase 3 (03-01 + 03-02 + 03-03 complete; 03-04 acceptance-gate pending)
-Status: Wave 2 mid-flight — AnthropicMGTIClient real adapter shipped (442 lines, was 47-line stub); manual X-Correlation-Id observation script in place; classify_with_tool preserved as Phase 4 stub; 18/18 Phase 1+2 acceptance gates still green
-Last activity: 2026-05-21 — Completed 03-PLAN-03-anthropic-adapter.md
+Phase: 3 of 5 (Anthropic MGTI Adapter) — COMPLETE
+Plan: 4 of 4 in Phase 3 (03-01 + 03-02 + 03-03 + 03-04 all complete)
+Status: Phase 3 acceptance gate green — tests/test_phase3_adapter.py (21 tests) passing; combined Phase 1+2+3 run is 39/39 green; AnthropicMGTIClient reachable via get_llm('anthropic_mgti') with full typed-error mapping, structured logging, and per-provider QueryError dispatch. Phase 4 unblocked.
+Last activity: 2026-05-21 — Completed 03-PLAN-04-acceptance-gate.md
 
-Progress: [███████░░░] 67% (10/15 plans estimated)
+Progress: [████████░░] 73% (11/15 plans estimated)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10 (through 03-03)
-- Average duration: ~4 min
-- Total execution time: ~29 min
+- Total plans completed: 11 (through 03-04 — Phase 3 fully complete)
+- Average duration: ~3 min
+- Total execution time: ~32 min
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [███████░░░] 67% (10/15 plans estimated)
 |-------|-------|-------|----------|
 | 1. Abstraction Seam | 3 | 11 min | ~4 min |
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
-| 3. Anthropic Adapter | 3 (of 4) | ~13 min | ~4.3 min |
+| 3. Anthropic Adapter | 4 (of 4) | ~16 min | ~4 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-04 (6 min), 03-01 (3 min), 03-02 (2 min), 03-03 (8 min)
-- Trend: consistent 2-8 min/plan; 03-03 was the centerpiece adapter rewrite (~442-line implementation)
+- Last 5 plans: 03-01 (3 min), 03-02 (2 min), 03-03 (8 min), 03-04 (3 min)
+- Trend: consistent 2-8 min/plan; 03-04 (acceptance gate, test-only deliverable) shipped in 3 min once preconditions were verified
 
 *Updated after each plan completion*
 
@@ -124,6 +124,15 @@ Decisions from 03-03 (Anthropic adapter implementation):
 - __repr__ override returns 'AnthropicMGTIClient()' — OBS-03 regression guard symmetric with Azure; API key cannot leak via repr/Streamlit session inspection
 - classify_with_tool stub body BYTE-IDENTICAL to Phase 1 — Phase 4 territory; raise NotImplementedError("AnthropicMGTIClient.classify_with_tool is implemented in Phase 4")
 
+Decisions from 03-04 (acceptance gate):
+- Test module self-contained — no conftest.py, no pytest.ini added; matches Phase 1/Phase 2 gate pattern across all three phases now
+- Inline mock-response builders (_make_anthropic_response, _make_error_response) used INSTEAD of fixture files — Phase 3 has no parity baseline so the Phase 2 fixture-file pattern does not apply (CONTEXT.md decision); RESEARCH.md "Mock Response Builder Pattern" applied
+- _RecordCapturer is a class-level helper (not a fixture) — adds handler in test body and removes in finally; no global logger mutation; the autouse fixture pattern from Phase 2 is preserved for env/cache isolation only
+- anthropic_env and opus_env are SEPARATE non-overlapping fixtures (not parameterized) — opus path's response body uses a different model field AND triggers a different code branch in _build_request_body; separating keeps SC #2 test names self-documenting
+- Empty-model no-raise verified TWICE in one test (test_init_no_raise_on_empty_model): __init__ constructs successfully AND complete() pre-flight raises LLMConfigError — both halves of the Phase 1 no-op pattern proved intact
+- Guardrail/Schema-error PAIR (test_guardrail_intervened_raises_guardrail_error + test_empty_content_non_guardrail_raises_schema_error) is the load-bearing regression guard for RESEARCH.md Pitfall 4 — if adapter reorders the checks, only the latter passes; both must be green
+- COMPAT-DISPATCH group (2 tests) deliberately exercises Plan 02's per-provider dispatch end-to-end with provider='anthropic_mgti' tag — locks against the "wrong product label in UI" regression class; pattern to replicate in Phase 4's gate (e.g. for LLMSchemaError(provider='anthropic_mgti') → tool-mode QueryError wording)
+
 ### Phase 1 Sign-Off
 
 Phase 1 (Abstraction Seam) is complete. All 5 ROADMAP.md success criteria are proven by the acceptance gate at tests/test_llm_seam.py (6 tests, 0.42s, zero live HTTP calls). The seam is stable for Phase 2 to plug AzureOpenAIClient into.
@@ -132,6 +141,10 @@ Phase 1 (Abstraction Seam) is complete. All 5 ROADMAP.md success criteria are pr
 
 Phase 2 (Azure Extraction + Parity Gate) is complete. All four ROADMAP success criteria proven by tests/test_phase2_parity.py (12 tests, ~8s, zero live HTTP calls). Azure adapter extraction verified byte-identical across 5 fixtures covering all 3 call sites. Combined suite: 18 tests, 0 failures. Phase 3 (Anthropic MGTI Adapter) is unblocked.
 
+### Phase 3 Sign-Off
+
+Phase 3 (Anthropic MGTI Adapter) is complete. All 5 ROADMAP success criteria proven by tests/test_phase3_adapter.py (21 tests, ~8s, zero live HTTP calls). Anthropic adapter is wired against the MGTI Apigee proxy with full typed-error mapping (401/403/429/5xx/Timeout/Guardrail/Schema), structured logging (llm_provider_loaded + llm_call), and per-provider QueryError dispatch through Plan 02's _compat layer. Adapter reachable via get_llm('anthropic_mgti'). classify_with_tool intentionally remains a NotImplementedError stub — Phase 4 territory. Combined suite: 39 tests, 0 failures. Phase 4 (Strict-Tools + Smoke Test) is unblocked.
+
 ### Pending Todos
 
 None.
@@ -139,10 +152,10 @@ None.
 ### Blockers/Concerns
 
 - Phase 4: MGTI proxy strict-tools support is "works as of 2026-05-12 but undocumented" — `ANTHROPIC_TOOLS_SUPPORTED=false` escape hatch must be verified against staging before relying on tools in prod
-- Phase 3: MGTI `usage` block pass-through and `X-Correlation-Id` echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — deferred to Phase 4 smoke test per ROADMAP.md. No adapter code path depends on the outcome.
+- Phase 4: MGTI `usage` block pass-through and `X-Correlation-Id` echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — to be combined with Phase 4 smoke test per ROADMAP.md. No adapter code path depends on the outcome.
 
 ## Session Continuity
 
-Last session: 2026-05-21T15:14:35Z
-Stopped at: Completed 03-PLAN-03-anthropic-adapter.md — Wave 2 mid-flight; AnthropicMGTIClient fully wired (442 lines); only 03-04 acceptance-gate remains in Phase 3
+Last session: 2026-05-21T15:19:33Z
+Stopped at: Completed 03-PLAN-04-acceptance-gate.md — Phase 3 fully complete; 39/39 combined tests green; ready for Phase 4 (Strict-Tools + Smoke Test)
 Resume file: None
