@@ -19,9 +19,9 @@ Progress: [█████████░] 94% (16/17 plans estimated — Phase 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11 (through 03-04 — Phase 3 fully complete)
-- Average duration: ~3 min
-- Total execution time: ~32 min
+- Total plans completed: 15 (through 04-04 — Phase 4 fully complete)
+- Average duration: ~4 min
+- Total execution time: ~50 min
 
 **By Phase:**
 
@@ -30,6 +30,7 @@ Progress: [█████████░] 94% (16/17 plans estimated — Phase 
 | 1. Abstraction Seam | 3 | 11 min | ~4 min |
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
 | 3. Anthropic Adapter | 4 (of 4) | ~16 min | ~4 min |
+| 4. Strict-Tools + Smoke | 4 (of 4) | ~22 min | ~5.5 min |
 
 **Recent Trend:**
 - Last 5 plans: 03-04 (3 min), 04-01 (~3 min), 04-02 (7 min), 04-03 (~4 min), 04-04 (4 min)
@@ -178,7 +179,9 @@ Phase 3 (Anthropic MGTI Adapter) is complete. All 5 ROADMAP success criteria pro
 
 ### Phase 4 Sign-Off
 
-Phase 4 (Strict-Tools + Smoke Test) is complete. All 5 ROADMAP success criteria proven by tests/test_phase4_strict_tools.py (30 tests, ~8s, zero live HTTP calls). classify_intent uses strict-tools when ANTHROPIC_TOOLS_SUPPORTED=true and JSON-parse text-mode fallback when false; INTENT_TOOL is derived programmatically from ClassificationResultV1 (single source of truth, chart fields excluded by design); heuristic-merge regression locked by SC #4 test; COMPAT-DISPATCH pair covers LLMSchemaError + LLMGuardrailError; smoke script exists and compiles cleanly. Combined suite: 69 tests (39 + 30), 0 failures, 8.05s. Phase 5 (Sidebar UI Toggle) is unblocked pending operator-run smoke gate against stage gateway.
+Phase 4 (Strict-Tools + Smoke Test) is complete. All 5 ROADMAP success criteria proven by tests/test_phase4_strict_tools.py (30 tests, ~8s, zero live HTTP calls). classify_intent uses strict-tools when ANTHROPIC_TOOLS_SUPPORTED=true and JSON-parse text-mode fallback when false; INTENT_TOOL is derived programmatically from ClassificationResultV1 (single source of truth, chart fields excluded by design); heuristic-merge regression locked by SC #4 test; COMPAT-DISPATCH pair covers LLMSchemaError + LLMGuardrailError; smoke script exists and compiles cleanly. Combined suite: 69 tests (39 + 30), 0 failures, 8.05s.
+
+Verifier outcome: 4/5 automated + 1 human_needed (SC #5 live-execution against stage gateway). User explicitly approved deferring the live smoke run to the Phase 4 verification PR review (operator-run, not CI — original phase contract per CONTEXT.md §Smoke script credential). VERIFICATION.md captures the operator checklist item. Phase 5 (Sidebar UI Toggle) is unblocked.
 
 ### Pending Todos
 
@@ -191,6 +194,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-05-21T19:08:39Z
-Stopped at: Completed 04-PLAN-04-acceptance-gate.md — tests/test_phase4_strict_tools.py (30 tests, 869 lines); all 5 Phase 4 SCs proven; 9 error-matrix rows covered; COMPAT-DISPATCH pair; 69/69 combined tests green; Phase 4 COMPLETE; Phase 5 unblocked pending operator smoke gate
+Last session: 2026-05-21T19:30:00Z
+Stopped at: Phase 4 close-out — verifier returned human_needed (4/5 automated + SC #5 operator-run live smoke deferred to PR review per user approval); ROADMAP.md / REQUIREMENTS.md / STATE.md updated; 04-VERIFICATION.md created; combined suite 69/69 green; Phase 5 (Sidebar UI Toggle) unblocked
 Resume file: None

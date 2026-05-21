@@ -24,9 +24,9 @@ Requirements for this milestone (adding Anthropic Claude as a selectable provide
 - [ ] **ADP-04**: `AnthropicMGTIClient` body shape is correct: `anthropic_version: "bedrock-2023-05-31"`, top-level `system`, `max_tokens` required, `temperature` honored
 - [ ] **ADP-05**: `AnthropicMGTIClient` validates the configured model name starts with `eu.anthropic.claude-` and raises `LLMConfigError` at construction otherwise
 - [ ] **ADP-06**: `AnthropicMGTIClient` omits `temperature`, `top_p`, and `top_k` from the request body when the model name matches `eu.anthropic.claude-opus-4-7*`
-- [ ] **ADP-07**: `AnthropicMGTIClient.classify_with_tool` uses Anthropic strict-tools: `tools=[tool]`, `tool_choice={"type": "tool", "name": tool.name, "disable_parallel_tool_use": True}`
+- [x] **ADP-07**: `AnthropicMGTIClient.classify_with_tool` uses Anthropic strict-tools: `tools=[tool]`, `tool_choice={"type": "tool", "name": tool.name, "disable_parallel_tool_use": True}`
 - [ ] **ADP-08**: `AnthropicMGTIClient` translates `stop_reason == "guardrail_intervened"` into `LLMGuardrailError` (HTTP 200 response with empty content does NOT count as success)
-- [ ] **ADP-09**: `AnthropicMGTIClient` extracts `tool_use` block input from a strict-tools response and returns it as a `ToolCall`; missing tool_use block raises `LLMSchemaError`
+- [x] **ADP-09**: `AnthropicMGTIClient` extracts `tool_use` block input from a strict-tools response and returns it as a `ToolCall`; missing tool_use block raises `LLMSchemaError`
 
 ### Configuration (CFG)
 
@@ -47,11 +47,11 @@ Requirements for this milestone (adding Anthropic Claude as a selectable provide
 ### Tools & Schema (TOOL)
 
 - [x] **TOOL-01**: `ClassificationResultV1` dataclass (frozen, slotted) is the single Python source of truth for intent-classification output; `IntentResult` is built from it
-- [ ] **TOOL-02**: `INTENT_TOOL` (`ToolSchema`) is derived programmatically from `ClassificationResultV1` — no hand-written JSON schema duplication
-- [ ] **TOOL-03**: `chart_requested` and `chart_type` are NOT in the LLM tool's `input_schema`; they continue to be populated by the heuristic `_detect_chart_request()` before the LLM call
-- [ ] **TOOL-04**: `classify_intent` receives the heuristic-populated `chart_requested`/`chart_type` and merges them with the LLM result; LLM output cannot overwrite the heuristic for these two fields
-- [ ] **TOOL-05**: When `ANTHROPIC_TOOLS_SUPPORTED=false`, `AnthropicMGTIClient.classify_with_tool` falls back to text mode + JSON parse — escape hatch if MGTI proxy regresses on tool pass-through
-- [ ] **TOOL-06**: Strict-tools responses are validated with `jsonschema.validate` against the same `INTENT_TOOL.input_schema` before being returned as a `ToolCall` (defence-in-depth)
+- [x] **TOOL-02**: `INTENT_TOOL` (`ToolSchema`) is derived programmatically from `ClassificationResultV1` — no hand-written JSON schema duplication
+- [x] **TOOL-03**: `chart_requested` and `chart_type` are NOT in the LLM tool's `input_schema`; they continue to be populated by the heuristic `_detect_chart_request()` before the LLM call
+- [x] **TOOL-04**: `classify_intent` receives the heuristic-populated `chart_requested`/`chart_type` and merges them with the LLM result; LLM output cannot overwrite the heuristic for these two fields
+- [x] **TOOL-05**: When `ANTHROPIC_TOOLS_SUPPORTED=false`, `AnthropicMGTIClient.classify_with_tool` falls back to text mode + JSON parse — escape hatch if MGTI proxy regresses on tool pass-through
+- [x] **TOOL-06**: Strict-tools responses are validated with `jsonschema.validate` against the same `INTENT_TOOL.input_schema` before being returned as a `ToolCall` (defence-in-depth)
 - [ ] **TOOL-07**: `generate_sql` and `generate_executive_summary` use only `complete()` (text mode) on both providers — no tool-use wrapping
 
 ### Observability (OBS)
@@ -73,11 +73,11 @@ Requirements for this milestone (adding Anthropic Claude as a selectable provide
 
 ### Smoke Test (SMK)
 
-- [ ] **SMK-01**: `scripts/smoke_llm.py` exists; runnable as `python scripts/smoke_llm.py [--provider azure_openai|anthropic_mgti|both]`
-- [ ] **SMK-02**: For each selected provider, smoke test exercises BOTH `complete()` and `classify_with_tool()` against the live endpoint using credentials from `.env`
-- [ ] **SMK-03**: For Anthropic, smoke test additionally hits the service-info `GET /coreapi/llm/anthropic/v1/` endpoint to confirm gateway reachability (the kbroles-validated first-step diagnostic)
-- [ ] **SMK-04**: Smoke test prints clear pass/fail per check with the captured response shape; exits non-zero on any failure
-- [ ] **SMK-05**: Smoke test must pass for both providers before the sidebar dropdown is wired (gates Phase 5)
+- [x] **SMK-01**: `scripts/smoke_llm.py` exists; runnable as `python scripts/smoke_llm.py [--provider azure_openai|anthropic_mgti|both]`
+- [x] **SMK-02**: For each selected provider, smoke test exercises BOTH `complete()` and `classify_with_tool()` against the live endpoint using credentials from `.env`
+- [x] **SMK-03**: For Anthropic, smoke test additionally hits the service-info `GET /coreapi/llm/anthropic/v1/` endpoint to confirm gateway reachability (the kbroles-validated first-step diagnostic)
+- [x] **SMK-04**: Smoke test prints clear pass/fail per check with the captured response shape; exits non-zero on any failure
+- [x] **SMK-05**: Smoke test must pass for both providers before the sidebar dropdown is wired (gates Phase 5)
 
 ### Documentation (DOC)
 
@@ -143,9 +143,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ADP-04 | Phase 3 | Pending |
 | ADP-05 | Phase 3 | Pending |
 | ADP-06 | Phase 3 | Pending |
-| ADP-07 | Phase 4 | Pending |
+| ADP-07 | Phase 4 | Complete |
 | ADP-08 | Phase 3 | Pending |
-| ADP-09 | Phase 4 | Pending |
+| ADP-09 | Phase 4 | Complete |
 | CFG-01 | Phase 1 | Complete |
 | CFG-02 | Phase 3 | Pending |
 | CFG-03 | Phase 1 | Complete |
@@ -157,11 +157,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ERR-03 | Phase 3 | Pending |
 | ERR-04 | Phase 2 | Complete |
 | TOOL-01 | Phase 1 | Complete |
-| TOOL-02 | Phase 4 | Pending |
-| TOOL-03 | Phase 4 | Pending |
-| TOOL-04 | Phase 4 | Pending |
-| TOOL-05 | Phase 4 | Pending |
-| TOOL-06 | Phase 4 | Pending |
+| TOOL-02 | Phase 4 | Complete |
+| TOOL-03 | Phase 4 | Complete |
+| TOOL-04 | Phase 4 | Complete |
+| TOOL-05 | Phase 4 | Complete |
+| TOOL-06 | Phase 4 | Complete |
 | TOOL-07 | Phase 3 | Pending |
 | OBS-01 | Phase 3 | Pending |
 | OBS-02 | Phase 2 | Complete |
@@ -174,11 +174,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-05 | Phase 5 | Pending |
 | UI-06 | Phase 5 | Pending |
 | UI-07 | Phase 5 | Pending |
-| SMK-01 | Phase 4 | Pending |
-| SMK-02 | Phase 4 | Pending |
-| SMK-03 | Phase 4 | Pending |
-| SMK-04 | Phase 4 | Pending |
-| SMK-05 | Phase 4 | Pending |
+| SMK-01 | Phase 4 | Complete |
+| SMK-02 | Phase 4 | Complete |
+| SMK-03 | Phase 4 | Complete |
+| SMK-04 | Phase 4 | Complete |
+| SMK-05 | Phase 4 | Complete (live execution pending operator) |
 | DOC-01 | Phase 5 | Pending |
 | DOC-02 | Phase 5 | Pending |
 | DOC-03 | Phase 5 | Pending |
@@ -198,4 +198,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-19*
-*Last updated: 2026-05-19 — Phase 1 (Abstraction Seam) requirements marked Complete*
+*Last updated: 2026-05-21 — Phase 4 (Strict-Tools + Smoke Test) requirements marked Complete*
