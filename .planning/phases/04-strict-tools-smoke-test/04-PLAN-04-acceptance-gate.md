@@ -897,34 +897,38 @@ def test_compat_dispatch_guardrail_error_translates_to_anthropic_query_error():
 # Log-event assertions — startup log has tools_supported; llm_call has llm_tool_mode
 # ===========================================================================
 
-class _LogCapturer:
-    """Lightweight log-record capturer for assertion in tests.
+class _RecordCapturer(logging.Handler):
+    """Capture log records for the test's lifetime.
 
-    Mirrors the Phase 3 _RecordCapturer pattern (STATE.md Phase 3-04 decision:
-    'class-level helper (not a fixture) — adds handler in test body and
-    removes in finally; no global logger mutation').
+    MIRRORS tests/test_phase3_adapter.py:412-420 VERBATIM (STATE.md Phase 3-04
+    decision: 'class-level helper (not a fixture) — adds handler in test body
+    and removes in finally; no global logger mutation'). Locked decision §3
+    of this plan requires Phase 3 idiom verbatim — subclass logging.Handler
+    and override emit(), then register via snow_logger.addHandler(cap) /
+    snow_logger.removeHandler(cap). Do NOT use addFilter on a vanilla
+    logging.Handler() — its default emit() raises NotImplementedError and
+    pollutes test output.
     """
-    def __init__(self):
+
+    def __init__(self) -> None:
+        super().__init__()
         self.records: list[logging.LogRecord] = []
 
-    def __call__(self, record: logging.LogRecord) -> bool:
+    def emit(self, record: logging.LogRecord) -> None:
         self.records.append(record)
-        return True
 
 
 def test_logs_startup_log_contains_tools_supported(anthropic_env):
     """Plan 02 decision §8: llm_provider_loaded log has tools_supported: bool field."""
-    capturer = _LogCapturer()
-    handler = logging.Handler()
-    handler.addFilter(capturer)
-    snow_logger.addHandler(handler)
+    cap = _RecordCapturer()
+    snow_logger.addHandler(cap)
     try:
         AnthropicMGTIClient()  # triggers startup log
     finally:
-        snow_logger.removeHandler(handler)
+        snow_logger.removeHandler(cap)
 
     startup_events = [
-        r for r in capturer.records
+        r for r in cap.records
         if getattr(r, "provider", None) == "anthropic_mgti"
         and r.getMessage() == "llm_provider_loaded"
     ]
@@ -943,10 +947,8 @@ def test_logs_classify_with_tool_strict_path_emits_one_event_with_llm_tool_mode_
     """RESEARCH.md Pitfall 6 + Plan 02 decision §7: strict path emits exactly ONE
     llm_call event tagged llm_tool_mode='strict'.
     """
-    capturer = _LogCapturer()
-    handler = logging.Handler()
-    handler.addFilter(capturer)
-    snow_logger.addHandler(handler)
+    cap = _RecordCapturer()
+    snow_logger.addHandler(cap)
     try:
         client = AnthropicMGTIClient()
         mock_resp = _make_tool_use_response()
@@ -957,10 +959,10 @@ def test_logs_classify_with_tool_strict_path_emits_one_event_with_llm_tool_mode_
                 tool_name="classify_intent",
             )
     finally:
-        snow_logger.removeHandler(handler)
+        snow_logger.removeHandler(cap)
 
     call_events = [
-        r for r in capturer.records
+        r for r in cap.records
         if r.getMessage() == "llm_call"
         and getattr(r, "llm_provider", None) == "anthropic_mgti"
     ]
@@ -981,10 +983,8 @@ def test_logs_classify_with_tool_text_fallback_emits_one_event_with_llm_tool_mod
     llm_tool_mode='text_fallback'. The delegate's (complete()'s) event is
     suppressed via _emit_log=False.
     """
-    capturer = _LogCapturer()
-    handler = logging.Handler()
-    handler.addFilter(capturer)
-    snow_logger.addHandler(handler)
+    cap = _RecordCapturer()
+    snow_logger.addHandler(cap)
     try:
         client = AnthropicMGTIClient()
         fallback_json = json.dumps({
@@ -999,10 +999,10 @@ def test_logs_classify_with_tool_text_fallback_emits_one_event_with_llm_tool_mod
                 tool_name="classify_intent",
             )
     finally:
-        snow_logger.removeHandler(handler)
+        snow_logger.removeHandler(cap)
 
     call_events = [
-        r for r in capturer.records
+        r for r in cap.records
         if r.getMessage() == "llm_call"
         and getattr(r, "llm_provider", None) == "anthropic_mgti"
     ]
