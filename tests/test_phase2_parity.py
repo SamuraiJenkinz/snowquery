@@ -113,8 +113,16 @@ def test_call_azure_openai_eliminated():
     # DI shape: each of the three call sites uses get_llm() + llm_to_query_error().
     import src.query_router as qr
     import src.sql_generator as sg
+
+    # classify_intent (CS1) migrated to classify_with_tool in Phase 4 — no longer
+    # calls client.complete() so max_tokens is not present at this call site.
+    ci_src = inspect.getsource(qr.classify_intent)
+    assert "get_llm()" in ci_src, "classify_intent missing get_llm()"
+    assert "llm_to_query_error()" in ci_src, "classify_intent missing llm_to_query_error()"
+    assert "classify_with_tool" in ci_src, "classify_intent missing classify_with_tool (Phase 4 migration)"
+
+    # CS2 and CS3 still use complete() + max_tokens — parity invariant preserved.
     for fn, expected_max_tokens in [
-        (qr.classify_intent, "max_tokens=500"),
         (qr.generate_executive_summary, "max_tokens=500"),
         (sg.generate_sql, "max_tokens=1000"),
     ]:
@@ -207,27 +215,36 @@ def test_parity_q5_exec_summary(azure_env):
 def test_parity_end_to_end_classify_intent(azure_env):
     """Success criterion #2 — end-to-end CS1 parity through classify_intent.
 
-    Exercises the full call-site path: mocked requests.post →
-    AzureOpenAIClient.complete → llm_to_query_error context manager →
-    classify_intent's JSON parse → returned dict. Proves the .strip() + JSON
-    parse downstream still works the same as before.
+    Phase 4: classify_intent now calls client.classify_with_tool() instead of
+    client.complete(). The mock patches classify_with_tool directly to return a
+    ToolCall whose .input matches the ClassificationResultV1 fields. The
+    heuristic chart_requested/chart_type merge is asserted to be present.
     """
+    from src.llm.types import ToolCall
     from src.query_router import classify_intent
 
-    fixture = _load_fixture("q1_structured_classification.json")
-    mock_resp = _make_mock_response(fixture)
     schema = {
         "table_name": "incidents",
         "row_count": 10,
         "columns": [{"name": "priority", "type": "VARCHAR", "sample": "P1"}],
     }
-    with patch("requests.post", return_value=mock_resp):
+    mock_tool_call = ToolCall(
+        tool_name="classify_intent",
+        input={
+            "version": "v1",
+            "intent": "structured",
+            "confidence": 0.95,
+            "reasoning": "Count aggregation query with priority and date-range filters",
+            "detected_filters": {"priority": ["P1"], "assignment_group": None, "date_range": "this week"},
+        },
+    )
+    with patch.object(AzureOpenAIClient, "classify_with_tool", return_value=mock_tool_call):
         result = classify_intent("How many P1 incidents were opened this week?", schema)
 
     assert result["intent"] == "structured"
     assert result["confidence"] == 0.95
     assert result["detected_filters"]["priority"] == ["P1"]
-    # chart_requested is heuristic-merged at the call site (TOOL-03 prep)
+    # chart_requested is heuristic-merged at the call site (TOOL-04)
     assert "chart_requested" in result
     assert "chart_type" in result
 
@@ -325,9 +342,15 @@ def test_error_translation_at_call_site(monkeypatch):
     }
 
     def _install_raising_client(exc: Exception):
-        """Replace the cached azure_openai client with one whose .complete raises."""
+        """Replace the cached azure_openai client with one whose LLM methods raise.
+
+        Phase 4: classify_intent calls classify_with_tool (not complete), so we
+        set both side_effects. CS2 (generate_sql) and CS3
+        (generate_executive_summary) still call complete().
+        """
         fake = MagicMock(spec=AzureOpenAIClient)
         fake.complete.side_effect = exc
+        fake.classify_with_tool.side_effect = exc
         llm_pkg._cache["azure_openai"] = fake
 
     # --- LLMTimeoutError → QueryError("Azure OpenAI API call failed", ...) ---

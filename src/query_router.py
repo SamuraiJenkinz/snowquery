@@ -4,7 +4,6 @@ Determines whether to use SQL or semantic search based on query intent.
 """
 from __future__ import annotations
 
-import json
 from typing import Any, Optional
 
 import pandas as pd
@@ -12,6 +11,7 @@ import pandas as pd
 from config import TOP_K_SEMANTIC
 from src.llm import get_llm
 from src.llm._compat import llm_to_query_error
+from src.llm.types import INTENT_TOOL
 from src.semantic_search import semantic_query
 from src.sql_generator import query_with_sql
 from src.utils import QueryError, format_schema_for_llm, logger
@@ -136,36 +136,36 @@ def classify_intent(
 
         client = get_llm()
         with llm_to_query_error():
-            content = client.complete(messages, max_tokens=500).strip()
+            call = client.classify_with_tool(
+                messages,
+                INTENT_TOOL,
+                tool_name="classify_intent",
+            )
 
-        # Parse JSON response
-        try:
-            # Handle markdown code blocks
-            if content.startswith("```"):
-                content = content.split("```")[1]
-                if content.startswith("json"):
-                    content = content[4:]
-                content = content.strip()
+        result = call.input  # dict matching ClassificationResultV1 fields
+        # Schema validation happened inside the adapter via jsonschema —
+        # `intent` is guaranteed to be one of structured/semantic/hybrid
+        # (enum constraint from INTENT_TOOL.input_schema), and all 5 fields
+        # are present (required-by-default in the derived schema).
 
-            result = json.loads(content)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse classification response: {content}")
-            # Fallback to heuristic classification
-            return _heuristic_classify(user_query)
+        logger.info(
+            f"Classified as: {result['intent']} "
+            f"(confidence: {result.get('confidence', 0)})"
+        )
 
-        # Validate intent
-        if result.get("intent") not in ["structured", "semantic", "hybrid"]:
-            result["intent"] = _heuristic_classify(user_query)["intent"]
-
-        logger.info(f"Classified as: {result['intent']} (confidence: {result.get('confidence', 0)})")
-
+        # CRITICAL (TOOL-04): heuristic merge AFTER LLM result. The
+        # chart_requested / chart_type values come from the heuristic
+        # locals computed at line 121 (_detect_chart_request) — NEVER
+        # from call.input. INTENT_TOOL.input_schema has no such fields,
+        # so call.input.get('chart_requested') would return None anyway,
+        # but reading from it is the regression vector this comment guards.
         return {
-            "intent": result.get("intent", "structured"),
+            "intent": result["intent"],
             "confidence": result.get("confidence", 0.5),
             "reasoning": result.get("reasoning", ""),
             "detected_filters": result.get("detected_filters", {}),
-            "chart_requested": chart_requested,
-            "chart_type": chart_type
+            "chart_requested": chart_requested,  # from heuristic at line 121
+            "chart_type": chart_type,             # from heuristic at line 121
         }
 
     except QueryError:
