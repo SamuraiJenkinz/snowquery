@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-05-19)
 
 ## Current Position
 
-Phase: 3 of 5 (Anthropic MGTI Adapter) — COMPLETE
-Plan: 4 of 4 in Phase 3 (03-01 + 03-02 + 03-03 + 03-04 all complete)
-Status: Phase 3 acceptance gate green — tests/test_phase3_adapter.py (21 tests) passing; combined Phase 1+2+3 run is 39/39 green; AnthropicMGTIClient reachable via get_llm('anthropic_mgti') with full typed-error mapping, structured logging, and per-provider QueryError dispatch. Phase 4 unblocked.
-Last activity: 2026-05-21 — Completed 03-PLAN-04-acceptance-gate.md
+Phase: 4 of 5 (Strict-Tools + Smoke Test) — In Progress
+Plan: 1 of ~4 in Phase 4 (04-01 complete)
+Status: INTENT_TOOL constant live in src/llm/types.py; classify_intent migrated to classify_with_tool; 39/39 tests green. Plan 04-02 (AnthropicMGTIClient.classify_with_tool implementation) and 04-02 (parallel Azure parity) unblocked.
+Last activity: 2026-05-21 — Completed 04-PLAN-01-intent-tool-and-classify-intent-migration.md
 
-Progress: [████████░░] 73% (11/15 plans estimated)
+Progress: [████████░░] 75% (12/16 plans estimated)
 
 ## Performance Metrics
 
@@ -124,6 +124,13 @@ Decisions from 03-03 (Anthropic adapter implementation):
 - __repr__ override returns 'AnthropicMGTIClient()' — OBS-03 regression guard symmetric with Azure; API key cannot leak via repr/Streamlit session inspection
 - classify_with_tool stub body BYTE-IDENTICAL to Phase 1 — Phase 4 territory; raise NotImplementedError("AnthropicMGTIClient.classify_with_tool is implemented in Phase 4")
 
+Decisions from 04-01 (INTENT_TOOL + classify_intent migration):
+- INTENT_TOOL derived from ClassificationResultV1 via typing.get_type_hints() — NOT fields().type (which returns strings under `from __future__ import annotations`); this is the critical RESEARCH.md Pitfall 1 guard
+- version: str stays plain string (no Literal["v1"]/const/enum) per locked decision §2 — future v2 updates dataclass + derivation helper together
+- additionalProperties: false on derived schema — LLM cannot inject chart_requested/chart_type even by accident
+- result["intent"] used directly in return dict (not .get("intent","structured")) — schema required+enum guarantees presence; defaulting silently masks contract violation
+- test_phase2_parity.py updated (Rule 1 deviation): 3 tests tested old complete() call path in classify_intent; updated to mock classify_with_tool and ToolCall directly; all 39 tests green
+
 Decisions from 03-04 (acceptance gate):
 - Test module self-contained — no conftest.py, no pytest.ini added; matches Phase 1/Phase 2 gate pattern across all three phases now
 - Inline mock-response builders (_make_anthropic_response, _make_error_response) used INSTEAD of fixture files — Phase 3 has no parity baseline so the Phase 2 fixture-file pattern does not apply (CONTEXT.md decision); RESEARCH.md "Mock Response Builder Pattern" applied
@@ -156,6 +163,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-05-21T15:19:33Z
-Stopped at: Completed 03-PLAN-04-acceptance-gate.md — Phase 3 fully complete; 39/39 combined tests green; ready for Phase 4 (Strict-Tools + Smoke Test)
+Last session: 2026-05-21T18:42:43Z
+Stopped at: Completed 04-PLAN-01-intent-tool-and-classify-intent-migration.md — INTENT_TOOL live, classify_intent migrated; 39/39 tests green; Phase 4 Plan 02 (AnthropicMGTIClient.classify_with_tool) unblocked
 Resume file: None
