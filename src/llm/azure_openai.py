@@ -83,6 +83,16 @@ class AzureOpenAIClient(LLMClient):
         self._api_version: str = settings.azure_api_version
         self._model: str = _extract_model_from_endpoint(self._endpoint)
 
+        # SC #5: log the configured base URL once per loadable provider. The
+        # factory cache (src/llm/__init__.py _cache dict) ensures __init__ runs
+        # at most once per provider per process — so this emits exactly one
+        # llm_provider_loaded event per provider, even if get_llm() is called
+        # repeatedly. Symmetric with AnthropicMGTIClient.__init__ (Phase 3 Plan 03).
+        logger.info(
+            "llm_provider_loaded",
+            extra={"provider": "azure_openai", "base_url": self._endpoint},
+        )
+
     def __repr__(self) -> str:
         # OBS-03: never include self._api_key in repr.
         return "AzureOpenAIClient()"
