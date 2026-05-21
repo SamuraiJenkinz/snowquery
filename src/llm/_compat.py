@@ -24,10 +24,11 @@ Design notes (locked decisions from CONTEXT.md / RESEARCH.md):
     compat layer provider-agnostic -- adding Anthropic does NOT require
     editing this file (RESEARCH.md "Phase 3 Compatibility Check").
 
-  * LLMAuthError uses the historic 'Set the AZURE_OPENAI_API_KEY ...'
-    remediation text to preserve byte-identical user-visible behavior
-    today. Phase 3 may revisit this branch when the Anthropic adapter
-    lands -- at that point the branch can dispatch on e.provider.
+  * LLMAuthError / LLMTimeoutError / LLMTransientError / catch-all
+    LLMError dispatch on e.provider so Anthropic errors get
+    Anthropic-named remediation. The Azure path (and unknown-provider
+    path) preserves the exact Phase 2 wording byte-identically. See the
+    if-branches below.
 
   * All raise statements use 'from e' to preserve the underlying
     LLMError as __cause__ for debugging (PEP 3134).
@@ -70,28 +71,47 @@ def llm_to_query_error() -> Iterator[None]:
     try:
         yield
     except LLMConfigError as e:
-        # Provider embeds remediation text in the LLMConfigError message
-        # at raise time (see AzureOpenAIClient.complete pre-flight check).
-        # Pass str(e) through as the QueryError.message so the user sees
-        # the same actionable text today and after Phase 3 adds Anthropic.
+        # UNCHANGED — provider embeds remediation text at raise time; str(e) is
+        # passed through verbatim. This is the "Phase-3-clean" pattern from
+        # Phase 2 OQ-1: adding a new provider does NOT require editing this
+        # branch (the new adapter just constructs LLMConfigError with its own
+        # remediation text — see AnthropicMGTIClient.complete pre-flight check
+        # in Phase 3 Plan 03).
         raise QueryError(str(e), "Check your .env configuration.") from e
+
     except LLMAuthError as e:
-        # HTTP 401/403 from the provider -- key was present but invalid.
-        # The historic remediation text in _call_azure_openai (today) is:
-        #   QueryError("Azure OpenAI API key not configured",
-        #              "Set the AZURE_OPENAI_API_KEY environment variable.")
-        # which is the same user-visible text we want here (the old code
-        # didn't actually distinguish missing-key vs invalid-key at the
-        # HTTP layer -- RequestException covered both).
+        # Phase 3: dispatch on e.provider so each provider's HTTP 401/403
+        # surfaces its own remediation. Azure path is BYTE-IDENTICAL to Phase 2
+        # (the Phase 2 acceptance gate at tests/test_phase2_parity.py
+        # asserts these exact strings).
+        if getattr(e, "provider", None) == "anthropic_mgti":
+            raise QueryError(
+                "Anthropic API key not configured or not authorised",
+                "Check ANTHROPIC_API_KEY and ANTHROPIC_BASE_URL in your .env.",
+            ) from e
+        # Azure path (and any unknown / None provider — preserves Phase 2 behavior)
         raise QueryError(
             "Azure OpenAI API key not configured",
             "Set the AZURE_OPENAI_API_KEY environment variable.",
         ) from e
+
     except LLMTimeoutError as e:
+        # Phase 3: provider-named message so an Anthropic timeout does not show
+        # "Azure OpenAI API call failed" in the UI. Azure path UNCHANGED.
+        if getattr(e, "provider", None) == "anthropic_mgti":
+            raise QueryError("Anthropic API call failed", str(e)) from e
         raise QueryError("Azure OpenAI API call failed", str(e)) from e
+
     except LLMTransientError as e:
+        # Phase 3: provider-named message (matches LLMTimeoutError pattern).
+        if getattr(e, "provider", None) == "anthropic_mgti":
+            raise QueryError("Anthropic API call failed", str(e)) from e
         raise QueryError("Azure OpenAI API call failed", str(e)) from e
+
     except LLMError as e:
-        # Catch-all for any other LLMError subclass (LLMSchemaError today,
-        # LLMGuardrailError in Phase 3, anything new in Phase 4+).
+        # Catch-all for any LLMError subclass not caught above (LLMSchemaError,
+        # LLMGuardrailError, future additions). Phase 3: dispatch by provider
+        # so guardrail / schema errors get the right product label too.
+        if getattr(e, "provider", None) == "anthropic_mgti":
+            raise QueryError("Anthropic API call failed", str(e)) from e
         raise QueryError("Azure OpenAI API call failed", str(e)) from e
