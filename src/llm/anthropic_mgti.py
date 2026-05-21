@@ -120,10 +120,11 @@ def _build_request_body(
 
 
 class AnthropicMGTIClient(LLMClient):
-    """Real Anthropic MGTI adapter (Phase 3).
+    """Real Anthropic MGTI adapter (Phase 3 / Phase 4).
 
     Talks to the MMC Apigee proxy at POST {base_url}/model/{model}/messages.
-    Provides complete() only; classify_with_tool is a Phase 4 stub.
+    Provides complete() for text-mode and classify_with_tool() for strict-tools
+    intent classification (Phase 4).
 
     Construction:
       - Reads 8 anthropic_* fields from LLMSettings (src/llm/config.py).
@@ -177,12 +178,110 @@ class AnthropicMGTIClient(LLMClient):
         # Matches the Azure pattern in src/llm/azure_openai.py (Plan 01 edit).
         logger.info(
             "llm_provider_loaded",
-            extra={"provider": "anthropic_mgti", "base_url": self._base_url},
+            extra={
+                "provider": "anthropic_mgti",
+                "base_url": self._base_url,
+                "tools_supported": self._tools_supported,
+            },
         )
 
     def __repr__(self) -> str:
         # OBS-03 — never include self._api_key in repr.
         return "AnthropicMGTIClient()"
+
+    def _post_messages(
+        self,
+        body: dict,
+        headers: dict,
+        correlation_id: str,
+        extra: dict,
+    ) -> dict:
+        """POST to /messages, parse envelope, raise typed errors on 4xx/5xx, return JSON dict on 2xx.
+
+        Shared by complete() and classify_with_tool(). Owns:
+          - requests.post with timeout
+          - requests.Timeout → LLMTimeoutError (with correlation_id)
+          - requests.RequestException → LLMTransientError (with correlation_id)
+          - MGTI error envelope parsing ({error: {title, detail, status}})
+          - 401/403 → LLMAuthError; 429/5xx → LLMTransientError; other → LLMError
+
+        Does NOT own:
+          - Response-body parsing beyond error-envelope lookup (caller-specific:
+            complete() extracts text blocks; classify_with_tool extracts tool_use)
+          - Timing (caller's try/finally owns t0/latency)
+          - Log emission (caller's try/finally calls _log_llm_call)
+
+        `extra` is mutated in-place for log enrichment (llm_outcome, llm_error_type)
+        so the caller's finally block sees the right values when emitting llm_call.
+        """
+        url = f"{self._base_url.rstrip('/')}/model/{self._model}/messages"
+
+        try:
+            response = requests.post(
+                url,
+                headers=headers,
+                json=body,
+                timeout=self._timeout_s,
+            )
+        except requests.exceptions.Timeout as e:
+            extra["llm_error_type"] = "LLMTimeoutError"
+            extra["llm_outcome"] = "timeout"
+            raise LLMTimeoutError(
+                f"Anthropic MGTI request timed out after {self._timeout_s}s: {e}",
+                provider="anthropic_mgti",
+                correlation_id=correlation_id,
+            ) from e
+        except requests.exceptions.RequestException as e:
+            # Connection errors, DNS, etc. — transient. Does NOT catch HTTPError
+            # (we never call raise_for_status; MGTI 4xx/5xx handled below).
+            extra["llm_error_type"] = "LLMTransientError"
+            extra["llm_outcome"] = "transient_error"
+            raise LLMTransientError(
+                f"Anthropic MGTI request failed: {e}",
+                provider="anthropic_mgti",
+                correlation_id=correlation_id,
+            ) from e
+
+        # HTTP error path (4xx/5xx). Per RESEARCH.md Pitfall 1 / Phase 3 lock:
+        # do NOT call response.raise_for_status() — must parse MGTI envelope first.
+        if not response.ok:
+            status = response.status_code
+            try:
+                err = response.json().get("error", {}) or {}
+                title = err.get("title", "unknown")
+                detail = err.get("detail", response.text[:200])
+                msg = f"{title}: {detail}"
+            except (ValueError, AttributeError):
+                msg = response.text[:200] if response.text else "unknown error"
+
+            if status in (401, 403):
+                extra["llm_error_type"] = "LLMAuthError"
+                extra["llm_outcome"] = "auth_error"
+                raise LLMAuthError(
+                    f"Anthropic MGTI auth failed (HTTP {status}): {msg}",
+                    provider="anthropic_mgti",
+                    status_code=status,
+                    correlation_id=correlation_id,
+                )
+            if status == 429 or (500 <= status < 600):
+                extra["llm_error_type"] = "LLMTransientError"
+                extra["llm_outcome"] = "transient_error"
+                raise LLMTransientError(
+                    f"Anthropic MGTI transient failure (HTTP {status}): {msg}",
+                    provider="anthropic_mgti",
+                    status_code=status,
+                    correlation_id=correlation_id,
+                )
+            # Any other HTTP error (400, 404, 422) — surface as generic LLMError
+            extra["llm_error_type"] = "LLMError"
+            raise LLMError(
+                f"Anthropic MGTI HTTP error (HTTP {status}): {msg}",
+                provider="anthropic_mgti",
+                status_code=status,
+                correlation_id=correlation_id,
+            )
+
+        return response.json()
 
     def complete(
         self,
@@ -190,6 +289,7 @@ class AnthropicMGTIClient(LLMClient):
         *,
         max_tokens: int = 500,
         temperature: float = 0.1,
+        _emit_log: bool = True,
         **kwargs: Any,
     ) -> str:
         """Send a chat-completion request to MGTI and return the assistant text.
@@ -251,7 +351,6 @@ class AnthropicMGTIClient(LLMClient):
             temperature=temperature,
             messages=messages,
         )
-        url = f"{self._base_url.rstrip('/')}/model/{self._model}/messages"
 
         t0 = time.monotonic()
         extra: dict = {
@@ -266,56 +365,9 @@ class AnthropicMGTIClient(LLMClient):
             "llm_stop_reason": None,         # populated on both success and error paths when available
         }
         try:
-            response = requests.post(
-                url,
-                headers=headers,
-                json=body,
-                timeout=self._timeout_s,
-            )
-
-            # ---- HTTP error path (4xx/5xx) ----
-            # Per RESEARCH.md Pitfall 1: do NOT call response.raise_for_status().
-            # The MGTI error envelope must be parsed BEFORE raising, to extract
-            # {title, detail}. Use `if not response.ok:` instead.
-            if not response.ok:
-                status = response.status_code
-                try:
-                    err = response.json().get("error", {}) or {}
-                    title = err.get("title", "unknown")
-                    detail = err.get("detail", response.text[:200])
-                    msg = f"{title}: {detail}"
-                except (ValueError, AttributeError):
-                    msg = response.text[:200] if response.text else "unknown error"
-
-                if status in (401, 403):
-                    extra["llm_error_type"] = "LLMAuthError"
-                    extra["llm_outcome"] = "auth_error"
-                    raise LLMAuthError(
-                        f"Anthropic MGTI auth failed (HTTP {status}): {msg}",
-                        provider="anthropic_mgti",
-                        status_code=status,
-                        correlation_id=correlation_id,
-                    )
-                if status == 429 or (500 <= status < 600):
-                    extra["llm_error_type"] = "LLMTransientError"
-                    extra["llm_outcome"] = "transient_error"
-                    raise LLMTransientError(
-                        f"Anthropic MGTI transient failure (HTTP {status}): {msg}",
-                        provider="anthropic_mgti",
-                        status_code=status,
-                        correlation_id=correlation_id,
-                    )
-                # Any other HTTP error (e.g. 400, 404, 422) — surface as generic LLMError
-                extra["llm_error_type"] = "LLMError"
-                raise LLMError(
-                    f"Anthropic MGTI HTTP error (HTTP {status}): {msg}",
-                    provider="anthropic_mgti",
-                    status_code=status,
-                    correlation_id=correlation_id,
-                )
+            data = self._post_messages(body, headers, correlation_id, extra)
 
             # ---- HTTP 200 success path ----
-            data = response.json()
             usage = data.get("usage", {}) or {}
             extra["llm_prompt_tokens"] = usage.get("input_tokens")
             extra["llm_completion_tokens"] = usage.get("output_tokens")
@@ -402,30 +454,10 @@ class AnthropicMGTIClient(LLMClient):
             # but breaks the symmetric provider behavior locked in Phase 2.
             return "".join(b.get("text", "") for b in text_blocks)
 
-        except requests.exceptions.Timeout as e:
-            extra["llm_error_type"] = "LLMTimeoutError"
-            extra["llm_outcome"] = "timeout"
-            raise LLMTimeoutError(
-                f"Anthropic MGTI request timed out after {self._timeout_s}s: {e}",
-                provider="anthropic_mgti",
-                correlation_id=correlation_id,
-            ) from e
-
-        except requests.exceptions.RequestException as e:
-            # Connection errors, DNS, etc. — treat as transient. This branch
-            # does NOT catch HTTPError because we never call raise_for_status();
-            # MGTI 4xx/5xx is handled in the `if not response.ok:` block above.
-            extra["llm_error_type"] = "LLMTransientError"
-            extra["llm_outcome"] = "transient_error"
-            raise LLMTransientError(
-                f"Anthropic MGTI request failed: {e}",
-                provider="anthropic_mgti",
-                correlation_id=correlation_id,
-            ) from e
-
         finally:
             extra["llm_latency_ms"] = int((time.monotonic() - t0) * 1000)
-            _log_llm_call(extra)
+            if _emit_log:
+                _log_llm_call(extra)
 
     def classify_with_tool(
         self,
@@ -435,8 +467,356 @@ class AnthropicMGTIClient(LLMClient):
         tool_name: str,
         **kwargs: Any,
     ) -> ToolCall:
-        # PRESERVED from Phase 1 stub — Phase 4 owns the strict-tools flow
-        # (RESEARCH.md Pitfall 7). Do NOT implement in Phase 3.
-        raise NotImplementedError(
-            "AnthropicMGTIClient.classify_with_tool is implemented in Phase 4"
+        """Strict-tools intent classification with env-flag-gated text fallback.
+
+        Sends Anthropic's `tools` + `tool_choice` strict-mode request body
+        (TOOL-02/TOOL-06). On HTTP 200, extracts the first tool_use block
+        matching `tool_name`, validates its `.input` against
+        `tool.input_schema` via jsonschema (defence-in-depth), and returns
+        a ToolCall. When `self._tools_supported is False`, delegates
+        transparently to `_classify_via_text_mode` — the returned ToolCall
+        is INDISTINGUISHABLE downstream from the strict-tools path
+        (CONTEXT.md §Fallback strategy).
+
+        Raises:
+            LLMConfigError: missing ANTHROPIC_API_KEY/BASE_URL/MODEL.
+            LLMAuthError: HTTP 401/403.
+            LLMTransientError: HTTP 429/5xx or connection-level errors.
+            LLMTimeoutError: requests.Timeout.
+            LLMGuardrailError: stop_reason == 'guardrail_intervened'.
+            LLMSchemaError: any of the 6 structural failures in the error
+                matrix — missing tool_use block, wrong tool name, malformed
+                input (not dict), schema-validation failure, max_tokens
+                during tool_use (DIVERGES from complete()'s truncated-success
+                semantics — Phase 4 lock per CONTEXT.md error matrix), or
+                unknown stop_reason.
+            LLMError: any other unexpected HTTP error.
+        """
+        import json as _json
+        import jsonschema
+
+        # Pre-flight config checks — IDENTICAL to complete() (lines 217-235).
+        # Duplicated (not extracted) because the helper boundary is HTTP, not
+        # config. Keeps each method's pre-conditions explicit.
+        if not self._api_key:
+            raise LLMConfigError(
+                "Anthropic API key not configured. "
+                "Set the ANTHROPIC_API_KEY environment variable.",
+                provider="anthropic_mgti",
+            )
+        if not self._base_url:
+            raise LLMConfigError(
+                "Anthropic base URL not configured. "
+                "Set the ANTHROPIC_BASE_URL environment variable.",
+                provider="anthropic_mgti",
+            )
+        if not self._model:
+            raise LLMConfigError(
+                "Anthropic model not configured. "
+                "Set the ANTHROPIC_MODEL environment variable to a "
+                "Claude 4.5+ EU Bedrock model (eu.anthropic.claude-*).",
+                provider="anthropic_mgti",
+            )
+
+        # Branch on env-flag — CONTEXT.md §Fallback strategy: env-flag-only,
+        # NO runtime auto-fallback. Operator flips ANTHROPIC_TOOLS_SUPPORTED
+        # to disable strict-tools entirely.
+        if not self._tools_supported:
+            return self._classify_via_text_mode(messages, tool, tool_name=tool_name)
+
+        # --- Strict-tools path ---
+        correlation_id = str(uuid.uuid4())  # RESEARCH.md Pitfall 5: before try
+        headers = {
+            "Content-Type": "application/json",
+            "X-Api-Key": self._api_key,
+            "X-Correlation-Id": correlation_id,
+        }
+
+        # Body shape: complete()'s baseline body PLUS tools + tool_choice.
+        # max_tokens uses kwargs override OR self._max_tokens default
+        # (NOT the 500 hardcode from complete() — classify needs enough
+        # room for a small structured object, ~256 tokens; default is fine).
+        max_tokens = kwargs.get("max_tokens", self._max_tokens)
+        temperature = kwargs.get("temperature", self._temperature)
+        body = _build_request_body(
+            model=self._model,
+            version=self._version,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            messages=messages,
         )
+        # Anthropic tool definition shape — verified verbatim against
+        # platform.claude.com/docs/en/api/messages (RESEARCH.md "Anthropic
+        # strict-tools request body").
+        body["tools"] = [
+            {
+                "name": tool.name,
+                "description": tool.description,
+                "input_schema": tool.input_schema,
+            }
+        ]
+        body["tool_choice"] = {
+            "type": "tool",
+            "name": tool_name,
+            "disable_parallel_tool_use": True,
+        }
+
+        t0 = time.monotonic()
+        extra: dict = {
+            "llm_provider": "anthropic_mgti",
+            "llm_model": self._model,
+            "llm_latency_ms": 0,
+            "llm_outcome": "error",
+            "llm_error_type": None,
+            "llm_prompt_tokens": None,
+            "llm_completion_tokens": None,
+            "llm_correlation_id": correlation_id,
+            "llm_stop_reason": None,
+            "llm_tool_mode": "strict",  # CONTEXT.md §classify_with_tool log
+            "llm_tool_name": tool_name,
+        }
+        try:
+            data = self._post_messages(body, headers, correlation_id, extra)
+
+            usage = data.get("usage", {}) or {}
+            extra["llm_prompt_tokens"] = usage.get("input_tokens")
+            extra["llm_completion_tokens"] = usage.get("output_tokens")
+            stop_reason = data.get("stop_reason")
+            extra["llm_stop_reason"] = stop_reason
+            content_blocks = data.get("content") or []
+
+            # CRITICAL ORDER (mirrors complete()'s order + adds tool_use-
+            # specific checks) — RESEARCH.md Pitfall 4 + locked decision §4:
+            #   1. guardrail (BEFORE missing-tool_use — guardrails have
+            #      empty content[], would otherwise surface as schema error)
+            #   2. max_tokens during tool_use → schema error (DIVERGES from
+            #      complete()'s truncated-success semantics — locked decision §3)
+            #   3. defensive iteration to find first tool_use block matching
+            #      tool_name (RESEARCH.md Pitfall 3 — content may be mixed
+            #      text+tool_use)
+            #   4. missing tool_use block / wrong name → schema error
+            #   5. malformed input (not dict) → schema error
+            #   6. jsonschema.validate → schema error on failure
+
+            # 1. Guardrail
+            if stop_reason == "guardrail_intervened":
+                extra["llm_error_type"] = "LLMGuardrailError"
+                extra["llm_outcome"] = "guardrail"
+                raise LLMGuardrailError(
+                    "Anthropic guardrail intervened on this request.",
+                    provider="anthropic_mgti",
+                    correlation_id=correlation_id,
+                )
+
+            # 2. max_tokens during tool_use — LOCKED DIVERGENCE FROM complete()
+            if stop_reason == "max_tokens":
+                extra["llm_error_type"] = "LLMSchemaError"
+                extra["llm_outcome"] = "schema_error"
+                raise LLMSchemaError(
+                    "max_tokens reached during tool_use — input likely "
+                    "truncated and unreliable; raise ANTHROPIC_MAX_TOKENS.",
+                    provider="anthropic_mgti",
+                    correlation_id=correlation_id,
+                )
+
+            # 3. Find first tool_use block matching tool_name (defensive
+            #    iteration even with disable_parallel_tool_use=True per
+            #    locked decision §5)
+            tool_use_block = None
+            wrong_name_seen = None  # track for better error msg
+            for block in content_blocks:
+                if block.get("type") == "tool_use":
+                    if block.get("name") == tool_name:
+                        tool_use_block = block
+                        break
+                    else:
+                        wrong_name_seen = block.get("name")
+
+            # 4. Missing tool_use (or only wrong-name tool_use blocks)
+            if tool_use_block is None:
+                extra["llm_error_type"] = "LLMSchemaError"
+                extra["llm_outcome"] = "schema_error"
+                if wrong_name_seen is not None:
+                    msg = (
+                        f"wrong tool name returned: expected {tool_name!r}, "
+                        f"got {wrong_name_seen!r}"
+                    )
+                else:
+                    types = [b.get("type") for b in content_blocks]
+                    msg = (
+                        f"missing tool_use block in content "
+                        f"(stop_reason={stop_reason!r}, content_types={types!r})"
+                    )
+                raise LLMSchemaError(
+                    msg,
+                    provider="anthropic_mgti",
+                    correlation_id=correlation_id,
+                )
+
+            # 5. Malformed input
+            input_dict = tool_use_block.get("input")
+            if not isinstance(input_dict, dict):
+                extra["llm_error_type"] = "LLMSchemaError"
+                extra["llm_outcome"] = "schema_error"
+                raise LLMSchemaError(
+                    f"malformed tool_use input: expected dict, got "
+                    f"{type(input_dict).__name__}",
+                    provider="anthropic_mgti",
+                    correlation_id=correlation_id,
+                )
+
+            # 6. Defence-in-depth jsonschema validation (TOOL-06)
+            try:
+                jsonschema.validate(input_dict, tool.input_schema)
+            except jsonschema.ValidationError as e:
+                extra["llm_error_type"] = "LLMSchemaError"
+                extra["llm_outcome"] = "schema_error"
+                raise LLMSchemaError(
+                    f"tool_use input failed schema validation: {e.message}",
+                    provider="anthropic_mgti",
+                    correlation_id=correlation_id,
+                ) from e
+
+            # Unknown / missing stop_reason — defensive (Anthropic should
+            # always return stop_reason="tool_use" on a successful tool call).
+            # Accept tool_use; treat anything else (after guardrail/max_tokens
+            # already handled above) as schema error.
+            if stop_reason not in ("tool_use", "end_turn", "stop_sequence"):
+                extra["llm_error_type"] = "LLMSchemaError"
+                extra["llm_outcome"] = "schema_error"
+                raise LLMSchemaError(
+                    f"unknown stop_reason: {stop_reason!r}",
+                    provider="anthropic_mgti",
+                    correlation_id=correlation_id,
+                )
+
+            # Success
+            extra["llm_outcome"] = "success"
+            return ToolCall(
+                tool_name=tool_name,
+                input=input_dict,
+                raw_response=data,
+            )
+
+        finally:
+            extra["llm_latency_ms"] = int((time.monotonic() - t0) * 1000)
+            _log_llm_call(extra)
+
+    def _classify_via_text_mode(
+        self,
+        messages: list[dict],
+        tool: ToolSchema,
+        *,
+        tool_name: str,
+    ) -> ToolCall:
+        """Text-mode escape hatch when ANTHROPIC_TOOLS_SUPPORTED=false.
+
+        Mirrors the strict-tools path's external shape: produces a ToolCall
+        whose `input` passes the same jsonschema.validate(input, tool.input_schema)
+        check. Downstream code cannot distinguish which path produced the result.
+
+        Mechanism:
+          1. Inject a system message instructing the LLM to respond with ONLY
+             a JSON object matching `tool.input_schema`. Mirror Azure's
+             pattern verbatim (azure_openai.py:254-264) — intentional
+             duplication per CONTEXT.md §Fallback strategy ("Text-mode helper
+             is INTERNAL to AnthropicMGTIClient — does NOT import from
+             src/llm/azure_openai.py").
+          2. Call self.complete(enriched, _emit_log=False). The kwarg
+             suppresses complete()'s llm_call event because the wrapper
+             emits its own event tagged llm_tool_mode='text_fallback'
+             (locked decision §7).
+          3. Strip markdown fences (mirror query_router.py:144-148 verbatim).
+          4. json.loads → jsonschema.validate → return ToolCall.
+
+        ALL error cases raise LLMSchemaError (no JSONDecodeError leaks past
+        this boundary). Both paths through classify_with_tool produce
+        EXACTLY ONE llm_call log event.
+        """
+        import json as _json
+        import jsonschema
+
+        # Build the system-prompt addendum. Mirror azure_openai.py:254-264
+        # verbatim (CONTEXT.md §Fallback strategy "intentional duplication,
+        # symmetric with Phase 2/3 _log_llm_call precedent").
+        enriched = list(messages) + [
+            {
+                "role": "system",
+                "content": (
+                    f"You are calling the tool `{tool.name}`. "
+                    f"Respond ONLY with a JSON object matching this schema:\n"
+                    f"{_json.dumps(tool.input_schema)}\n"
+                    f"Do not include markdown code fences or commentary."
+                ),
+            }
+        ]
+
+        # Set up the per-call log envelope for the wrapper's ONE event.
+        # The delegate (self.complete) is called with _emit_log=False so
+        # it does NOT emit its own llm_call event — we emit one event
+        # here tagged with llm_tool_mode='text_fallback' (locked decision §7).
+        correlation_id = str(uuid.uuid4())
+        t0 = time.monotonic()
+        extra: dict = {
+            "llm_provider": "anthropic_mgti",
+            "llm_model": self._model,
+            "llm_latency_ms": 0,
+            "llm_outcome": "error",
+            "llm_error_type": None,
+            "llm_prompt_tokens": None,  # not available in text-mode wrapper
+            "llm_completion_tokens": None,
+            "llm_correlation_id": correlation_id,
+            "llm_stop_reason": None,
+            "llm_tool_mode": "text_fallback",
+            "llm_tool_name": tool_name,
+        }
+        try:
+            # Delegate to complete() with log suppression. complete() generates
+            # its own correlation_id and headers internally; the one above
+            # belongs to the wrapper's log event (operator can correlate
+            # via wall-clock proximity if needed).
+            raw = self.complete(enriched, _emit_log=False)
+
+            # Fence-stripping — mirror query_router.py:144-148 verbatim
+            # (CONTEXT.md §Specifics: "mirror query_router.py:144-148")
+            content = raw.strip()
+            if content.startswith("```"):
+                content = content.split("```")[1]
+                if content.startswith("json"):
+                    content = content[4:]
+                content = content.strip()
+
+            try:
+                parsed = _json.loads(content)
+            except _json.JSONDecodeError as e:
+                extra["llm_error_type"] = "LLMSchemaError"
+                extra["llm_outcome"] = "schema_error"
+                raise LLMSchemaError(
+                    f"Anthropic MGTI text-mode returned invalid JSON for "
+                    f"tool {tool.name!r}: {e}",
+                    provider="anthropic_mgti",
+                    correlation_id=correlation_id,
+                ) from e
+
+            try:
+                jsonschema.validate(parsed, tool.input_schema)
+            except jsonschema.ValidationError as e:
+                extra["llm_error_type"] = "LLMSchemaError"
+                extra["llm_outcome"] = "schema_error"
+                raise LLMSchemaError(
+                    f"Anthropic MGTI text-mode response failed schema "
+                    f"validation for {tool.name!r}: {e.message}",
+                    provider="anthropic_mgti",
+                    correlation_id=correlation_id,
+                ) from e
+
+            extra["llm_outcome"] = "success"
+            return ToolCall(
+                tool_name=tool_name,
+                input=parsed,
+                raw_response={"content": raw},
+            )
+
+        finally:
+            extra["llm_latency_ms"] = int((time.monotonic() - t0) * 1000)
+            _log_llm_call(extra)
