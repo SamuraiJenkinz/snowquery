@@ -40,11 +40,21 @@ from src.llm.azure_openai import AzureOpenAIClient
 
 @pytest.fixture(autouse=True)
 def _clear_factory_cache():
-    """Ensure each test sees an empty get_llm cache."""
+    """Ensure each test sees an empty get_llm cache.
+
+    Phase 5 Plan 05-01: _cache dict deleted, replaced by @_cache_resource on
+    _get_llm_cached. The decorated function exposes .clear() under Streamlit;
+    in the no-Streamlit fallback no .clear() attribute exists — defended via
+    getattr-with-callable.
+    """
     import src.llm as llm_pkg
-    llm_pkg._cache.clear()
+    clear_fn = getattr(llm_pkg._get_llm_cached, "clear", None)
+    if callable(clear_fn):
+        clear_fn()
     yield
-    llm_pkg._cache.clear()
+    clear_fn = getattr(llm_pkg._get_llm_cached, "clear", None)
+    if callable(clear_fn):
+        clear_fn()
 
 
 @pytest.fixture(autouse=True)
@@ -181,7 +191,9 @@ def test_resolution_order(monkeypatch):
 
     # Env var overrides default.
     import src.llm as llm_pkg
-    llm_pkg._cache.clear()
+    clear_fn = getattr(llm_pkg._get_llm_cached, "clear", None)
+    if callable(clear_fn):
+        clear_fn()
     monkeypatch.setenv("LLM_PROVIDER_DEFAULT", "anthropic_mgti")
     via_env = get_llm()
     assert isinstance(via_env, AnthropicMGTIClient)

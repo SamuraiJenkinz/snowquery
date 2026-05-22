@@ -58,11 +58,22 @@ _AZURE_KEY = "azure-test-key-not-real"
 
 @pytest.fixture(autouse=True)
 def _clear_factory_cache():
-    """Ensure each test sees an empty get_llm cache."""
+    """Ensure each test sees an empty get_llm cache.
+
+    Phase 5 Plan 05-01 deleted the module-level _cache dict and replaced it
+    with @_cache_resource on _get_llm_cached. The decorated function exposes
+    .clear() in real Streamlit; in the no-Streamlit fallback the decorator
+    is a pass-through and no .clear() exists — getattr-with-callable check
+    handles both contexts.
+    """
     import src.llm as llm_pkg
-    llm_pkg._cache.clear()
+    clear_fn = getattr(llm_pkg._get_llm_cached, "clear", None)
+    if callable(clear_fn):
+        clear_fn()
     yield
-    llm_pkg._cache.clear()
+    clear_fn = getattr(llm_pkg._get_llm_cached, "clear", None)
+    if callable(clear_fn):
+        clear_fn()
 
 
 @pytest.fixture(autouse=True)

@@ -73,11 +73,21 @@ _SMOKE_SCRIPT_PATH = "scripts/smoke_llm.py"
 
 @pytest.fixture(autouse=True)
 def _clear_factory_cache():
-    """Each test sees an empty get_llm cache."""
+    """Each test sees an empty get_llm cache.
+
+    Phase 5 Plan 05-01: _cache dict deleted, replaced by @_cache_resource on
+    _get_llm_cached. The decorated function exposes .clear() under Streamlit;
+    in the no-Streamlit fallback no .clear() attribute exists — defended via
+    getattr-with-callable.
+    """
     import src.llm as llm_pkg
-    llm_pkg._cache.clear()
+    clear_fn = getattr(llm_pkg._get_llm_cached, "clear", None)
+    if callable(clear_fn):
+        clear_fn()
     yield
-    llm_pkg._cache.clear()
+    clear_fn = getattr(llm_pkg._get_llm_cached, "clear", None)
+    if callable(clear_fn):
+        clear_fn()
 
 
 @pytest.fixture(autouse=True)

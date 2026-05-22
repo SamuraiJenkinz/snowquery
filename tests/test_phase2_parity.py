@@ -49,12 +49,21 @@ _DUMMY_KEY = "test-key-not-real"
 
 @pytest.fixture(autouse=True)
 def _clear_factory_cache():
-    """Ensure each test sees an empty get_llm cache (the module-level _cache
-    dict in src/llm/__init__.py persists across tests in one pytest process)."""
+    """Ensure each test sees an empty get_llm cache.
+
+    Phase 5 Plan 05-01 deleted the module-level _cache dict and replaced it
+    with @_cache_resource on _get_llm_cached. The decorated function exposes
+    .clear() under Streamlit; in the no-Streamlit fallback no .clear() exists
+    — getattr-with-callable handles both contexts.
+    """
     import src.llm as llm_pkg
-    llm_pkg._cache.clear()
+    clear_fn = getattr(llm_pkg._get_llm_cached, "clear", None)
+    if callable(clear_fn):
+        clear_fn()
     yield
-    llm_pkg._cache.clear()
+    clear_fn = getattr(llm_pkg._get_llm_cached, "clear", None)
+    if callable(clear_fn):
+        clear_fn()
 
 
 @pytest.fixture(autouse=True)
@@ -341,8 +350,15 @@ def test_error_translation_at_call_site(monkeypatch):
         "columns": [{"name": "priority", "type": "VARCHAR", "sample": "P1"}],
     }
 
-    def _install_raising_client(exc: Exception):
-        """Replace the cached azure_openai client with one whose LLM methods raise.
+    def _make_raising_client(exc: Exception):
+        """Build a fake LLMClient whose .complete()/.classify_with_tool() raise.
+
+        Phase 5 Plan 05-01 rewire (Option A from decision §7): the original
+        test wrote `llm_pkg._cache["azure_openai"] = fake` to install the
+        fake. That dict has been deleted in favor of @_cache_resource on
+        _get_llm_cached. Tests now use `patch.object(llm_pkg, "_get_llm_cached",
+        return_value=fake)` to inject the fake adapter — same intent (substitute
+        a fake client for get_llm() resolution), no debug-only API surface.
 
         Phase 4: classify_intent calls classify_with_tool (not complete), so we
         set both side_effects. CS2 (generate_sql) and CS3
@@ -351,51 +367,55 @@ def test_error_translation_at_call_site(monkeypatch):
         fake = MagicMock(spec=AzureOpenAIClient)
         fake.complete.side_effect = exc
         fake.classify_with_tool.side_effect = exc
-        llm_pkg._cache["azure_openai"] = fake
+        # Plan 05-01 Task 1.1 added provider_name as abstract property; the
+        # spec=AzureOpenAIClient auto-stubs it as a MagicMock. Set explicitly
+        # in case any code path under test reads it.
+        fake.provider_name = "azure_openai"
+        return fake
 
     # --- LLMTimeoutError → QueryError("Azure OpenAI API call failed", ...) ---
-    llm_pkg._cache.clear()
-    _install_raising_client(LLMTimeoutError("timed out after 30s", provider="azure_openai"))
-    with pytest.raises(QueryError) as exc_info:
-        # classify_intent has `except QueryError: raise` BEFORE the broad
-        # `except Exception` fallback — QueryError must propagate, NOT fall
-        # through to the heuristic fallback (RESEARCH.md Risk 5).
-        classify_intent("test query", schema)
+    fake = _make_raising_client(LLMTimeoutError("timed out after 30s", provider="azure_openai"))
+    with patch.object(llm_pkg, "_get_llm_cached", return_value=fake):
+        with pytest.raises(QueryError) as exc_info:
+            # classify_intent has `except QueryError: raise` BEFORE the broad
+            # `except Exception` fallback — QueryError must propagate, NOT fall
+            # through to the heuristic fallback (RESEARCH.md Risk 5).
+            classify_intent("test query", schema)
     assert exc_info.value.message == "Azure OpenAI API call failed"
     assert "timed out" in (exc_info.value.details or "")
 
     # --- LLMTransientError → same first-arg ---
-    llm_pkg._cache.clear()
-    _install_raising_client(
+    fake = _make_raising_client(
         LLMTransientError("HTTP 503", provider="azure_openai", status_code=503)
     )
-    with pytest.raises(QueryError) as exc_info:
-        classify_intent("test", schema)
+    with patch.object(llm_pkg, "_get_llm_cached", return_value=fake):
+        with pytest.raises(QueryError) as exc_info:
+            classify_intent("test", schema)
     assert exc_info.value.message == "Azure OpenAI API call failed"
 
     # --- LLMAuthError → historic Azure key-not-configured remediation text ---
-    llm_pkg._cache.clear()
-    _install_raising_client(
+    fake = _make_raising_client(
         LLMAuthError("HTTP 401", provider="azure_openai", status_code=401)
     )
-    with pytest.raises(QueryError) as exc_info:
-        classify_intent("test", schema)
+    with patch.object(llm_pkg, "_get_llm_cached", return_value=fake):
+        with pytest.raises(QueryError) as exc_info:
+            classify_intent("test", schema)
     assert exc_info.value.message == "Azure OpenAI API key not configured"
     assert exc_info.value.details == (
         "Set the AZURE_OPENAI_API_KEY environment variable."
     )
 
     # --- LLMConfigError → adapter-embedded remediation passed through ---
-    llm_pkg._cache.clear()
-    _install_raising_client(
+    fake = _make_raising_client(
         LLMConfigError(
             "Azure OpenAI API key not configured. "
             "Set the AZURE_OPENAI_API_KEY environment variable.",
             provider="azure_openai",
         )
     )
-    with pytest.raises(QueryError) as exc_info:
-        classify_intent("test", schema)
+    with patch.object(llm_pkg, "_get_llm_cached", return_value=fake):
+        with pytest.raises(QueryError) as exc_info:
+            classify_intent("test", schema)
     assert "AZURE_OPENAI_API_KEY" in exc_info.value.message
     assert exc_info.value.details == "Check your .env configuration."
 
@@ -408,21 +428,21 @@ def test_error_translation_at_call_site(monkeypatch):
     # user would see "Failed to generate SQL" instead of the required
     # "Azure OpenAI API call failed". We assert BOTH LLMTimeoutError AND
     # LLMTransientError at CS2 to lock that down.
-    llm_pkg._cache.clear()
-    _install_raising_client(LLMTimeoutError("timeout", provider="azure_openai"))
-    with pytest.raises(QueryError) as exc_info:
-        generate_sql("test", schema)
+    fake = _make_raising_client(LLMTimeoutError("timeout", provider="azure_openai"))
+    with patch.object(llm_pkg, "_get_llm_cached", return_value=fake):
+        with pytest.raises(QueryError) as exc_info:
+            generate_sql("test", schema)
     assert exc_info.value.message == "Azure OpenAI API call failed", (
         f"CS2 LLMTimeoutError leaked past compat manager — got "
         f"{exc_info.value.message!r}, expected 'Azure OpenAI API call failed'"
     )
 
-    llm_pkg._cache.clear()
-    _install_raising_client(
+    fake = _make_raising_client(
         LLMTransientError("HTTP 503", provider="azure_openai", status_code=503)
     )
-    with pytest.raises(QueryError) as exc_info:
-        generate_sql("test", schema)
+    with patch.object(llm_pkg, "_get_llm_cached", return_value=fake):
+        with pytest.raises(QueryError) as exc_info:
+            generate_sql("test", schema)
     assert exc_info.value.message == "Azure OpenAI API call failed", (
         f"CS2 LLMTransientError leaked past compat manager into the broad "
         f"except — got {exc_info.value.message!r}, expected "
@@ -434,10 +454,10 @@ def test_error_translation_at_call_site(monkeypatch):
     # (RESEARCH.md Pitfall 4). Both old and new behave the same way here.
     import pandas as pd
     from src.query_router import generate_executive_summary
-    llm_pkg._cache.clear()
-    _install_raising_client(LLMTimeoutError("timeout", provider="azure_openai"))
-    df = pd.DataFrame({"x": [1, 2, 3]})
-    result = generate_executive_summary("test", df, "structured")
+    fake = _make_raising_client(LLMTimeoutError("timeout", provider="azure_openai"))
+    with patch.object(llm_pkg, "_get_llm_cached", return_value=fake):
+        df = pd.DataFrame({"x": [1, 2, 3]})
+        result = generate_executive_summary("test", df, "structured")
     assert result is None, (
         "generate_executive_summary should silently return None on LLM error "
         "— this preserves byte-identical behavior vs the old _call_azure_openai path"
