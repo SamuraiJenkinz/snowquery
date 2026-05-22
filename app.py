@@ -17,6 +17,7 @@ from src.embeddings import (
     get_embedding_stats,
 )
 from src.ingest import get_schema_summary, load_csv, table_exists
+from src.llm import load_settings, missing_vars
 from src.query_router import generate_executive_summary, get_mode_description, route_query
 from src.utils import (
     dataframe_to_csv_bytes,
@@ -357,6 +358,17 @@ MODE_OPTIONS = {
     "ANALYZE [HYBRID]": "hybrid"
 }
 
+# Phase 5: LLM provider selectbox option mapping.
+# Display labels (left) → internal _REGISTRY keys (right). MUST match the keys
+# in src/llm/__init__.py::_REGISTRY exactly. Insertion order = selectbox order:
+# Azure first so the default-selected option is the existing behavior.
+_PROVIDER_OPTIONS: dict[str, str] = {
+    "Azure OpenAI": "azure_openai",
+    "Anthropic Claude (MGTI)": "anthropic_mgti",
+}
+_PROVIDER_LABELS: dict[str, str] = {v: k for k, v in _PROVIDER_OPTIONS.items()}
+_PROVIDER_KEYS: tuple[str, ...] = tuple(_PROVIDER_OPTIONS.values())  # ("azure_openai", "anthropic_mgti")
+
 
 def init_session_state():
     """Initialize session state variables."""
@@ -546,6 +558,65 @@ def render_sidebar():
 
         st.divider()
 
+        # ---------- LLM PROVIDER (Phase 5) ----------
+        st.markdown("### LLM PROVIDER")
+
+        # Initialize session_state on first render. Clamp unknown values to
+        # azure_openai (defense against typos in LLM_PROVIDER_DEFAULT — RESEARCH.md
+        # Pitfall 2). The .strip() handles trailing whitespace.
+        if "llm_provider" not in st.session_state:
+            default = os.getenv("LLM_PROVIDER_DEFAULT", "azure_openai").strip()
+            if default not in _PROVIDER_KEYS:
+                logger.warning(
+                    f"LLM_PROVIDER_DEFAULT={default!r} not in {_PROVIDER_KEYS}; "
+                    f"falling back to 'azure_openai'"
+                )
+                default = "azure_openai"
+            st.session_state["llm_provider"] = default
+
+        # Selectbox: locked label "LLM provider"; options exactly ["Azure OpenAI",
+        # "Anthropic Claude (MGTI)"]; index resolved from current session_state so
+        # reruns preserve the selection. Help text matches the one-sentence
+        # convention used elsewhere in render_sidebar().
+        selected_label = st.selectbox(
+            "LLM provider",
+            options=list(_PROVIDER_OPTIONS.keys()),
+            index=_PROVIDER_KEYS.index(st.session_state["llm_provider"]),
+            help="Which LLM serves classification, SQL generation, and executive summaries. Default is Azure OpenAI.",
+        )
+        st.session_state["llm_provider"] = _PROVIDER_OPTIONS[selected_label]
+
+        # Read-only active-model caption beneath the selector. Use load_settings()
+        # NOT get_llm() — sidebar render must not side-effect adapter construction
+        # or startup logs (Plan 05-02 decision §11).
+        _settings = load_settings()
+        if st.session_state["llm_provider"] == "azure_openai":
+            # Azure: extract deployment from endpoint URL the same way the adapter does.
+            from src.llm.azure_openai import _extract_model_from_endpoint
+            _active_model = _extract_model_from_endpoint(_settings.azure_endpoint) if _settings.azure_endpoint else ""
+        else:
+            _active_model = _settings.anthropic_model
+        st.caption(f"MODEL: `{_active_model or 'NOT CONFIGURED'}`")
+
+        # Missing-creds warning + blocked-flag set. Called every rerun — cheap
+        # (os.getenv is O(1)). Do NOT @st.cache_data this — adding env vars
+        # between runs must invalidate immediately (RESEARCH.md Pitfall 10).
+        _missing = missing_vars(st.session_state["llm_provider"])
+        if _missing:
+            _human_name = _PROVIDER_LABELS[st.session_state["llm_provider"]]
+            _missing_str = ", ".join(f"`{v}`" for v in _missing)
+            st.warning(
+                f"**{_human_name}** is not configured. Missing env vars: {_missing_str}.\n\n"
+                f"Add them to your `.env` and restart the app, or switch back to Azure OpenAI above.",
+                icon=":material/warning:",
+            )
+            st.session_state["_llm_provider_blocked"] = True
+        else:
+            st.session_state["_llm_provider_blocked"] = False
+
+        st.divider()
+
+        # ---------- CONFIG (existing) ----------
         # Settings
         st.markdown("### CONFIG")
 
