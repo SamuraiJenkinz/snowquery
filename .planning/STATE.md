@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** Phase 5 — Sidebar UI Toggle + Documentation (Plans 05-01, 05-02, 05-04 complete; Plan 05-03 per-message caption running in parallel; 05-05 acceptance gate next)
+**Current focus:** Phase 5 — Sidebar UI Toggle + Documentation (Plans 05-01, 05-02, 05-03, 05-04 complete; 05-05 acceptance gate next and final)
 
 ## Current Position
 
 Phase: 5 of 5 (Sidebar UI Toggle + Documentation) — IN PROGRESS
-Plan: 3 of 4 in Phase 5 (05-01, 05-02, 05-04 complete; 05-03 in parallel)
-Status: Plan 05-04 (README + USER_GUIDE) complete. README.md gains 5 new env-var rows (LLM_PROVIDER_DEFAULT + 3 required Anthropic + 1 optional summary), MGTI/Hubble pointer paragraph, `### LLM Provider Selection` cross-link subsection, `### Smoke Test (operator-run)` subsection with three invocation variants + exit-code semantics. USER_GUIDE.md gains `## LLM Provider Selection` section (75 body lines, 7 sub-headings: Overview / MGTI-Only Constraint / How to Switch (5-step) / Caption Meaning (Azure+Anthropic examples) / Warning-Resolution table (5 rows + 2 recovery paths) / First-Time Anthropic Setup Checklist (4-step including smoke test) / Mid-Session Switching Behavior), TOC renumbered (9-10 → 10-11), footer bumped to v2.1 May 2026. All 7 locked UI strings present verbatim in both docs (RESEARCH.md Pitfall 13 docs-drift guard). DOC-01..04 requirement coverage complete. Strict docs-only scope — no edits to src/, scripts/, tests/, app.py, .env.example. Full 69-test suite still green. Plan 05-02 also complete in parallel (sidebar wire-up in app.py).
-Last activity: 2026-05-21 — Completed 05-PLAN-04-readme-and-user-guide.md (in parallel with 05-02)
+Plan: 4 of 4 in Phase 5 (05-01, 05-02, 05-03, 05-04 all complete; 05-05 acceptance gate is the only remaining plan)
+Status: Plan 05-03 (per-message provenance caption) complete. app.py gains `_render_provenance_caption(provider, model)` at module scope with explicit positional args + docstring-locked "MUST NOT read st.session_state" invariant; extended import line `from src.llm import get_llm, load_settings, missing_vars`; capture block in `process_query` (lines 897–906) that resolves `_client = get_llm()` → `_provider = getattr(_client, "provider_name", session_state fallback)` → `_model = getattr(_client, "_model", "unknown")` BEFORE the happy-path return; happy-path return dict gains `"provider"` + `"model"` keys; `render_chat_history` renders caption ABOVE `st.markdown(content)` dual-guarded by `role == "assistant" AND message.get("provider")`; on-submit `st.chat_message("assistant")` block renders caption ABOVE `st.markdown(response["content"])` guarded by `response.get("provider")`; `st.session_state.messages.append({...})` persists `provider` + `model` keys per assistant message. Early-return error paths intentionally unchanged — caption guard handles their absence. AST check verified helper body is session_state-free. Ordering check (cap_idx < md_idx) holds at both render sites. Strict app.py-only scope — no edits to src/, scripts/, tests/, README.md, USER_GUIDE.md, .env.example. Full 69-test suite still green.
+Last activity: 2026-05-22 — Completed 05-PLAN-03-per-message-provenance-caption.md
 
-Progress: [█████████░] 95% (18/19 plans complete — 3/4 of Phase 5 done)
+Progress: [█████████░] 95% (19/20 plans complete — Phase 5 acceptance gate is the final remaining plan)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18 (through 05-04 — Phase 5 docs landed alongside sidebar)
+- Total plans completed: 19 (through 05-04 — Phase 5 acceptance gate (05-05) is the only remaining plan)
 - Average duration: ~4.3 min
-- Total execution time: ~78 min
+- Total execution time: ~82 min
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [█████████░] 95% (18/19 plans complete — 3/4 of 
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
 | 3. Anthropic Adapter | 4 (of 4) | ~16 min | ~4 min |
 | 4. Strict-Tools + Smoke | 4 (of 4) | ~22 min | ~5.5 min |
-| 5. Sidebar UI Toggle | 3 (of 4) | ~28 min | ~9.3 min |
+| 5. Sidebar UI Toggle | 4 (of 4) | ~32 min | ~8 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-03 (~4 min), 04-04 (4 min), 05-01 (~15 min), 05-02 (~3 min), 05-04 (~10 min)
-- Trend: 05-04 was docs-only — two atomic commits (README + USER_GUIDE), no test rewires, both tasks landed first try with the 69-test suite still green. Ran in parallel with 05-02; zero merge-conflict risk (different file scopes).
+- Last 5 plans: 04-04 (4 min), 05-01 (~15 min), 05-02 (~3 min), 05-04 (~10 min), 05-03 (~4 min)
+- Trend: 05-03 was app.py-only — two atomic commits (helper+capture; render+persist), no test rewires, both tasks landed first try with the 69-test suite still green. Zero merge-conflict risk: 05-03 ran after 05-02 + 05-04 (proper Wave 3 ordering per plan decision §16).
 
 *Updated after each plan completion*
 
@@ -166,6 +166,21 @@ Decisions from 05-02 (sidebar selectbox + warning):
 - Selectbox key= intentionally omitted — index=... + manual write-back chosen for consistency with existing MODE selectbox pattern (decision §5)
 - No deletions of existing widgets — pure additive; DATA INGEST, DATA STATUS, EMBEDDINGS, CONFIG, MODE selectbox, all main-content widgets UNCHANGED. Only app.py modified — no src/, no tests/, no docs
 
+Decisions from 05-03 (per-message provenance caption):
+- Capture location LOCKED inside process_query AFTER route_query success and BEFORE the happy-path return — guarantees the captured (provider, model) reflects the adapter that actually produced THIS response, future-proof against retry/fallback wrappers
+- Re-call get_llm() inside process_query for _client/_provider/_model — cache hit via @st.cache_resource (Plan 05-01's 4-arg tuple key), zero extra HTTP, zero extra startup log
+- Defensive getattr with double-fallback: getattr(_client, "provider_name", st.session_state.get("llm_provider", "unknown")) → three-layer fallback (abstract property → sidebar-written session_state → literal 'unknown'). _model fallback is literal 'unknown' (no session_state fallback because resolved model is adapter-private)
+- Early-return error paths (NO DATA LOADED, NO EMBEDDINGS, route_query error) DO NOT carry provider/model — intentional. The dual-guard on the caption render skips them silently (no false-positive 'via **Azure OpenAI**' captions on errors that didn't involve the LLM)
+- Helper API LOCKED: _render_provenance_caption(provider: str, model: str | None) -> None at app.py module scope with EXPLICIT positional args + docstring containing the verbatim string 'CRITICAL INVARIANT: This helper MUST NOT read st.session_state' — Plan 05-05 will add an AST-based regression test for this invariant (helper body must be session_state-free)
+- Caption format LOCKED verbatim from RESEARCH Recommendation 3: f"via **{human_name}** · `{model}`" (interpunct · is U+00B7). When model is falsy, drops to f"via **{human_name}**" (helper handles both branches)
+- Provider human-name via _PROVIDER_LABELS.get(provider, provider) — reuses Plan 05-02's module-level dict (single source of truth). Unknown provider key degrades gracefully to the raw string (no crash; legible for future provider additions)
+- Render position: FIRST inside `with st.chat_message(...):` context manager, BEFORE st.markdown(content). Verified by python regex window-check: cap_idx < md_idx at BOTH render sites
+- Dual-guard at history render site: `role == "assistant" AND message.get("provider")` — BOTH conditions required. Role check excludes user messages permanently; dict-key check skips early-return error paths (NO DATA LOADED etc.) that intentionally don't carry provenance
+- On-submit live render guards on `response.get("provider")` alone — the `with st.chat_message("assistant"):` block establishes role context structurally (no `role` field on the response dict)
+- Append-with-`.get(...)`-fallback: two new keys `"provider": response.get("provider"), "model": response.get("model")` at the END of the assistant message dict (trailing comma added to chart_feedback for Black-style cleanliness). `.get` access (vs subscript) preserves SC #3 contract — if process_query returned an early-error dict without provider/model, append still succeeds with None values; caption guard skips render
+- Single from-src-llm import line LOCKED: `from src.llm import get_llm, load_settings, missing_vars` at app.py:20 (Option B from plan decision §14 — extended the Plan-05-02 line in-place; alphabetized: get_llm, load_settings, missing_vars). NO inline `from src.llm import get_llm` inside any function body. Verified: `grep -cE '^from src\.llm import' app.py` = 1
+- Wave 3 placement justified by hard-dependency on both Plan 05-01 (provider_name abstract property) AND Plan 05-02 (_PROVIDER_LABELS dict + the import line being extended). Three-wave ordering (Wave 1 = 05-01, Wave 2 = 05-02 + 05-04, Wave 3 = 05-03, Wave 4 = 05-05) cleanly serializes the file-shared edits to app.py between 05-02 and 05-03
+
 Decisions from 05-04 (README + USER_GUIDE):
 - README/USER_GUIDE split LOCKED per RESEARCH.md Rec 4: README owns setup audience (env vars, smoke-test how/when, MGTI/Hubble pointer); USER_GUIDE owns use audience (in-app switching, captions, warnings, first-time checklist). One cross-link from README to USER_GUIDE — zero content duplication.
 - 7 exact UI strings quoted verbatim in both docs (RESEARCH.md Pitfall 13 docs-drift guard): selectbox label `LLM provider`, options `Azure OpenAI` + `Anthropic Claude (MGTI)`, sidebar header `LLM PROVIDER`, blocked-input placeholder `QUERY DISABLED — see sidebar warning`, caption format `via **<Provider>** · \`<model>\``, Hubble URL, smoke_llm.py script path.
@@ -231,15 +246,16 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 5 Plans 05-01, 05-02, 05-04: COMPLETE; no smoke gate required for these (05-01 pure infrastructure, 05-02 pure additive UI in app.py, 05-04 docs-only) — all three exercised by the unchanged 69-test acceptance suite.
-- Plan 05-03 (per-message caption): RUNNING IN PARALLEL with 05-04; touches only app.py.
+- Phase 5 Plans 05-01, 05-02, 05-03, 05-04: ALL COMPLETE; no smoke gate required for these (05-01 pure infrastructure, 05-02 pure additive UI in app.py, 05-03 pure additive UI metadata capture + render in app.py, 05-04 docs-only) — all four exercised by the unchanged 69-test acceptance suite.
+- Plan 05-05 (acceptance gate) is the only remaining Phase 5 plan. UNBLOCKED on all upstream dependencies (provider_name property from 05-01, sidebar wire-up from 05-02, per-message caption + persistence from 05-03, docs from 05-04). Critical SC #4 test (history-survives-provider-switch) is now fully exercisable since 05-03 lands write-time capture + read-from-stored-dict render pattern. Plan 05-05 should also include an AST-based regression test asserting `_render_provenance_caption` body is session_state-free (Pitfall 11 lock).
 - Operator-run smoke gate against stage gateway (`python scripts/smoke_llm.py --provider both --verbose`) still pending — NOW DOCUMENTED PROMINENTLY in BOTH README ("### Smoke Test (operator-run)") and USER_GUIDE (First-Time Anthropic Setup Checklist step 3) by Plan 05-04. Must land before any production deploy.
 - Plan 05-05 acceptance gate: Plan 05-04 outputs are ready for SC #5 docs-content assertions. Critical: grep for `^## LLM Provider Selection` (NO numeric prefix) in USER_GUIDE.md — see 05-04 decisions block above for the style-resolution explanation.
+- Plan 05-05 acceptance gate: Plan 05-03 outputs are ready for SC #4 caption + history-survives-switch assertions. For the dual-render-site check, prefer AST-walker (find `ast.With` nodes whose context manager is `st.chat_message(...)`) over literal-string grep — `render_chat_history` uses dynamic `st.chat_message(message["role"])` (pre-existing pattern, not a Plan 05-03 deviation).
 - Manual UI verification (operator running Streamlit and clicking through the sidebar) is the responsibility of the Phase 5 verification PR review — Plan 05-05 (acceptance gate) covers it programmatically via streamlit mocks.
 - Phase 4 MGTI usage block pass-through and X-Correlation-Id echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — to be combined with smoke gate run.
 
 ## Session Continuity
 
-Last session: 2026-05-21T22:10:00Z
-Stopped at: Plan 05-04 (README + USER_GUIDE) complete — 2/2 tasks committed atomically, SUMMARY.md created, STATE.md updated; full 69-test suite green; Plan 05-02 also complete in parallel (different agent, app.py scope); Plan 05-03 (per-message caption) still running in parallel; Plan 05-05 acceptance gate unblocked once 05-03 lands
+Last session: 2026-05-22T02:06:09Z
+Stopped at: Plan 05-03 (per-message provenance caption) complete — 2/2 tasks committed atomically (8c4a12d feat: helper + capture; a5e3480 feat: render + persist), SUMMARY.md created, STATE.md updated; full 69-test suite green (7.83s). All 4 of 4 Phase 5 implementation plans now complete (05-01, 05-02, 05-03, 05-04). Plan 05-05 (acceptance gate) is the only remaining Phase 5 plan and is now unblocked on every upstream dependency.
 Resume file: None
