@@ -31,7 +31,7 @@ from src.ui.css import LORO_PIANA_CSS
 # Page configuration
 st.set_page_config(
     page_title="SNOWGREP",
-    page_icon="▣",
+    page_icon="✦",
     layout="wide",
     initial_sidebar_state="expanded"
 )
