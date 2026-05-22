@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** Phase 5 — Sidebar UI Toggle + Documentation (Plans 05-01, 05-02, 05-03, 05-04 complete; 05-05 acceptance gate next and final)
+**Current focus:** Phase 5 — Sidebar UI Toggle + Documentation: **COMPLETE**. All 5 phases shipped. Pending only operator-run smoke gate against stage MGTI gateway for production sign-off.
 
 ## Current Position
 
-Phase: 5 of 5 (Sidebar UI Toggle + Documentation) — IN PROGRESS
-Plan: 4 of 4 in Phase 5 (05-01, 05-02, 05-03, 05-04 all complete; 05-05 acceptance gate is the only remaining plan)
-Status: Plan 05-03 (per-message provenance caption) complete. app.py gains `_render_provenance_caption(provider, model)` at module scope with explicit positional args + docstring-locked "MUST NOT read st.session_state" invariant; extended import line `from src.llm import get_llm, load_settings, missing_vars`; capture block in `process_query` (lines 897–906) that resolves `_client = get_llm()` → `_provider = getattr(_client, "provider_name", session_state fallback)` → `_model = getattr(_client, "_model", "unknown")` BEFORE the happy-path return; happy-path return dict gains `"provider"` + `"model"` keys; `render_chat_history` renders caption ABOVE `st.markdown(content)` dual-guarded by `role == "assistant" AND message.get("provider")`; on-submit `st.chat_message("assistant")` block renders caption ABOVE `st.markdown(response["content"])` guarded by `response.get("provider")`; `st.session_state.messages.append({...})` persists `provider` + `model` keys per assistant message. Early-return error paths intentionally unchanged — caption guard handles their absence. AST check verified helper body is session_state-free. Ordering check (cap_idx < md_idx) holds at both render sites. Strict app.py-only scope — no edits to src/, scripts/, tests/, README.md, USER_GUIDE.md, .env.example. Full 69-test suite still green.
-Last activity: 2026-05-22 — Completed 05-PLAN-03-per-message-provenance-caption.md
+Phase: 5 of 5 (Sidebar UI Toggle + Documentation) — **COMPLETE**
+Plan: 5 of 5 in Phase 5 (all five plans complete: 05-01, 05-02, 05-03, 05-04, 05-05)
+Status: Plan 05-05 (Phase 5 acceptance gate) complete. tests/test_phase5_ui.py shipped: 22 tests proving all 5 Phase 5 ROADMAP success criteria + 5 RESEARCH.md pitfall regression guards (Pitfalls 1, 6, 8, 11, 13). Self-contained module — no conftest.py, no pytest.ini, no fixture files (matches Phase 1/2/3/4 gate pattern). `_build_streamlit_mock_surface()` helper is single source of truth for Streamlit mocks (12 tests reuse it); `_make_cm()` inline factory + side_effect closures correctly handle st.columns(), st.chat_message() per-iteration, st.spinner(), and st.expander(). SC #4 helper-invariant check uses AST parsing + docstring-drop (Plan 05-03's helper docstring intentionally documents the session_state invariant — naive substring grep would false-positive). SC #3 covers BOTH chat_input branches (blocked: disabled=True + 'QUERY DISABLED — see sidebar warning' placeholder; unblocked: disabled=False + 'ENTER QUERY...' placeholder) — a regression that always sets disabled=True would now fail. SC #5 README test explicitly asserts 'MGTI' token (Warning 6 closure — not just inferred from Hubble). Combined Phase 1+2+3+4+5 suite: **91 passed in 8.13s, zero live HTTP/LLM/Streamlit, zero subprocess/network**. Phase 5 milestone SIGNED OFF. The multi-provider LLM Streamlit toggle is live; historical messages survive provider switches with original provenance preserved.
+Last activity: 2026-05-22 — Completed 05-PLAN-05-acceptance-gate.md (Phase 5 close-out)
 
-Progress: [█████████░] 95% (19/20 plans complete — Phase 5 acceptance gate is the final remaining plan)
+Progress: [██████████] 100% (20/20 plans complete — Phase 5 fully closed; only operator-run smoke gate against stage gateway remains for production deploy)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19 (through 05-04 — Phase 5 acceptance gate (05-05) is the only remaining plan)
-- Average duration: ~4.3 min
-- Total execution time: ~82 min
+- Total plans completed: 20 (ALL plans across Phases 1–5 done)
+- Average duration: ~4.4 min
+- Total execution time: ~88 min
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [█████████░] 95% (19/20 plans complete — Phase 5
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
 | 3. Anthropic Adapter | 4 (of 4) | ~16 min | ~4 min |
 | 4. Strict-Tools + Smoke | 4 (of 4) | ~22 min | ~5.5 min |
-| 5. Sidebar UI Toggle | 4 (of 4) | ~32 min | ~8 min |
+| 5. Sidebar UI Toggle | 5 (of 5) | ~38 min | ~7.6 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-04 (4 min), 05-01 (~15 min), 05-02 (~3 min), 05-04 (~10 min), 05-03 (~4 min)
-- Trend: 05-03 was app.py-only — two atomic commits (helper+capture; render+persist), no test rewires, both tasks landed first try with the 69-test suite still green. Zero merge-conflict risk: 05-03 ran after 05-02 + 05-04 (proper Wave 3 ordering per plan decision §16).
+- Last 5 plans: 05-01 (~15 min), 05-02 (~3 min), 05-04 (~10 min), 05-03 (~4 min), 05-05 (~6 min)
+- Trend: 05-05 was the Phase 5 acceptance gate — single test file, one atomic commit, one debug iteration to refine the mock-surface helper (columns/chat_message needed side_effect closures for multi-call/per-iteration semantics) and AST docstring-drop for the SC4 invariant check (the helper docstring intentionally documents the invariant, so naive substring grep false-positives). All 5 ROADMAP SCs proven by 22 tests in 8.05s; combined Phase 1+2+3+4+5 suite is 91/91 green.
 
 *Updated after each plan completion*
 
@@ -191,6 +191,18 @@ Decisions from 05-04 (README + USER_GUIDE):
 - Strict docs-only scope: ZERO edits to .env.example, src/, scripts/, tests/, app.py, ROADMAP.md, REQUIREMENTS.md — verified by `git diff --stat HEAD -- src/ scripts/ tests/ app.py .env.example` returning empty.
 - No screenshots embedded in either doc — both docs preserve their image-free convention (RESEARCH.md Rec 4 explicit decision); zero matches for image-embed regex confirmed.
 
+Decisions from 05-05 (Phase 5 acceptance gate):
+- Test module SELF-CONTAINED — no conftest.py, no pytest.ini, no new fixture files (matches Phase 1/2/3/4 gate pattern across all five phases now)
+- `_build_streamlit_mock_surface()` helper at module top is single source of truth for Streamlit mocks; called by 12 render_*-exercising tests (DRY). Uses inline `_make_cm()` factory + `side_effect` closures for `columns` / `expander` / `chat_message` / `spinner` — handles st.columns(2), st.columns(3), st.columns([3,1]) simultaneously, and produces fresh CM mocks per call (render_chat_history loops over messages — each `with st.chat_message(role):` needs its own CM)
+- SC #4 helper-invariant check uses AST parsing + docstring-drop instead of raw `'session_state' not in inspect.getsource(...)` — Plan 05-03's `_render_provenance_caption` docstring intentionally documents the invariant ("CRITICAL INVARIANT: This helper MUST NOT read st.session_state"); naive substring grep would always-false-positive. Refined to parse the function via ast.parse → drop the docstring expression node → ast.unparse the body → string-check. Invariant locked at executable level; documentation is free to evolve
+- SC #3 covers BOTH chat_input branches in render_main_content (Warning 5 closure). The blocked test asserts `disabled=True` + 'QUERY DISABLED — see sidebar warning' placeholder; the unblocked test asserts `disabled=False` + 'ENTER QUERY...' placeholder exactly (Warning 7 — locks default UI string against silent drift). Without the unblocked test, a regression that always sets disabled=True would still pass the blocked-only assertion
+- SC #5 README test asserts `"MGTI" in text` explicitly (Warning 6 closure) — not just inferred via 'Hubble'. The MGTI constraint is the load-bearing context; documenting Hubble without MGTI would leave readers confused about whether api.anthropic.com works directly
+- Three autouse fixtures: `_clear_factory_cache` (uses getattr+callable for the .clear() fallback), `_strip_llm_env` (12 LLM env vars), `_clear_streamlit_session_state` (NEW vs prior phases — Streamlit session_state persists across pytest invocations in the same process; SC1 init + SC3 warning + SC4 history-survives-switch tests MUST not leak state into each other)
+- Tests that call render_sidebar / render_main_content seed `upload_authenticated`, `data_loaded`, `embeddings_ready`, `schema` (and messages where relevant) before the render call — the autouse session-state-clear means each test starts blank and must re-seed (RESEARCH.md hardening over prior-phase pattern)
+- 22 tests total (one above ~21 target): SC1=4, SC2=4, SC3=4, SC4=4, Pitfall 8/provider_name=2, SC5=2, helper sanity=2
+- Combined Phase 1+2+3+4+5 suite: 91 passed in 8.13s, zero live HTTP, zero live LLM, zero live Streamlit, zero subprocess/network (grep verified)
+- Plan 05-05 deviation (Rule 3 — Blocker resolution): plan's draft return_value-based context-manager mocks insufficient for production code's per-iteration / multi-call patterns; helper refactored to side_effect closures. Functionally identical to plan intent (single source of truth, pre-built CM-shaped mocks); implementation adds dynamic-shape support. NOT a scope change
+
 Decisions from 05-01 (factory cache + helpers):
 - Single cache layer LOCKED: Phase 1 module-level _cache: dict DELETED; @_cache_resource on _get_llm_cached is the only cache (RESEARCH.md Pitfall 6); Phase 1 anticipated this at __init__.py:59-60 comment
 - Cache key tuple order LOCKED: (provider, base_url, model, api_key_fingerprint) — all positional, all hashable strings; switching ANY of these four re-resolves the adapter
@@ -240,22 +252,33 @@ Phase 4 (Strict-Tools + Smoke Test) is complete. All 5 ROADMAP success criteria 
 
 Verifier outcome: 4/5 automated + 1 human_needed (SC #5 live-execution against stage gateway). User explicitly approved deferring the live smoke run to the Phase 4 verification PR review (operator-run, not CI — original phase contract per CONTEXT.md §Smoke script credential). VERIFICATION.md captures the operator checklist item. Phase 5 (Sidebar UI Toggle) is unblocked.
 
+### Phase 5 Sign-Off
+
+Phase 5 (Sidebar UI Toggle + Documentation) is complete. All 5 ROADMAP success criteria proven by tests/test_phase5_ui.py (22 tests, 8.05s, zero live HTTP / LLM / Streamlit calls). Multi-provider LLM selection is shipped end-to-end:
+
+- **SC #1** (sidebar selectbox): app.py `_PROVIDER_OPTIONS` dict + LLM PROVIDER block (lines 586–642) renders `st.selectbox("LLM provider", ...)` with options ['Azure OpenAI', 'Anthropic Claude (MGTI)']; session_state init from LLM_PROVIDER_DEFAULT with clamp-to-azure_openai fallback; active-model caption beneath
+- **SC #2** (cache invalidation): src/llm/__init__.py `@_cache_resource` on `_get_llm_cached(provider, base_url, model, api_key_fingerprint)`; `_fingerprint` is one-way SHA-256 8-hex (empty key → ""); Phase 1 module-level _cache dict DELETED (single cache layer)
+- **SC #3** (missing-env warning + query disabled): sidebar renders st.warning naming each missing var; sets `_llm_provider_blocked` flag; render_main_content wires `st.chat_input(disabled=_blocked)` + 'QUERY DISABLED — see sidebar warning' placeholder swap
+- **SC #4** (per-message caption survives switch): `_render_provenance_caption(provider, model)` at app.py module scope (NEVER reads session_state); process_query captures `_provider = getattr(_client, "provider_name", ...)` + `_model = getattr(_client, "_model", "unknown")` AT WRITE TIME; session_state.messages.append persists provider+model per dict; render_chat_history + on-submit assistant block render caption FROM the stored dict — never from session_state
+- **SC #5** (docs): README.md + USER_GUIDE.md document provider selection, MGTI-only constraint, smoke_llm.py, warning resolution; 7 locked UI strings preserved verbatim in both docs (Pitfall 13 docs-drift guard)
+
+Combined Phase 1+2+3+4+5 suite: 91 passed in 8.13s, zero live HTTP, zero live LLM, zero live Streamlit, zero subprocess/network. Phase 5 milestone signed off.
+
+Verifier outcome: 5/5 SCs automated and green in CI / pytest. The only remaining live surface is the operator-run smoke gate against the stage MGTI Apigee gateway (`python scripts/smoke_llm.py --provider both --verbose`) — same outstanding item from Phase 4 close-out (not introduced by Phase 5). Documented prominently in BOTH README.md (`### Smoke Test (operator-run)`) AND USER_GUIDE.md (`### First-Time Anthropic Setup Checklist` step 3). Must land before any production deploy.
+
 ### Pending Todos
 
 None.
 
 ### Blockers/Concerns
 
-- Phase 5 Plans 05-01, 05-02, 05-03, 05-04: ALL COMPLETE; no smoke gate required for these (05-01 pure infrastructure, 05-02 pure additive UI in app.py, 05-03 pure additive UI metadata capture + render in app.py, 05-04 docs-only) — all four exercised by the unchanged 69-test acceptance suite.
-- Plan 05-05 (acceptance gate) is the only remaining Phase 5 plan. UNBLOCKED on all upstream dependencies (provider_name property from 05-01, sidebar wire-up from 05-02, per-message caption + persistence from 05-03, docs from 05-04). Critical SC #4 test (history-survives-provider-switch) is now fully exercisable since 05-03 lands write-time capture + read-from-stored-dict render pattern. Plan 05-05 should also include an AST-based regression test asserting `_render_provenance_caption` body is session_state-free (Pitfall 11 lock).
-- Operator-run smoke gate against stage gateway (`python scripts/smoke_llm.py --provider both --verbose`) still pending — NOW DOCUMENTED PROMINENTLY in BOTH README ("### Smoke Test (operator-run)") and USER_GUIDE (First-Time Anthropic Setup Checklist step 3) by Plan 05-04. Must land before any production deploy.
-- Plan 05-05 acceptance gate: Plan 05-04 outputs are ready for SC #5 docs-content assertions. Critical: grep for `^## LLM Provider Selection` (NO numeric prefix) in USER_GUIDE.md — see 05-04 decisions block above for the style-resolution explanation.
-- Plan 05-05 acceptance gate: Plan 05-03 outputs are ready for SC #4 caption + history-survives-switch assertions. For the dual-render-site check, prefer AST-walker (find `ast.With` nodes whose context manager is `st.chat_message(...)`) over literal-string grep — `render_chat_history` uses dynamic `st.chat_message(message["role"])` (pre-existing pattern, not a Plan 05-03 deviation).
-- Manual UI verification (operator running Streamlit and clicking through the sidebar) is the responsibility of the Phase 5 verification PR review — Plan 05-05 (acceptance gate) covers it programmatically via streamlit mocks.
-- Phase 4 MGTI usage block pass-through and X-Correlation-Id echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — to be combined with smoke gate run.
+- **Phase 5: COMPLETE.** All 5 plans landed (05-01 factory cache + helpers, 05-02 sidebar selectbox + warning, 05-03 per-message provenance caption, 05-04 README + USER_GUIDE, 05-05 acceptance gate). All 5 ROADMAP success criteria proven by tests/test_phase5_ui.py (22 tests, 8.05s). Combined Phase 1+2+3+4+5 suite is 91 passed in 8.13s — zero live HTTP, zero live LLM, zero live Streamlit, zero subprocess/network.
+- **Operator-run smoke gate against stage gateway** (`python scripts/smoke_llm.py --provider both --verbose`) — the ONLY remaining live surface. Same outstanding item from Phase 4 close-out (not introduced by Phase 5). Documented prominently in BOTH README ("### Smoke Test (operator-run)") AND USER_GUIDE ("### First-Time Anthropic Setup Checklist" step 3). Must land before any production deploy.
+- **Manual UI sanity click-through** (operator running Streamlit and clicking through the sidebar selectbox + verifying caption + verifying warning + verifying disabled chat input) — covered programmatically by Plan 05-05 acceptance gate, but a 30-second manual ritual is the standard PR-review responsibility. NOT a blocker for sign-off.
+- Phase 4 MGTI usage block pass-through and X-Correlation-Id echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — to be combined with the smoke gate run.
 
 ## Session Continuity
 
-Last session: 2026-05-22T02:06:09Z
-Stopped at: Plan 05-03 (per-message provenance caption) complete — 2/2 tasks committed atomically (8c4a12d feat: helper + capture; a5e3480 feat: render + persist), SUMMARY.md created, STATE.md updated; full 69-test suite green (7.83s). All 4 of 4 Phase 5 implementation plans now complete (05-01, 05-02, 05-03, 05-04). Plan 05-05 (acceptance gate) is the only remaining Phase 5 plan and is now unblocked on every upstream dependency.
+Last session: 2026-05-22T02:19:52Z
+Stopped at: Plan 05-05 (Phase 5 acceptance gate) complete — 1/1 task committed atomically (010bc78 test: 22-test acceptance gate), SUMMARY.md created, STATE.md updated. Full Phase 1+2+3+4+5 combined suite green: 91 passed in 8.13s. **Phase 5 milestone SIGNED OFF.** The snow_query multi-provider LLM integration (Azure OpenAI + Anthropic Claude via MGTI) is shippable. Only operator-run smoke gate against stage MGTI gateway remains for production deploy.
 Resume file: None
