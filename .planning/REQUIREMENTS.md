@@ -109,23 +109,51 @@ Explicitly excluded for v2.2. Documented to prevent scope creep.
 
 ## Traceability
 
-Phases mapped during roadmap creation. Empty until `gsd-roadmapper` runs.
+Phases mapped during roadmap creation 2026-05-22.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FND-01..06 | TBD | Pending |
-| SPL-01..04 | TBD | Pending |
-| SBR-01..06 | TBD | Pending |
-| MAIN-01..06 | TBD | Pending |
-| DVZ-01..05 | TBD | Pending |
-| POL-01..04 | TBD | Pending |
-| DOC-01..02 | TBD | Pending |
-| TST-01..03 | TBD | Pending |
+| FND-01      | 6     | Pending |
+| FND-02      | 6     | Pending |
+| FND-03      | 6     | Pending |
+| FND-04      | 6     | Pending |
+| FND-05      | 6     | Pending |
+| FND-06      | 6     | Pending |
+| SPL-01      | 7     | Pending |
+| SPL-02      | 7     | Pending |
+| SPL-03      | 7     | Pending |
+| SPL-04      | 7     | Pending |
+| SBR-01      | 8     | Pending |
+| SBR-02      | 8     | Pending |
+| SBR-03      | 8     | Pending |
+| SBR-04      | 8     | Pending |
+| SBR-05      | 8     | Pending |
+| SBR-06      | 8     | Pending |
+| MAIN-01     | 8     | Pending |
+| MAIN-02     | 8     | Pending |
+| MAIN-03     | 8     | Pending |
+| MAIN-04     | 8     | Pending |
+| MAIN-05     | 8     | Pending |
+| MAIN-06     | 8     | Pending |
+| DVZ-01      | 9     | Pending |
+| DVZ-02      | 9     | Pending |
+| DVZ-03      | 9     | Pending |
+| DVZ-04      | 9     | Pending |
+| DVZ-05      | 9     | Pending |
+| POL-01      | 10    | Pending |
+| POL-02      | 10    | Pending |
+| POL-03      | 10    | Pending |
+| POL-04      | 10    | Pending |
+| DOC-01      | 11    | Pending |
+| DOC-02      | 11    | Pending |
+| TST-01      | 11    | Pending |
+| TST-02      | 11    | Pending |
+| TST-03      | 11    | Pending |
 
 **Coverage:**
 - v1 requirements: 36 total
-- Mapped to phases: 0
-- Unmapped: 36 (roadmap will close this)
+- Mapped to phases: 36
+- Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-05-22*
+*Requirements defined: 2026-05-22. Traceability updated 2026-05-22 after roadmap revision (Phases 8+9 merged into single Phase 8).*
