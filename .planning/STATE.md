@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** Phase 5 — Sidebar UI Toggle (Phase 4 complete — pending operator-run smoke gate)
+**Current focus:** Phase 5 — Sidebar UI Toggle (Plan 05-01 complete; Plan 05-02 sidebar wire-up next)
 
 ## Current Position
 
-Phase: 4 of 5 (Strict-Tools + Smoke Test) — COMPLETE (all 4 plans done)
-Plan: 4 of 4 in Phase 4 (04-04 complete)
-Status: All 5 Phase 4 SCs proven; 69/69 tests green; Phase 4 acceptance gate shipped. Phase 5 (Sidebar UI Toggle) unblocked pending operator-run smoke gate against stage gateway (python scripts/smoke_llm.py --provider both --verbose).
-Last activity: 2026-05-21 — Completed 04-PLAN-04-acceptance-gate.md
+Phase: 5 of 5 (Sidebar UI Toggle + Documentation) — IN PROGRESS
+Plan: 1 of 4 in Phase 5 (05-01 complete)
+Status: Plan 05-01 (factory cache + helpers) complete. Single cache layer via @_cache_resource on _get_llm_cached(provider, base_url, model, api_key_fingerprint). _fingerprint() SHA-256 one-way; missing_vars() non-raising helper; provider_name @property @abc.abstractmethod with concrete returns on both adapters. All 4 prior-phase test files rewired; 69/69 still green.
+Last activity: 2026-05-21 — Completed 05-PLAN-01-factory-cache-and-helpers.md
 
-Progress: [█████████░] 94% (16/17 plans estimated — Phase 5 unblocked)
+Progress: [█████████░] 94% (16/17 plans complete — 1/4 of Phase 5 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15 (through 04-04 — Phase 4 fully complete)
-- Average duration: ~4 min
-- Total execution time: ~50 min
+- Total plans completed: 16 (through 05-01 — Phase 5 Wave-1 foundation laid)
+- Average duration: ~5 min
+- Total execution time: ~65 min
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [█████████░] 94% (16/17 plans estimated — Phase 
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
 | 3. Anthropic Adapter | 4 (of 4) | ~16 min | ~4 min |
 | 4. Strict-Tools + Smoke | 4 (of 4) | ~22 min | ~5.5 min |
+| 5. Sidebar UI Toggle | 1 (of 4) | ~15 min | ~15 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-04 (3 min), 04-01 (~3 min), 04-02 (7 min), 04-03 (~4 min), 04-04 (4 min)
-- Trend: consistent 3-7 min/plan; Phase 4 (4 plans) fully complete
+- Last 5 plans: 04-01 (~3 min), 04-02 (7 min), 04-03 (~4 min), 04-04 (4 min), 05-01 (~15 min)
+- Trend: 05-01 was larger-than-typical (4 src + 4 test rewires); subsequent 05-02..05-04 plans expected to be faster
 
 *Updated after each plan completion*
 
@@ -148,6 +149,20 @@ Decisions from 04-01 (INTENT_TOOL + classify_intent migration):
 - result["intent"] used directly in return dict (not .get("intent","structured")) — schema required+enum guarantees presence; defaulting silently masks contract violation
 - test_phase2_parity.py updated (Rule 1 deviation): 3 tests tested old complete() call path in classify_intent; updated to mock classify_with_tool and ToolCall directly; all 39 tests green
 
+Decisions from 05-01 (factory cache + helpers):
+- Single cache layer LOCKED: Phase 1 module-level _cache: dict DELETED; @_cache_resource on _get_llm_cached is the only cache (RESEARCH.md Pitfall 6); Phase 1 anticipated this at __init__.py:59-60 comment
+- Cache key tuple order LOCKED: (provider, base_url, model, api_key_fingerprint) — all positional, all hashable strings; switching ANY of these four re-resolves the adapter
+- _fingerprint(api_key) empty key returns '' (NOT hashlib.sha256(b"").hexdigest()[:8]) — unconfigured-provider cache slot must be distinct from any real key's slot
+- _fingerprint uses hashlib.sha256(key.encode("utf-8")).hexdigest()[:8] — 32 bits of entropy is sufficient for cache-invalidation purposes; NEVER substring of raw key; NEVER raw key in cache-key tuple (RESEARCH.md Pitfall 1)
+- Streamlit decorator with try/except fallback at module scope: try import streamlit; except → def _cache_resource(func=None, **kwargs): pass-through. Tests defend missing .clear() via getattr(_get_llm_cached, "clear", None) + callable(...)
+- missing_vars() as SEPARATE function (not validate_config(raise_on_missing=False)) — Open Question 3 resolved by Researcher recommendation: distinct API for distinct purpose (UI runtime vs startup-time guard)
+- missing_vars unknown provider returns [] (not raises) — sidebar selectbox enum validates upstream; UI must not raise (Pitfall 7); validate_config keeps its raise-on-unknown contract
+- provider_name as @property @abc.abstractmethod on LLMClient (NOT class attribute) — forces every future adapter to deliberately implement it; concrete returns ('azure_openai' / 'anthropic_mgti') match _REGISTRY keys AND startup-log provider= strings — single source of truth lock
+- test_phase2_parity.py:354 WRITE rewired via patch.object(llm_pkg, "_get_llm_cached", return_value=fake) — Option A from plan decision §7; chosen over Option B (mock at different seam, too invasive) and Option C (debug-only _set_cached_for_testing() helper, violates Pitfall 6 single-cache lock)
+- _install_raising_client renamed to _make_raising_client (builder, not installer) — sets fake.provider_name = 'azure_openai' for MagicMock(spec=AzureOpenAIClient) + Task 1.1 abstract-property compatibility
+- _extract_model_from_endpoint imported from src.llm.azure_openai (NOT reimplemented) — leading underscore intentional; Phase 5 reaches across package internals per decision §5
+- test_abc_contract_enforced updated to expect frozenset({"complete", "classify_with_tool", "provider_name"}) — inline Complete/MissingOne test subclasses got provider_name overrides
+
 Decisions from 04-04 (acceptance gate):
 - Test module self-contained — no conftest.py, no pytest.ini, no new tests/fixtures/ files (matches Phase 1/2/3 acceptance-gate pattern; four phases consistent now)
 - Inline mock-response builders used INSTEAD of fixture files — RESEARCH.md "Mock Response Builder Pattern" applied (same as Phase 3 gate)
@@ -189,11 +204,12 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 5: Requires operator-run smoke gate before starting (python scripts/smoke_llm.py --provider both --verbose against stage ANTHROPIC_API_KEY). Without this, Phase 5 work should not begin (per SMK-05 / CONTEXT.md §Smoke script credential).
+- Phase 5 Plan 05-01: COMPLETE; no smoke gate required for this plan (pure infrastructure refactor, exercised by 69-test acceptance suite).
+- Plans 05-02..05-04 (sidebar wire-up, per-message caption, documentation): operator-run smoke gate against stage gateway (python scripts/smoke_llm.py --provider both --verbose) still pending; should land before any production deploy. Plan 05-04 (documentation) is the natural place to reference the smoke ritual.
 - Phase 4 MGTI usage block pass-through and X-Correlation-Id echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — to be combined with smoke gate run.
 
 ## Session Continuity
 
-Last session: 2026-05-21T19:30:00Z
-Stopped at: Phase 4 close-out — verifier returned human_needed (4/5 automated + SC #5 operator-run live smoke deferred to PR review per user approval); ROADMAP.md / REQUIREMENTS.md / STATE.md updated; 04-VERIFICATION.md created; combined suite 69/69 green; Phase 5 (Sidebar UI Toggle) unblocked
+Last session: 2026-05-21T21:55:00Z
+Stopped at: Plan 05-01 (factory cache + helpers) complete — 4/4 tasks committed atomically, SUMMARY.md created, full 69-test suite green; Wave-2 Phase 5 plans (05-02 sidebar, 05-03 caption, 05-04 docs) unblocked
 Resume file: None
