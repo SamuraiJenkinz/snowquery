@@ -944,7 +944,13 @@ def render_main_content():
     render_chat_history()
 
     # Query input
-    if user_query := st.chat_input("ENTER QUERY..."):
+    # Phase 5: honor sidebar's missing-creds blocked flag — disable chat input
+    # and swap placeholder so users see WHY they can't submit. The blocked flag
+    # is set by render_sidebar() on every rerun (Phase 5 RESEARCH.md Pitfall 5
+    # — order is load-bearing; see main()).
+    _blocked = st.session_state.get("_llm_provider_blocked", False)
+    _placeholder = "ENTER QUERY..." if not _blocked else "QUERY DISABLED — see sidebar warning"
+    if user_query := st.chat_input(_placeholder, disabled=_blocked):
         query_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
 
         st.session_state.messages.append({
@@ -990,7 +996,14 @@ def render_main_content():
 
 
 def main():
-    """Main application entry point."""
+    """Main application entry point.
+
+    ORDER IS LOAD-BEARING: render_sidebar() must run BEFORE render_main_content()
+    because the sidebar writes st.session_state["_llm_provider_blocked"] which
+    render_main_content() reads at the st.chat_input call site. Reversing the
+    order would leak stale blocked state across reruns (Phase 5 SC #3 + RESEARCH
+    Pitfall 5).
+    """
     init_session_state()
     render_sidebar()
     render_main_content()
