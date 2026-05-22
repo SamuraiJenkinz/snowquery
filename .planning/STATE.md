@@ -5,47 +5,55 @@
 See: .planning/PROJECT.md (updated 2026-05-22)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** v2.1 milestone shipped 2026-05-22. Planning next milestone — run `/gsd:new-milestone` to define scope.
+**Current focus:** v2.2 SNOWGREP Visual Revamp — Loro Piana quiet luxury aesthetic across all screens.
 
 ## Current Position
 
-Phase: None active
-Plan: Not started
-Status: Ready to plan next milestone
-Last activity: 2026-05-22 — v2.1 milestone complete (5 phases, 20 plans, 91 tests). All requirements shipped. Only pre-prod gate is operator-run smoke against staging MGTI gateway.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-22 — Milestone v2.2 started; PROJECT.md updated, research skipped (loro-piana-aesthetic skill is the design source)
 
-Progress: v2.1 complete — [██████████] 100% (20/20 plans across all 5 phases)
+Progress: v2.2 phases TBD (defining)
 
-## Open Pre-Prod Gates
+## v2.2 Design Reference
 
-- **SMK-05 live smoke run against staging gateway** (`python scripts/smoke_llm.py --provider both --verbose`) — artifact is structurally verified; live execution requires staging Anthropic + Azure credentials operator-side. Must run before production deploy. Documented in `.planning/milestones/v2.1-MILESTONE-AUDIT.md` §7, `README.md` (Smoke Test section), and `USER_GUIDE.md` (First-Time Anthropic Setup Checklist).
-- **Manual UI sanity click-through** — 30-second operator ritual (sidebar selectbox + caption + warning + disabled chat_input). Covered programmatically by Phase 5 acceptance gate; manual standard PR-review responsibility.
-- **X-Correlation-Id echo observation** (`tests/manual/observe_correlation_echo.py`) — observation step, not runtime dependency. To be combined with the smoke gate run when staging credentials are available.
+Three Stitch mockups generated 2026-05-22 and validated by user:
+- `.planning/design-mockups/00-splash-helix.png` — splash with helix data motion
+- `.planning/design-mockups/01-main-chat.png` — hero chat + sidebar
+- `.planning/design-mockups/02-results-chart.png` — query results with chart
+
+Live in Stitch: https://stitch.withgoogle.com/projects/11615568135320819515
+
+Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\taylo\.claude\skills\loro-piana-aesthetic\`
+
+## v2.1 Open Pre-Prod Gates (carried forward)
+
+- **SMK-05 live smoke run against staging gateway** (`python scripts/smoke_llm.py --provider both --verbose`) — pre-authorized operator gate before production deploy. Documented in `.planning/milestones/v2.1-MILESTONE-AUDIT.md` §7.
 
 ## Accumulated Context
 
-### Decisions
+### Decisions (recent)
 
-Full decision log in PROJECT.md "Key Decisions" table (15 decisions with outcomes marked ✓ Good / ⚠️ Pending / — Pending).
+- **v2.1 Phase 5 invariant carries forward**: `_render_provenance_caption(provider, model)` must never read `st.session_state` — history messages keep original provenance after mid-session switches. AST-based regression test in `tests/test_phase5_ui.py` locks this. v2.2 visual changes must preserve this invariant.
+- **v2.2 dataframe pattern**: editorial HTML hero + `st.expander` containing native `st.dataframe` — zero functionality loss vs. fighting glide-data-grid CSS. Removes 4-6h estimate risk.
+- **v2.2 skip research**: loro-piana-aesthetic skill is the design source; Stitch mockups have validated the look; Streamlit CSS limits are implementation knowledge not domain research.
 
-Per-plan decisions logged in `.planning/milestones/v2.1-ROADMAP.md` (archived) and phase-level SUMMARY.md files at `.planning/phases/01-*/...` through `05-*/...`.
+Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ### Resolved Blockers
 
-All Phase 1-5 blockers resolved at milestone close:
-- Phase 2 KNOWN DEBT (LLMAuthError hardcoded Azure remediation) → resolved by Phase 3 per-provider dispatch in `_compat.py`
-- Phase 4 SC #5 (live smoke run) → deferred to operator pre-prod gate (pre-authorized; not a milestone blocker)
-- Phase 5 mid-session-switch provenance loss → resolved by `_render_provenance_caption` reading from stored dict (AST-locked invariant)
+(None active)
 
 ### Open Blockers/Concerns
 
-None for the milestone. Only the operator-run pre-prod smoke gate remains (above).
+(None for v2.2 start)
 
 ## Session Continuity
 
-Last session: 2026-05-22 — v2.1 milestone completion ritual.
-Stopped at: Milestone v2.1 archived, ROADMAP.md collapsed, REQUIREMENTS.md deleted (fresh for next milestone), PROJECT.md evolved to brownfield format with Current State + Next Milestone Goals, git tag v2.1 created.
-Resume file: None — next session starts with `/gsd:new-milestone`.
+Last session: 2026-05-22 — v2.2 milestone initialization
+Stopped at: PROJECT.md + STATE.md updated; about to define requirements and spawn roadmapper
+Resume file: None
 
 ---
-*Last updated: 2026-05-22 after v2.1 milestone completion*
+*Last updated: 2026-05-22 after v2.2 milestone initialization*

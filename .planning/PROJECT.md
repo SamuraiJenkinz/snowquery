@@ -14,15 +14,33 @@ Operators get accurate, fast natural-language answers about ServiceNow incidents
 
 **Open pre-prod gate:** Operator-run live smoke against staging MGTI gateway (`python scripts/smoke_llm.py --provider both --verbose`). Smoke script artifact is structurally verified; live execution requires staging credentials not present in CI/dev. See `.planning/milestones/v2.1-MILESTONE-AUDIT.md` §7.
 
+## Current Milestone: v2.2 SNOWGREP Visual Revamp — Loro Piana Quiet Luxury
+
+**Goal:** Replace the brutalist terminal CSS with an editorial warm-toned design system across all screens (splash, sidebar, chat, results, charts) without touching v2.1 LLM behavior or losing any existing functionality.
+
+**Target features:**
+- Splash screen with helix-motif data animation on boot (CSS keyframes, clears when data ready)
+- Foundation CSS pass — EB Garamond + Inter fonts, warm earth palette, Streamlit color variable overrides
+- Sidebar restyle — small-caps tracked labels, MODE pill toggles, EMBEDDINGS status pills, dropdown bottom-border-only inputs
+- Main panel restyle — warm-beige user message cards, white assistant cards with thin borders, serif page header, restyled chat input + ASK button
+- Editorial dataframe + collapsible interactive view — HTML hero matching mockup wrapped in `st.expander` revealing full `st.dataframe` (zero functionality loss)
+- Altair chart theming module — cashmere bar palette, no axis box, warm gridlines, EB Garamond chart titles
+- Polish + edge states — empty state, provider-warning restyle, loading spinners with small-caps tracked labels
+- Updated USER_GUIDE noting the visual refresh; 22 Phase 5 UI tests stay green (assert strings, not styling)
+
+**Design reference:** Three Stitch mockups generated 2026-05-22 in `.planning/design-mockups/` (00-splash-helix.png, 01-main-chat.png, 02-results-chart.png) and live at https://stitch.withgoogle.com/projects/11615568135320819515
+
+**Design system:** Loro Piana Luxe — palette and component patterns at `C:\Users\taylo\.claude\skills\loro-piana-aesthetic\`
+
+**Out of scope for v2.2:** Backend / LLM behavior changes; mobile responsive; porting `app_brutalist.py` / `fixedapp.py` / `designui.py` variants; backwards-compatibility shim for the brutalist theme.
+
 ## Next Milestone Goals
 
-To be defined. Candidate areas (v2 backlog from v2.1):
-- **Resilience**: Retry with exponential backoff on `LLMTransientError` (429 / 5xx) — wait for production logs to show signal before scoping.
-- **Provider features**: Per-call-site model selection (Haiku for `classify_intent` / Sonnet for `generate_executive_summary`) — needs production cost/latency data.
-- **Opus 4.7 with adaptive thinking** — pending Hubble entitlement and tested use case.
-- **Connection-test button**: Sidebar widget that runs a minimal Create Message call and reports latency — depends on smoke test stability.
-
-Run `/gsd:new-milestone` to start questioning → research → requirements → roadmap.
+After v2.2 ships, candidate v2.3+ areas (v2 backlog from v2.1):
+- **Resilience**: Retry with exponential backoff on `LLMTransientError` (429 / 5xx)
+- **Provider features**: Per-call-site model selection (Haiku for `classify_intent` / Sonnet for `generate_executive_summary`)
+- **Opus 4.7 with adaptive thinking** — pending Hubble entitlement
+- **Connection-test button**: Sidebar widget that runs a minimal Create Message call and reports latency
 
 ## Requirements
 
@@ -65,9 +83,23 @@ Shipped in v2.1 (2026-05-22):
 
 ### Active
 
-<!-- Reset at v2.1 close. New active requirements will be defined by /gsd:new-milestone. -->
+<!-- v2.2 scope — visual revamp to Loro Piana quiet luxury aesthetic. Defined 2026-05-22. -->
 
-(None — next milestone scope is TBD)
+- [ ] Splash screen with helix-motif data animation on boot, restrained Loro Piana aesthetic
+- [ ] Foundation CSS — EB Garamond serif headlines, Inter body + small-caps labels, warm earth palette (#F5F0EB / #8B7355 / #2C2420 family), Streamlit color variable overrides
+- [ ] Sidebar restyle — small-caps tracked section labels (DATA, EMBEDDINGS, LLM PROVIDER, MODE), MODE pill toggles, EMBEDDINGS status pills, dropdown bottom-border-only style
+- [ ] Main panel restyle — warm-beige user message cards aligned right; white assistant cards with thin warm-beige border aligned left; EB Garamond page header "Incident Intelligence"; restyled chat input with cashmere ASK button
+- [ ] Provenance caption restyle — muted gold small-caps tracked, sits above message content (preserves v2.1 invariant: never reads session_state)
+- [ ] Editorial dataframe view — `st.markdown` HTML hero table matching mockup (italic priority labels, warm-beige row dividers, generous cell padding); single source of truth helper in `src/utils.py`
+- [ ] Collapsible interactive dataframe — every editorial table is followed by `st.expander("EXPAND · INTERACTIVE VIEW")` containing native `st.dataframe` + CSV download button; zero functionality loss
+- [ ] Altair chart theming module — cashmere graduated palette for bars, no axis box, warm-beige gridlines, EB Garamond chart titles, no chart legend on single-series
+- [ ] Empty state — no CSV loaded screen with editorial upload prompt
+- [ ] Provider-warning state — restyled inline warning in sidebar matching Loro Piana aesthetic (small-caps "PROVIDER NOT CONFIGURED", muted gold, recovery copy)
+- [ ] Loading indicators — small-caps tracked "LOADING…" / "ANALYZING…" replacing default Streamlit spinners
+- [ ] Page chrome — `st.set_page_config` page_icon refresh from brutalist `▣` to something restrained; page title preserved
+- [ ] USER_GUIDE update — new visual refresh subsection noting the redesign; locked v2.1 UI strings stay verbatim
+- [ ] Phase 5 test suite stays green — 22 v2.1 UI tests assert exact UI strings, not colors; all must pass post-revamp
+- [ ] Visual regression coverage — new test module asserts CSS rule presence (font imports, palette tokens, no `#0a0a0a` brutalist residue) — protects against silent revert
 
 ### Out of Scope
 
@@ -148,4 +180,4 @@ All routed through `LLMClient` via `get_llm()` + `llm_to_query_error()`.
 | Guardrail check BEFORE content-emptiness check in Anthropic HTTP 200 handler | Anthropic returns HTTP 200 + empty content when guardrail intervenes; checking emptiness first would silently succeed on guardrail blocks | ✓ Good — Phase 3 Pitfall 4 guard; locked by paired tests `test_guardrail_intervened_raises_guardrail_error` + `test_empty_content_non_guardrail_raises_schema_error` |
 
 ---
-*Last updated: 2026-05-22 after v2.1 milestone completion*
+*Last updated: 2026-05-22 after v2.2 milestone initialization*
