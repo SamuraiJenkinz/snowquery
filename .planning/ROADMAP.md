@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Azure Extraction + Parity Gate** — Extract existing Azure OpenAI flow into adapter; swap call sites; verify byte-identical output
 - [x] **Phase 3: Anthropic MGTI Adapter** — Add Anthropic adapter with text-mode `complete()`, correlation IDs, typed error mapping (no UI exposure)
 - [x] **Phase 4: Strict-Tools + Smoke Test** — Strict-tools mode for intent classification; live-credential smoke test gating Phase 5
-- [ ] **Phase 5: Sidebar UI Toggle + Documentation** — User-facing provider dropdown; README + USER_GUIDE updated
+- [x] **Phase 5: Sidebar UI Toggle + Documentation** — User-facing provider dropdown; README + USER_GUIDE updated
 
 ## Phase Details
 
@@ -118,11 +118,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. README and USER_GUIDE explain provider selection, the MGTI-only constraint, how to run `scripts/smoke_llm.py`, and what to do when a provider warning appears
 
 **Plans**:
-- [ ] 05-PLAN-01-factory-cache-and-helpers.md - Refactor src/llm/__init__.py to use @st.cache_resource with 4-arg tuple cache key (provider, base_url, model, api_key_fingerprint); delete Phase 1 module-level _cache dict; add _fingerprint() SHA-256 helper; add missing_vars() non-raising sibling of validate_config(); add provider_name abstract property to LLMClient ABC + concrete overrides on both adapters (Wave 1; foundation for SC #2, SC #3, SC #4)
-- [ ] 05-PLAN-02-sidebar-selectbox-and-warning.md - Add LLM PROVIDER block to app.py render_sidebar() between EMBEDDINGS and CONFIG: st.selectbox with locked label 'LLM provider' + options 'Azure OpenAI'/'Anthropic Claude (MGTI)', session-state init from LLM_PROVIDER_DEFAULT with clamp-to-known defense, active-model st.caption, inline st.warning when env vars missing + _llm_provider_blocked flag, and wire st.chat_input(disabled=) + placeholder swap (Wave 2; SC #1, SC #3, SC #2-cache-consumer)
-- [ ] 05-PLAN-03-per-message-provenance-caption.md - Capture (provider, model) at write time in process_query via client.provider_name + client._model; persist in st.session_state.messages dict; add _render_provenance_caption(provider, model) helper with locked 'never read session_state' invariant; render caption ABOVE st.markdown in both render_chat_history and on-submit assistant block (Wave 2; SC #4 + history-survives-switch + Pitfall 11 guard)
-- [ ] 05-PLAN-04-readme-and-user-guide.md - README.md: env-var rows for LLM_PROVIDER_DEFAULT + 3 Anthropic vars, MGTI/Hubble pointer, LLM Provider Selection cross-link subsection, Smoke Test subsection. USER_GUIDE.md: new section LLM Provider Selection with Overview / MGTI-Only Constraint / How to Switch / Caption Meaning / Warning Resolution table / First-Time Anthropic 4-step Checklist / Mid-Session Switching, TOC update, version-stamp bump to v2.1 (Wave 2; DOC-01..04 + SC #5)
-- [ ] 05-PLAN-05-acceptance-gate.md - tests/test_phase5_ui.py: pytest module proving all 5 Phase 5 success criteria + Pitfall 1/6/8/11/13 regression guards; Streamlit mocked via unittest.mock.patch (zero live Streamlit); SC #4 load-bearing history-survives-switch test; SC #5 docs-content grep for 7 locked UI strings + 4 required topics; zero live HTTP, zero conftest.py (Wave 3; depends on 05-01..05-04)
+- [x] 05-PLAN-01-factory-cache-and-helpers.md - Refactor src/llm/__init__.py to use @st.cache_resource with 4-arg tuple cache key (provider, base_url, model, api_key_fingerprint); delete Phase 1 module-level _cache dict; add _fingerprint() SHA-256 helper; add missing_vars() non-raising sibling of validate_config(); add provider_name abstract property to LLMClient ABC + concrete overrides on both adapters (Wave 1; foundation for SC #2, SC #3, SC #4)
+- [x] 05-PLAN-02-sidebar-selectbox-and-warning.md - Add LLM PROVIDER block to app.py render_sidebar() between EMBEDDINGS and CONFIG: st.selectbox with locked label 'LLM provider' + options 'Azure OpenAI'/'Anthropic Claude (MGTI)', session-state init from LLM_PROVIDER_DEFAULT with clamp-to-known defense, active-model st.caption, inline st.warning when env vars missing + _llm_provider_blocked flag, and wire st.chat_input(disabled=) + placeholder swap (Wave 2; SC #1, SC #3, SC #2-cache-consumer)
+- [x] 05-PLAN-03-per-message-provenance-caption.md - Capture (provider, model) at write time in process_query via client.provider_name + client._model; persist in st.session_state.messages dict; add _render_provenance_caption(provider, model) helper with locked 'never read session_state' invariant; render caption ABOVE st.markdown in both render_chat_history and on-submit assistant block (Wave 2; SC #4 + history-survives-switch + Pitfall 11 guard)
+- [x] 05-PLAN-04-readme-and-user-guide.md - README.md: env-var rows for LLM_PROVIDER_DEFAULT + 3 Anthropic vars, MGTI/Hubble pointer, LLM Provider Selection cross-link subsection, Smoke Test subsection. USER_GUIDE.md: new section LLM Provider Selection with Overview / MGTI-Only Constraint / How to Switch / Caption Meaning / Warning Resolution table / First-Time Anthropic 4-step Checklist / Mid-Session Switching, TOC update, version-stamp bump to v2.1 (Wave 2; DOC-01..04 + SC #5)
+- [x] 05-PLAN-05-acceptance-gate.md - tests/test_phase5_ui.py: pytest module proving all 5 Phase 5 success criteria + Pitfall 1/6/8/11/13 regression guards; Streamlit mocked via unittest.mock.patch (zero live Streamlit); SC #4 load-bearing history-survives-switch test; SC #5 docs-content grep for 7 locked UI strings + 4 required topics; zero live HTTP, zero conftest.py (Wave 3; depends on 05-01..05-04)
 
 ## Progress
 
@@ -135,7 +135,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Azure Extraction + Parity Gate | 4/4 | Complete ✓ | 2026-05-20 |
 | 3. Anthropic MGTI Adapter | 4/4 | Complete ✓ | 2026-05-21 |
 | 4. Strict-Tools + Smoke Test | 4/4 | Complete ✓ (live smoke pending operator) | 2026-05-21 |
-| 5. Sidebar UI Toggle + Documentation | 0/5 | Not started (planned 2026-05-21) | - |
+| 5. Sidebar UI Toggle + Documentation | 5/5 | Complete ✓ (live smoke pending operator) | 2026-05-22 |
 
 ---
 *Roadmap created: 2026-05-19*

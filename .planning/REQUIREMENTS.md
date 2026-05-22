@@ -63,13 +63,13 @@ Requirements for this milestone (adding Anthropic Claude as a selectable provide
 
 ### UI (UI)
 
-- [ ] **UI-01**: Sidebar contains an `st.selectbox` labeled "LLM provider" with options "Azure OpenAI" and "Anthropic Claude (MGTI)"
-- [ ] **UI-02**: Selected provider is stored in `st.session_state["llm_provider"]` and initialized from `LLM_PROVIDER_DEFAULT` env on first session
-- [ ] **UI-03**: Currently active model name is displayed under the provider selector (read-only)
-- [ ] **UI-04**: Switching the provider mid-session takes effect on the next user query (not retroactively on in-flight or historical results)
-- [ ] **UI-05**: Selecting a provider whose required env vars are missing shows a clear inline warning in the sidebar and prevents query submission while the warning is active
-- [ ] **UI-06**: `@st.cache_resource`-decorated adapter instances are keyed on `(provider, base_url, model, api_key_fingerprint)`; selecting a different provider re-resolves the adapter
-- [ ] **UI-07**: Every assistant message displays which provider produced it (e.g. small caption with provider + model)
+- [x] **UI-01**: Sidebar contains an `st.selectbox` labeled "LLM provider" with options "Azure OpenAI" and "Anthropic Claude (MGTI)"
+- [x] **UI-02**: Selected provider is stored in `st.session_state["llm_provider"]` and initialized from `LLM_PROVIDER_DEFAULT` env on first session
+- [x] **UI-03**: Currently active model name is displayed under the provider selector (read-only)
+- [x] **UI-04**: Switching the provider mid-session takes effect on the next user query (not retroactively on in-flight or historical results)
+- [x] **UI-05**: Selecting a provider whose required env vars are missing shows a clear inline warning in the sidebar and prevents query submission while the warning is active
+- [x] **UI-06**: `@st.cache_resource`-decorated adapter instances are keyed on `(provider, base_url, model, api_key_fingerprint)`; selecting a different provider re-resolves the adapter
+- [x] **UI-07**: Every assistant message displays which provider produced it (e.g. small caption with provider + model)
 
 ### Smoke Test (SMK)
 
@@ -81,10 +81,10 @@ Requirements for this milestone (adding Anthropic Claude as a selectable provide
 
 ### Documentation (DOC)
 
-- [ ] **DOC-01**: README updated with the provider selection feature, sidebar location, default behavior, and supported Claude models
-- [ ] **DOC-02**: USER_GUIDE updated with how to switch providers, expected behavior differences, and what to do when a provider warning appears
-- [ ] **DOC-03**: Document the MGTI-only constraint (no direct Anthropic API in this app context) and the Hubble onboarding link for future operators
-- [ ] **DOC-04**: Document how to run the smoke test and when to do it (any time `.env` Anthropic vars change; before every prod deploy)
+- [x] **DOC-01**: README updated with the provider selection feature, sidebar location, default behavior, and supported Claude models
+- [x] **DOC-02**: USER_GUIDE updated with how to switch providers, expected behavior differences, and what to do when a provider warning appears
+- [x] **DOC-03**: Document the MGTI-only constraint (no direct Anthropic API in this app context) and the Hubble onboarding link for future operators
+- [x] **DOC-04**: Document how to run the smoke test and when to do it (any time `.env` Anthropic vars change; before every prod deploy)
 
 ## v2 Requirements
 
@@ -167,22 +167,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OBS-02 | Phase 2 | Complete |
 | OBS-03 | Phase 1 | Complete |
 | OBS-04 | Phase 3 | Pending |
-| UI-01 | Phase 5 | Pending |
-| UI-02 | Phase 5 | Pending |
-| UI-03 | Phase 5 | Pending |
-| UI-04 | Phase 5 | Pending |
-| UI-05 | Phase 5 | Pending |
-| UI-06 | Phase 5 | Pending |
-| UI-07 | Phase 5 | Pending |
+| UI-01 | Phase 5 | Complete |
+| UI-02 | Phase 5 | Complete |
+| UI-03 | Phase 5 | Complete |
+| UI-04 | Phase 5 | Complete |
+| UI-05 | Phase 5 | Complete |
+| UI-06 | Phase 5 | Complete |
+| UI-07 | Phase 5 | Complete |
 | SMK-01 | Phase 4 | Complete |
 | SMK-02 | Phase 4 | Complete |
 | SMK-03 | Phase 4 | Complete |
 | SMK-04 | Phase 4 | Complete |
 | SMK-05 | Phase 4 | Complete (live execution pending operator) |
-| DOC-01 | Phase 5 | Pending |
-| DOC-02 | Phase 5 | Pending |
-| DOC-03 | Phase 5 | Pending |
-| DOC-04 | Phase 5 | Pending |
+| DOC-01 | Phase 5 | Complete |
+| DOC-02 | Phase 5 | Complete |
+| DOC-03 | Phase 5 | Complete |
+| DOC-04 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 52 total
@@ -198,4 +198,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-19*
-*Last updated: 2026-05-21 — Phase 4 (Strict-Tools + Smoke Test) requirements marked Complete*
+*Last updated: 2026-05-22 — Phase 5 (Sidebar UI Toggle + Documentation) requirements marked Complete*
