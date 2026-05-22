@@ -97,6 +97,10 @@ class AzureOpenAIClient(LLMClient):
         # OBS-03: never include self._api_key in repr.
         return "AzureOpenAIClient()"
 
+    @property
+    def provider_name(self) -> str:
+        return "azure_openai"
+
     def complete(
         self,
         messages: list[dict],

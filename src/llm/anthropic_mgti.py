@@ -189,6 +189,10 @@ class AnthropicMGTIClient(LLMClient):
         # OBS-03 — never include self._api_key in repr.
         return "AnthropicMGTIClient()"
 
+    @property
+    def provider_name(self) -> str:
+        return "anthropic_mgti"
+
     def _post_messages(
         self,
         body: dict,

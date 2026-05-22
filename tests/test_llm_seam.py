@@ -108,13 +108,18 @@ def test_package_importable():
 # ---------------------------------------------------------------------------
 
 def test_abc_contract_enforced():
-    """Success criterion #2: ABC blocks instantiation of incomplete subclasses."""
-    # The ABC declares exactly two abstract methods.
+    """Success criterion #2: ABC blocks instantiation of incomplete subclasses.
+
+    Phase 5 Plan 05-01 added `provider_name` as an abstract property — the
+    abstract-method set is now {complete, classify_with_tool, provider_name}.
+    A subclass missing ANY of the three must fail to instantiate.
+    """
+    # The ABC declares exactly three abstract members (two methods + one property).
     assert LLMClient.__abstractmethods__ == frozenset(
-        {"complete", "classify_with_tool"}
+        {"complete", "classify_with_tool", "provider_name"}
     )
 
-    # Subclass missing both → TypeError mentioning both.
+    # Subclass missing all → TypeError mentioning all three.
     class MissingBoth(LLMClient):
         pass
 
@@ -123,22 +128,31 @@ def test_abc_contract_enforced():
     msg = str(exc_info.value)
     assert "complete" in msg
     assert "classify_with_tool" in msg
+    assert "provider_name" in msg
 
     # Subclass missing only classify_with_tool → still TypeError.
     class MissingOne(LLMClient):
         def complete(self, messages, *, max_tokens=500, temperature=0.1, **kwargs):
             return ""
 
+        @property
+        def provider_name(self):
+            return "fake"
+
     with pytest.raises(TypeError):
         MissingOne()
 
-    # Subclass implementing both → instantiates cleanly.
+    # Subclass implementing all three → instantiates cleanly.
     class Complete(LLMClient):
         def complete(self, messages, *, max_tokens=500, temperature=0.1, **kwargs):
             return ""
 
         def classify_with_tool(self, messages, tool, *, tool_name, **kwargs):
             return ToolCall(tool_name=tool_name, input={})
+
+        @property
+        def provider_name(self):
+            return "fake"
 
     Complete()  # must not raise
 

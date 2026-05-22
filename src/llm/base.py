@@ -82,3 +82,18 @@ class LLMClient(abc.ABC):
             LLMSchemaError: If the provider returns a malformed/missing
                 tool_use response (Phase 4 raises this).
         """
+
+    @property
+    @abc.abstractmethod
+    def provider_name(self) -> str:
+        """Canonical provider identifier string.
+
+        Stable strings that match the keys in src.llm.__init__._REGISTRY and
+        the 'provider' field in the llm_provider_loaded / llm_call structured
+        log events. Phase 5 UI reads this at message-write time to caption
+        the assistant message with the provider that produced it.
+
+        Returns:
+            One of: "azure_openai", "anthropic_mgti" (or any future provider
+            key — must match its _REGISTRY entry exactly).
+        """
