@@ -725,6 +725,15 @@ def render_chat_history():
     """Render chat message history."""
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
+            # Phase 5: provenance caption ABOVE content for assistant messages
+            # that carry provider metadata. Read from the stored dict — never
+            # from session_state — so historical messages keep their original
+            # provenance after a provider switch (SC #4 + RESEARCH.md Pitfall 11).
+            if message["role"] == "assistant" and message.get("provider"):
+                _render_provenance_caption(
+                    message["provider"], message.get("model")
+                )
+
             st.markdown(message["content"])
 
             if "results" in message and message["results"] is not None:
@@ -1004,6 +1013,16 @@ def render_main_content():
             with st.spinner("PROCESSING..."):
                 response = process_query(user_query, selected_mode)
 
+            # Phase 5: provenance caption for the fresh response (SC #4).
+            # Same render contract as history: explicit args, only render when
+            # provider was captured (some early-return error paths in
+            # process_query don't carry provider/model — caption is skipped
+            # gracefully).
+            if response.get("provider"):
+                _render_provenance_caption(
+                    response["provider"], response.get("model")
+                )
+
             st.markdown(response["content"], unsafe_allow_html=True)
 
             if response["results"] is not None and not response["results"].empty:
@@ -1024,7 +1043,9 @@ def render_main_content():
             "query_id": query_id,
             "executive_summary": response.get("executive_summary"),
             "chart": response.get("chart"),
-            "chart_feedback": response.get("chart_feedback")
+            "chart_feedback": response.get("chart_feedback"),
+            "provider": response.get("provider"),       # NEW Phase 5 (SC #4)
+            "model": response.get("model"),             # NEW Phase 5 (SC #4)
         })
 
     # Clear chat button
