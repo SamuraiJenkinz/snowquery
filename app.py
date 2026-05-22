@@ -17,7 +17,7 @@ from src.embeddings import (
     get_embedding_stats,
 )
 from src.ingest import get_schema_summary, load_csv, table_exists
-from src.llm import load_settings, missing_vars
+from src.llm import get_llm, load_settings, missing_vars
 from src.query_router import generate_executive_summary, get_mode_description, route_query
 from src.utils import (
     dataframe_to_csv_bytes,
@@ -368,6 +368,31 @@ _PROVIDER_OPTIONS: dict[str, str] = {
 }
 _PROVIDER_LABELS: dict[str, str] = {v: k for k, v in _PROVIDER_OPTIONS.items()}
 _PROVIDER_KEYS: tuple[str, ...] = tuple(_PROVIDER_OPTIONS.values())  # ("azure_openai", "anthropic_mgti")
+
+
+def _render_provenance_caption(provider: str, model: str | None) -> None:
+    """Render the assistant-message provenance caption.
+
+    Format: "via **<Human Name>** · `<model>`" — or, if model is falsy, just
+    "via **<Human Name>**". Uses the _PROVIDER_LABELS map for the human-name;
+    unknown provider keys fall through to the raw string (degraded but
+    non-crashing). Caller MUST guard with `role == 'assistant' AND
+    message.get('provider')` before calling — this helper does NOT validate
+    its args (Phase 5 RESEARCH.md Pitfall 11).
+
+    CRITICAL INVARIANT: This helper MUST NOT read st.session_state for the
+    provider or model — args are explicit. Reading session_state would
+    silently break historical captions after a provider switch (a
+    historical message produced by Azure would caption as Anthropic
+    immediately after the user switched the sidebar). The test in
+    tests/test_phase5_ui.py locks this invariant — do not refactor
+    to read session_state without removing that test first.
+    """
+    human_name = _PROVIDER_LABELS.get(provider, provider)
+    if model:
+        st.caption(f"via **{human_name}** · `{model}`")
+    else:
+        st.caption(f"via **{human_name}**")
 
 
 def init_session_state():
@@ -860,13 +885,27 @@ def process_query(user_query: str, mode: str):
                 route_used
             )
 
+        # Phase 5: capture which adapter produced this response for the
+        # per-message provenance caption (SC #4). Reuses the same cached
+        # adapter instance route_query() resolved — @st.cache_resource cache
+        # hit, no extra HTTP, no extra startup log. Defensive getattr keeps
+        # the path crash-free even if a future adapter forgets to set _model
+        # or override provider_name.
+        _client = get_llm()
+        _provider = getattr(
+            _client, "provider_name", st.session_state.get("llm_provider", "unknown")
+        )
+        _model = getattr(_client, "_model", "unknown")
+
         return {
             "content": "".join(content_parts),
             "results": result.get("results"),
             "sql": result.get("sql"),
             "executive_summary": executive_summary,
             "chart": chart,
-            "chart_feedback": chart_feedback
+            "chart_feedback": chart_feedback,
+            "provider": _provider,   # NEW Phase 5 (SC #4)
+            "model": _model,         # NEW Phase 5 (SC #4)
         }
 
     except Exception as e:
