@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** Phase 5 — Sidebar UI Toggle (Plan 05-01 complete; Plan 05-02 sidebar wire-up next)
+**Current focus:** Phase 5 — Sidebar UI Toggle (Plans 05-01 + 05-02 complete; Plan 05-03 per-message caption next)
 
 ## Current Position
 
 Phase: 5 of 5 (Sidebar UI Toggle + Documentation) — IN PROGRESS
-Plan: 1 of 4 in Phase 5 (05-01 complete)
-Status: Plan 05-01 (factory cache + helpers) complete. Single cache layer via @_cache_resource on _get_llm_cached(provider, base_url, model, api_key_fingerprint). _fingerprint() SHA-256 one-way; missing_vars() non-raising helper; provider_name @property @abc.abstractmethod with concrete returns on both adapters. All 4 prior-phase test files rewired; 69/69 still green.
-Last activity: 2026-05-21 — Completed 05-PLAN-01-factory-cache-and-helpers.md
+Plan: 2 of 4 in Phase 5 (05-01, 05-02 complete)
+Status: Plan 05-02 (sidebar selectbox + warning) complete. LLM PROVIDER block added to app.py render_sidebar() between EMBEDDINGS and CONFIG; locked label "LLM provider"; locked options ["Azure OpenAI", "Anthropic Claude (MGTI)"]; st.session_state["llm_provider"] init from LLM_PROVIDER_DEFAULT with .strip()+clamp-to-known defense; st.caption MODEL line via load_settings(); inline st.warning naming each missing env var; st.session_state["_llm_provider_blocked"] flag wired to st.chat_input(disabled=) with placeholder swap; main() docstring locks load-bearing render_sidebar-before-render_main_content order. 69/69 still green. Only app.py modified.
+Last activity: 2026-05-22 — Completed 05-PLAN-02-sidebar-selectbox-and-warning.md
 
-Progress: [█████████░] 94% (16/17 plans complete — 1/4 of Phase 5 done)
+Progress: [█████████░] 89% (17/19 plans complete — 2/4 of Phase 5 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16 (through 05-01 — Phase 5 Wave-1 foundation laid)
-- Average duration: ~5 min
-- Total execution time: ~65 min
+- Total plans completed: 17 (through 05-02 — Phase 5 sidebar wired)
+- Average duration: ~4.5 min
+- Total execution time: ~68 min
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [█████████░] 94% (16/17 plans complete — 1/4 of 
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
 | 3. Anthropic Adapter | 4 (of 4) | ~16 min | ~4 min |
 | 4. Strict-Tools + Smoke | 4 (of 4) | ~22 min | ~5.5 min |
-| 5. Sidebar UI Toggle | 1 (of 4) | ~15 min | ~15 min |
+| 5. Sidebar UI Toggle | 2 (of 4) | ~18 min | ~9 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (~3 min), 04-02 (7 min), 04-03 (~4 min), 04-04 (4 min), 05-01 (~15 min)
-- Trend: 05-01 was larger-than-typical (4 src + 4 test rewires); subsequent 05-02..05-04 plans expected to be faster
+- Last 5 plans: 04-02 (7 min), 04-03 (~4 min), 04-04 (4 min), 05-01 (~15 min), 05-02 (~3 min)
+- Trend: 05-02 came in well under the predicted 5–7 min — pure additive UI work in a single file; no test rewires; no src/ changes; both tasks landed first try with green 69-test suite
 
 *Updated after each plan completion*
 
@@ -149,6 +149,23 @@ Decisions from 04-01 (INTENT_TOOL + classify_intent migration):
 - result["intent"] used directly in return dict (not .get("intent","structured")) — schema required+enum guarantees presence; defaulting silently masks contract violation
 - test_phase2_parity.py updated (Rule 1 deviation): 3 tests tested old complete() call path in classify_intent; updated to mock classify_with_tool and ToolCall directly; all 39 tests green
 
+Decisions from 05-02 (sidebar selectbox + warning):
+- Locked UI strings preserved verbatim from ROADMAP SC #1: selectbox label 'LLM provider' (lowercase 'provider', single space); options ['Azure OpenAI', 'Anthropic Claude (MGTI)']; internal keys 'azure_openai' / 'anthropic_mgti' matching _REGISTRY — single source of truth lock between UI label and factory dispatch
+- Position locked: between EMBEDDINGS and CONFIG. The LLM PROVIDER block ends with its own st.divider() (closing separator). Existing EMBEDDINGS-vs-LLM-PROVIDER divider preserved
+- Module-level _PROVIDER_OPTIONS / _PROVIDER_LABELS / _PROVIDER_KEYS at app.py:364–370 (after MODE_OPTIONS) — co-located UI mapping constants. _PROVIDER_OPTIONS insertion order is load-bearing (Azure first → default selectbox index points at it); _PROVIDER_KEYS derived as tuple(values()) at definition time
+- Session-state init with .strip() + clamp-to-_PROVIDER_KEYS + logger.warning on unknown — defends against typos ("Anthropic_MGTI", "anthropic"), empty string, trailing whitespace. Selectbox index=_PROVIDER_KEYS.index(...) is ValueError-safe by construction
+- Active-model caption via load_settings() NOT get_llm() — sidebar render must not side-effect adapter construction or @st.cache_resource resolution or startup-log emission on every rerun (decision §11)
+- Azure model derived via _extract_model_from_endpoint imported from src.llm.azure_openai (leading underscore intentional; Phase 5 reaches across package internals — same pattern Plan 05-01 established for cache-key derivation). Anthropic model read directly from settings.anthropic_model
+- 'NOT CONFIGURED' caption fallback: when _active_model is empty string, caption renders 'NOT CONFIGURED' literal — read-only display, never crashes the render
+- missing_vars() called every rerun — NOT @st.cache_data wrapped (would defeat credential-addition-then-refresh detection, RESEARCH.md Pitfall 10). os.getenv is O(1) so cost is negligible
+- Warning template names each missing var with backticks + lists BOTH recovery paths (add to .env + restart OR switch back to Azure OpenAI). icon=':material/warning:' is Streamlit Material-icon syntax (verified working at 1.40+)
+- st.session_state['_llm_provider_blocked'] decouples sidebar render from main-content render through session_state alone — no parameter ripple, no function-signature changes; main() docstring documents the load-bearing render_sidebar-before-render_main_content order (RESEARCH.md Pitfall 5)
+- st.chat_input modified ONLY at the placeholder + disabled= keyword args (lines 947–953). _blocked = st.session_state.get("_llm_provider_blocked", False) — defaults safely if key absent; placeholder swaps to 'QUERY DISABLED — see sidebar warning' when blocked (RESEARCH.md Pitfall 3 guard)
+- render_main_content otherwise UNTOUCHED — history rendering, message dict append, process_query call, etc. all preserved; Plan 05-03 owns per-message caption work
+- Single 'from src.llm import' line at app.py:20 = 'from src.llm import load_settings, missing_vars'. Plan 05-03 will EXTEND this same line to add get_llm (per Plan 05-03 decision §14, Option B). Do NOT split into multiple from src.llm import lines
+- Selectbox key= intentionally omitted — index=... + manual write-back chosen for consistency with existing MODE selectbox pattern (decision §5)
+- No deletions of existing widgets — pure additive; DATA INGEST, DATA STATUS, EMBEDDINGS, CONFIG, MODE selectbox, all main-content widgets UNCHANGED. Only app.py modified — no src/, no tests/, no docs
+
 Decisions from 05-01 (factory cache + helpers):
 - Single cache layer LOCKED: Phase 1 module-level _cache: dict DELETED; @_cache_resource on _get_llm_cached is the only cache (RESEARCH.md Pitfall 6); Phase 1 anticipated this at __init__.py:59-60 comment
 - Cache key tuple order LOCKED: (provider, base_url, model, api_key_fingerprint) — all positional, all hashable strings; switching ANY of these four re-resolves the adapter
@@ -204,12 +221,13 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 5 Plan 05-01: COMPLETE; no smoke gate required for this plan (pure infrastructure refactor, exercised by 69-test acceptance suite).
-- Plans 05-02..05-04 (sidebar wire-up, per-message caption, documentation): operator-run smoke gate against stage gateway (python scripts/smoke_llm.py --provider both --verbose) still pending; should land before any production deploy. Plan 05-04 (documentation) is the natural place to reference the smoke ritual.
+- Phase 5 Plans 05-01 + 05-02: COMPLETE; no smoke gate required for either plan (Plan 05-01 was pure infrastructure refactor exercised by 69-test suite; Plan 05-02 is pure additive UI inside app.py — adapters and config unchanged, so the 69-test acceptance suite still proves correctness end-to-end).
+- Plans 05-03..05-04 (per-message caption, documentation): operator-run smoke gate against stage gateway (python scripts/smoke_llm.py --provider both --verbose) still pending; should land before any production deploy. Plan 05-04 (documentation) is the natural place to reference the smoke ritual.
+- Manual UI verification (operator running Streamlit and clicking through the sidebar) is the responsibility of the Phase 5 verification PR review — Plan 05-05 (acceptance gate) covers it programmatically via streamlit mocks.
 - Phase 4 MGTI usage block pass-through and X-Correlation-Id echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — to be combined with smoke gate run.
 
 ## Session Continuity
 
-Last session: 2026-05-21T21:55:00Z
-Stopped at: Plan 05-01 (factory cache + helpers) complete — 4/4 tasks committed atomically, SUMMARY.md created, full 69-test suite green; Wave-2 Phase 5 plans (05-02 sidebar, 05-03 caption, 05-04 docs) unblocked
+Last session: 2026-05-22T01:54:17Z
+Stopped at: Plan 05-02 (sidebar selectbox + warning) complete — 2/2 tasks committed atomically, SUMMARY.md created, full 69-test suite green; Wave-3 Phase 5 plans (05-03 per-message caption, 05-04 docs) unblocked
 Resume file: None
