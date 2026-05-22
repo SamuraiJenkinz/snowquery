@@ -16,8 +16,9 @@ A natural language query interface for ServiceNow incident data using AI-powered
 6. [Writing Effective Queries](#writing-effective-queries)
 7. [Understanding Results](#understanding-results)
 8. [Settings](#settings)
-9. [Tips & Best Practices](#tips--best-practices)
-10. [Troubleshooting](#troubleshooting)
+9. [LLM Provider Selection](#llm-provider-selection)
+10. [Tips & Best Practices](#tips--best-practices)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -293,6 +294,81 @@ Access settings in the sidebar under **"Settings" → "Query Settings"**:
 
 ---
 
+## LLM Provider Selection
+
+### Overview
+
+This app supports two LLM backends, selectable per session in the sidebar:
+
+- **Azure OpenAI** (default) — existing behavior, unchanged.
+- **Anthropic Claude (MGTI)** — Claude 4.5+ via the MGTI Apigee gateway.
+
+The active provider is chosen from the sidebar `LLM PROVIDER` block, positioned between `EMBEDDINGS` and `CONFIG`. The currently active model identifier is displayed beneath the dropdown as `MODEL: <model-name>`. Every assistant response is captioned with the provider that produced it.
+
+### MGTI-Only Constraint for Anthropic
+
+Anthropic access in this app is **restricted to MGTI-enrolled users**. Credentials (`ANTHROPIC_API_KEY`) are issued only via the **Hubble** onboarding portal at https://hubble.mmc.com/apps after the coreapi-infrastructure onboarding step. The app does NOT connect to `api.anthropic.com` directly — that endpoint is not authorized in the MMC corporate app context.
+
+If you do not have MGTI credentials, **stay on Azure OpenAI**. Selecting `Anthropic Claude (MGTI)` without credentials will display an inline warning in the sidebar and disable query submission until you switch back or populate the missing variables.
+
+### How to Switch Providers
+
+1. Locate the **`LLM PROVIDER`** block in the sidebar (between `EMBEDDINGS` and `CONFIG`).
+2. Open the **`LLM provider`** dropdown and choose either `Azure OpenAI` or `Anthropic Claude (MGTI)`.
+3. Confirm the **`MODEL:`** caption beneath the dropdown updates to the new provider's model identifier.
+4. Send a query as usual — the next response will be produced by the new provider.
+5. Verify the `via **<Provider>** · \`<model>\`` caption above the assistant's reply names the expected provider.
+
+The switch takes effect on the **next query only** — in-flight queries finish on the previously selected provider, and historical messages keep their original provenance caption.
+
+### What the Per-Message Caption Means
+
+Every assistant response carries a small caption naming the provider and model that produced it. Format:
+
+- Azure example: `via **Azure OpenAI** · \`gpt-4o-mini\``
+- Anthropic example: `via **Anthropic Claude (MGTI)** · \`eu.anthropic.claude-sonnet-4-5-20250929-v1:0\``
+
+Captions are written at response time and **never recomputed** — if you switch providers, historical messages keep their original captions. This is intentional: the caption reflects which provider actually produced that specific message, not which provider is currently selected.
+
+### What to Do When a Provider Warning Appears
+
+If you select a provider whose required environment variables are missing, the sidebar shows an orange warning naming each missing variable, and the chat input is disabled with the placeholder `QUERY DISABLED — see sidebar warning`. Use the table below to resolve.
+
+| Warning text mentions   | Cause                                | Fix                                                                                          |
+|-------------------------|--------------------------------------|----------------------------------------------------------------------------------------------|
+| `ANTHROPIC_BASE_URL`    | Anthropic proxy URL not set          | Add `ANTHROPIC_BASE_URL` to `.env`; restart Streamlit                                        |
+| `ANTHROPIC_API_KEY`     | Anthropic API key not set or empty   | Request via Hubble; add `ANTHROPIC_API_KEY` to `.env`; restart Streamlit                     |
+| `ANTHROPIC_MODEL`       | Claude model identifier not set      | Set e.g. `ANTHROPIC_MODEL=eu.anthropic.claude-sonnet-4-5-20250929-v1:0` in `.env`; restart   |
+| `AZURE_OPENAI_ENDPOINT` | Azure endpoint URL not set           | Add `AZURE_OPENAI_ENDPOINT` to `.env`; restart Streamlit                                     |
+| `AZURE_OPENAI_API_KEY`  | Azure API key not set or empty       | Add `AZURE_OPENAI_API_KEY` to `.env`; restart Streamlit                                      |
+
+Recovery paths (either works):
+
+- **Populate the missing variables in `.env` and restart Streamlit.** The warning vanishes and the chat input becomes interactive on the next rerun.
+- **Switch back to the other provider** in the sidebar dropdown. The warning is provider-scoped — switching to a configured provider clears it immediately.
+
+### First-Time Anthropic Setup Checklist
+
+If you are switching to Anthropic Claude for the first time, run through these four steps in order:
+
+1. **Obtain MGTI access via Hubble.** Visit https://hubble.mmc.com/apps and complete the coreapi-infrastructure onboarding to receive your `ANTHROPIC_API_KEY`.
+2. **Populate `.env`** with the three required Anthropic variables: `ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`. See `.env.example` for the template and the optional tuning variables.
+3. **Run the smoke test** before opening the UI:
+   ```bash
+   python scripts/smoke_llm.py --provider anthropic_mgti --verbose
+   ```
+   Confirm `Exit: 0`. If it fails, the script prints the failing check — fix the env or contact your MGTI sponsor before proceeding.
+4. **Restart Streamlit**, switch the sidebar selector to `Anthropic Claude (MGTI)`, send a test query, and confirm the per-message caption shows the Anthropic model.
+
+### Mid-Session Switching Behavior
+
+- Switches take effect on the **next query only**.
+- In-flight queries finish on the previously selected provider (Streamlit's synchronous execution model means a switch cannot interleave with an in-flight call).
+- Historical messages **retain** their original provider's caption — switching does not re-render historical provenance.
+- The active model caption beneath the sidebar dropdown DOES update immediately to reflect the new selection.
+
+---
+
 ## Tips & Best Practices
 
 ### Performance
@@ -375,4 +451,4 @@ Contact your system administrator or refer to the project repository for technic
 
 ---
 
-*Last updated: December 2024 (v2.0 - Added password protection & chart visualization)*
+*Last updated: May 2026 (v2.1 - Added multi-provider LLM selection: Azure OpenAI / Anthropic Claude via MGTI)*
