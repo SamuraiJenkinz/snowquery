@@ -10,14 +10,14 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 ## Current Position
 
 Phase: 6 — Foundation (CSS module + design tokens + page chrome)
-Plan: — (ready for `/gsd:plan-phase 6`)
-Status: Roadmap approved; Phase 6 ready to plan
-Last activity: 2026-05-22 — v2.2 roadmap approved with 6 phases (6-11), 36/36 requirements mapped (Phases 8+9 merged into single Phase 8 per user feedback)
+Plan: 01 of TBD — `06-PLAN-01-create-css-module.md` COMPLETE
+Status: In progress — Plan 01 done; next plan in Phase 6 ready to execute
+Last activity: 2026-05-22 — Plan 01 shipped `src/ui/__init__.py` + `src/ui/css.py` (LORO_PIANA_TOKENS dict + LORO_PIANA_CSS string, 380 lines, 25 tokens)
 
-Progress: v2.2 — 0/6 phases complete
+Progress: v2.2 — Phase 6 in progress (1 plan complete)
 
 ```
-[          ] Phase 6  Foundation                       ← READY TO PLAN
+[█░░░░░░░░░] Phase 6  Foundation                       ← IN PROGRESS (Plan 01 done)
 [          ] Phase 7  Splash screen
 [          ] Phase 8  Screen restyle (sidebar + main)
 [          ] Phase 9  Data visualization
@@ -57,6 +57,8 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 
 ### Decisions (recent)
 
+- **Phase 6 Plan 01 — single source of truth pattern**: `src/ui/css.py` exports exactly two constants (`LORO_PIANA_TOKENS` dict, `LORO_PIANA_CSS` string) with `__all__` whitelist. All future v2.2 code reads tokens/CSS from this module — no module is permitted to hardcode Loro Piana hex values or Streamlit selector overrides. Plan 02+ extends here, never duplicates.
+- **Phase 6 Plan 01 — mono boundary established**: JetBrains Mono confined to `code, pre, kbd, samp, .lp-mono, [data-testid="stCodeBlock"], [data-testid="stCode"]`. Everything else renders in Inter (body) and EB Garamond (headlines). Streamlit's monospace default is clobbered via `.stApp { font-family: var(--lp-font-body) !important; }`. Future phases preserve this boundary.
 - **v2.1 Phase 5 invariant carries forward**: `_render_provenance_caption(provider, model)` must never read `st.session_state` — history messages keep original provenance after mid-session switches. AST-based regression test in `tests/test_phase5_ui.py` locks this. v2.2 Phase 8 (MAIN-04) only restyles CSS — does NOT touch the helper's read sources.
 - **v2.1 locked UI strings carry forward verbatim**: `"LLM provider"`, `"Azure OpenAI"`, `"Anthropic Claude (MGTI)"`, `"QUERY DISABLED — see sidebar warning"`. Phase 8 (SBR-05, SBR-06, MAIN-06) restyles MUST preserve them; Phase 11 (TST-01) gates the milestone with them still asserted true.
 - **v2.2 dataframe pattern**: editorial HTML hero + `st.expander` containing native `st.dataframe` — zero functionality loss vs. fighting glide-data-grid CSS. Removes 4-6h estimate risk. Phase 9 lands this.
@@ -76,9 +78,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-22 — v2.2 roadmap creation
-Stopped at: ROADMAP.md, STATE.md, REQUIREMENTS.md traceability written; Phase 6 ready to plan
-Resume command: `/gsd:plan-phase 6`
+Last session: 2026-05-22 — Phase 6 Plan 01 execution
+Stopped at: Completed `06-PLAN-01-create-css-module.md` — `src/ui/__init__.py` + `src/ui/css.py` shipped; SUMMARY written
+Resume file: None
+Next: Execute next plan in Phase 6 (CSS consumer wire-up + page chrome — `06-PLAN-02-*`)
 
 ---
-*Last updated: 2026-05-22 after v2.2 roadmap creation.*
+*Last updated: 2026-05-22 after Phase 6 Plan 01 completion.*
