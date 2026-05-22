@@ -131,3 +131,31 @@ def validate_config(provider: str) -> None:
             f"Missing required env vars for {provider}: " + ", ".join(missing),
             provider=provider,
         )
+
+
+def missing_vars(provider: str) -> list[str]:
+    """Return the list of missing required env-var names for `provider`.
+
+    Non-raising sibling of validate_config(). For UI use — the Streamlit
+    sidebar (Phase 5) calls this on every rerun to decide whether to show
+    a missing-credentials warning and whether to disable chat input.
+
+    Args:
+        provider: Provider key (e.g. "azure_openai", "anthropic_mgti").
+
+    Returns:
+        List of env-var names that are unset or empty. Empty list means
+        all required vars are populated and the provider is usable.
+        Unknown provider returns [] — the caller is responsible for
+        validating the provider string (the sidebar selectbox enum already
+        guarantees this).
+
+    Why a separate function (not validate_config(raise=False))?
+        validate_config() is the startup-time guard — it raises on bad
+        config so the app fails fast. missing_vars() is the runtime
+        UI helper — it never raises, so the script keeps running and
+        the user can switch providers without a crash.
+    """
+    if provider not in _REQUIRED_VARS:
+        return []
+    return [name for name in _REQUIRED_VARS[provider] if not os.getenv(name)]

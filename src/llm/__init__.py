@@ -27,6 +27,7 @@ from src.llm.config import (
     DEFAULT_PROVIDER,
     LLMSettings,
     load_settings,
+    missing_vars,
     validate_config,
 )
 from src.llm.errors import (
@@ -125,6 +126,7 @@ __all__ = [
     # Config
     "LLMSettings",
     "load_settings",
+    "missing_vars",
     "validate_config",
     "DEFAULT_PROVIDER",
     # Errors
