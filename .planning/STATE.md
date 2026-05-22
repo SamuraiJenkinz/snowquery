@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-05-19)
 
 **Core value:** Operators get accurate, fast natural-language answers about ServiceNow incidents using the LLM they choose — without their incident data ever leaving the box.
-**Current focus:** Phase 5 — Sidebar UI Toggle (Plans 05-01 + 05-02 complete; Plan 05-03 per-message caption next)
+**Current focus:** Phase 5 — Sidebar UI Toggle + Documentation (Plans 05-01, 05-02, 05-04 complete; Plan 05-03 per-message caption running in parallel; 05-05 acceptance gate next)
 
 ## Current Position
 
 Phase: 5 of 5 (Sidebar UI Toggle + Documentation) — IN PROGRESS
-Plan: 2 of 4 in Phase 5 (05-01, 05-02 complete)
-Status: Plan 05-02 (sidebar selectbox + warning) complete. LLM PROVIDER block added to app.py render_sidebar() between EMBEDDINGS and CONFIG; locked label "LLM provider"; locked options ["Azure OpenAI", "Anthropic Claude (MGTI)"]; st.session_state["llm_provider"] init from LLM_PROVIDER_DEFAULT with .strip()+clamp-to-known defense; st.caption MODEL line via load_settings(); inline st.warning naming each missing env var; st.session_state["_llm_provider_blocked"] flag wired to st.chat_input(disabled=) with placeholder swap; main() docstring locks load-bearing render_sidebar-before-render_main_content order. 69/69 still green. Only app.py modified.
-Last activity: 2026-05-22 — Completed 05-PLAN-02-sidebar-selectbox-and-warning.md
+Plan: 3 of 4 in Phase 5 (05-01, 05-02, 05-04 complete; 05-03 in parallel)
+Status: Plan 05-04 (README + USER_GUIDE) complete. README.md gains 5 new env-var rows (LLM_PROVIDER_DEFAULT + 3 required Anthropic + 1 optional summary), MGTI/Hubble pointer paragraph, `### LLM Provider Selection` cross-link subsection, `### Smoke Test (operator-run)` subsection with three invocation variants + exit-code semantics. USER_GUIDE.md gains `## LLM Provider Selection` section (75 body lines, 7 sub-headings: Overview / MGTI-Only Constraint / How to Switch (5-step) / Caption Meaning (Azure+Anthropic examples) / Warning-Resolution table (5 rows + 2 recovery paths) / First-Time Anthropic Setup Checklist (4-step including smoke test) / Mid-Session Switching Behavior), TOC renumbered (9-10 → 10-11), footer bumped to v2.1 May 2026. All 7 locked UI strings present verbatim in both docs (RESEARCH.md Pitfall 13 docs-drift guard). DOC-01..04 requirement coverage complete. Strict docs-only scope — no edits to src/, scripts/, tests/, app.py, .env.example. Full 69-test suite still green. Plan 05-02 also complete in parallel (sidebar wire-up in app.py).
+Last activity: 2026-05-21 — Completed 05-PLAN-04-readme-and-user-guide.md (in parallel with 05-02)
 
-Progress: [█████████░] 89% (17/19 plans complete — 2/4 of Phase 5 done)
+Progress: [█████████░] 95% (18/19 plans complete — 3/4 of Phase 5 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17 (through 05-02 — Phase 5 sidebar wired)
-- Average duration: ~4.5 min
-- Total execution time: ~68 min
+- Total plans completed: 18 (through 05-04 — Phase 5 docs landed alongside sidebar)
+- Average duration: ~4.3 min
+- Total execution time: ~78 min
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [█████████░] 89% (17/19 plans complete — 2/4 of 
 | 2. Azure Extraction | 4 | ~16 min | ~4 min |
 | 3. Anthropic Adapter | 4 (of 4) | ~16 min | ~4 min |
 | 4. Strict-Tools + Smoke | 4 (of 4) | ~22 min | ~5.5 min |
-| 5. Sidebar UI Toggle | 2 (of 4) | ~18 min | ~9 min |
+| 5. Sidebar UI Toggle | 3 (of 4) | ~28 min | ~9.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-02 (7 min), 04-03 (~4 min), 04-04 (4 min), 05-01 (~15 min), 05-02 (~3 min)
-- Trend: 05-02 came in well under the predicted 5–7 min — pure additive UI work in a single file; no test rewires; no src/ changes; both tasks landed first try with green 69-test suite
+- Last 5 plans: 04-03 (~4 min), 04-04 (4 min), 05-01 (~15 min), 05-02 (~3 min), 05-04 (~10 min)
+- Trend: 05-04 was docs-only — two atomic commits (README + USER_GUIDE), no test rewires, both tasks landed first try with the 69-test suite still green. Ran in parallel with 05-02; zero merge-conflict risk (different file scopes).
 
 *Updated after each plan completion*
 
@@ -166,6 +166,16 @@ Decisions from 05-02 (sidebar selectbox + warning):
 - Selectbox key= intentionally omitted — index=... + manual write-back chosen for consistency with existing MODE selectbox pattern (decision §5)
 - No deletions of existing widgets — pure additive; DATA INGEST, DATA STATUS, EMBEDDINGS, CONFIG, MODE selectbox, all main-content widgets UNCHANGED. Only app.py modified — no src/, no tests/, no docs
 
+Decisions from 05-04 (README + USER_GUIDE):
+- README/USER_GUIDE split LOCKED per RESEARCH.md Rec 4: README owns setup audience (env vars, smoke-test how/when, MGTI/Hubble pointer); USER_GUIDE owns use audience (in-app switching, captions, warnings, first-time checklist). One cross-link from README to USER_GUIDE — zero content duplication.
+- 7 exact UI strings quoted verbatim in both docs (RESEARCH.md Pitfall 13 docs-drift guard): selectbox label `LLM provider`, options `Azure OpenAI` + `Anthropic Claude (MGTI)`, sidebar header `LLM PROVIDER`, blocked-input placeholder `QUERY DISABLED — see sidebar warning`, caption format `via **<Provider>** · \`<model>\``, Hubble URL, smoke_llm.py script path.
+- USER_GUIDE section-header style `## LLM Provider Selection` (NO numeric prefix) matches the existing file convention where all 12 other `## SectionName` headers lack numeric prefixes — the plan's verify-check `^## [0-9]+\. ...` was style-stricter than the file. TOC's numbered list (1.–11.) remains authoritative section ordering. Plan 05-05 acceptance gate should grep `^## LLM Provider Selection`, NOT `^## 9\. LLM Provider Selection`.
+- Anthropic optional-vars consolidated into ONE table row (ANTHROPIC_VERSION / MAX_TOKENS / TEMPERATURE / TIMEOUT_S / TOOLS_SUPPORTED) pointing at .env.example — avoids 5-row bloat while keeping the variable names searchable.
+- Warning-Resolution table contains 5 rows (3 Anthropic + 2 Azure) matching src/llm/config.py:_REQUIRED_VARS exactly — the table is the documented mirror of _REQUIRED_VARS, so any future required-var change must update both. Recovery paths (2 of them: `.env`+restart, or switch back) listed inline after the table.
+- Version stamp bumped from `December 2024 (v2.0 - Added password protection & chart visualization)` to `May 2026 (v2.1 - Added multi-provider LLM selection: Azure OpenAI / Anthropic Claude via MGTI)` — preserves existing parenthetical-versioning convention; date uses today's planning context.
+- Strict docs-only scope: ZERO edits to .env.example, src/, scripts/, tests/, app.py, ROADMAP.md, REQUIREMENTS.md — verified by `git diff --stat HEAD -- src/ scripts/ tests/ app.py .env.example` returning empty.
+- No screenshots embedded in either doc — both docs preserve their image-free convention (RESEARCH.md Rec 4 explicit decision); zero matches for image-embed regex confirmed.
+
 Decisions from 05-01 (factory cache + helpers):
 - Single cache layer LOCKED: Phase 1 module-level _cache: dict DELETED; @_cache_resource on _get_llm_cached is the only cache (RESEARCH.md Pitfall 6); Phase 1 anticipated this at __init__.py:59-60 comment
 - Cache key tuple order LOCKED: (provider, base_url, model, api_key_fingerprint) — all positional, all hashable strings; switching ANY of these four re-resolves the adapter
@@ -221,13 +231,15 @@ None.
 
 ### Blockers/Concerns
 
-- Phase 5 Plans 05-01 + 05-02: COMPLETE; no smoke gate required for either plan (Plan 05-01 was pure infrastructure refactor exercised by 69-test suite; Plan 05-02 is pure additive UI inside app.py — adapters and config unchanged, so the 69-test acceptance suite still proves correctness end-to-end).
-- Plans 05-03..05-04 (per-message caption, documentation): operator-run smoke gate against stage gateway (python scripts/smoke_llm.py --provider both --verbose) still pending; should land before any production deploy. Plan 05-04 (documentation) is the natural place to reference the smoke ritual.
+- Phase 5 Plans 05-01, 05-02, 05-04: COMPLETE; no smoke gate required for these (05-01 pure infrastructure, 05-02 pure additive UI in app.py, 05-04 docs-only) — all three exercised by the unchanged 69-test acceptance suite.
+- Plan 05-03 (per-message caption): RUNNING IN PARALLEL with 05-04; touches only app.py.
+- Operator-run smoke gate against stage gateway (`python scripts/smoke_llm.py --provider both --verbose`) still pending — NOW DOCUMENTED PROMINENTLY in BOTH README ("### Smoke Test (operator-run)") and USER_GUIDE (First-Time Anthropic Setup Checklist step 3) by Plan 05-04. Must land before any production deploy.
+- Plan 05-05 acceptance gate: Plan 05-04 outputs are ready for SC #5 docs-content assertions. Critical: grep for `^## LLM Provider Selection` (NO numeric prefix) in USER_GUIDE.md — see 05-04 decisions block above for the style-resolution explanation.
 - Manual UI verification (operator running Streamlit and clicking through the sidebar) is the responsibility of the Phase 5 verification PR review — Plan 05-05 (acceptance gate) covers it programmatically via streamlit mocks.
 - Phase 4 MGTI usage block pass-through and X-Correlation-Id echo — RESOLVED-BY-OBSERVATION-STEP (tests/manual/observe_correlation_echo.py exists). Live observation still pending operator availability of a stage ANTHROPIC_API_KEY — to be combined with smoke gate run.
 
 ## Session Continuity
 
-Last session: 2026-05-22T01:54:17Z
-Stopped at: Plan 05-02 (sidebar selectbox + warning) complete — 2/2 tasks committed atomically, SUMMARY.md created, full 69-test suite green; Wave-3 Phase 5 plans (05-03 per-message caption, 05-04 docs) unblocked
+Last session: 2026-05-21T22:10:00Z
+Stopped at: Plan 05-04 (README + USER_GUIDE) complete — 2/2 tasks committed atomically, SUMMARY.md created, STATE.md updated; full 69-test suite green; Plan 05-02 also complete in parallel (different agent, app.py scope); Plan 05-03 (per-message caption) still running in parallel; Plan 05-05 acceptance gate unblocked once 05-03 lands
 Resume file: None
