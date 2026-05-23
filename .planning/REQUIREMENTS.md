@@ -113,12 +113,12 @@ Phases mapped during roadmap creation 2026-05-22.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FND-01      | 6     | Pending |
-| FND-02      | 6     | Pending |
-| FND-03      | 6     | Pending |
-| FND-04      | 6     | Pending |
-| FND-05      | 6     | Pending |
-| FND-06      | 6     | Pending |
+| FND-01      | 6     | Complete |
+| FND-02      | 6     | Complete |
+| FND-03      | 6     | Complete |
+| FND-04      | 6     | Complete |
+| FND-05      | 6     | Complete |
+| FND-06      | 6     | Complete |
 | SPL-01      | 7     | Pending |
 | SPL-02      | 7     | Pending |
 | SPL-03      | 7     | Pending |

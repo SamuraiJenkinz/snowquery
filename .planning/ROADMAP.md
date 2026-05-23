@@ -21,7 +21,7 @@ Three Stitch mockups (`.planning/design-mockups/00-splash-helix.png`, `01-main-c
 
 ## Phases (v2.2)
 
-- [ ] Phase 6: Foundation — CSS module + design tokens + page chrome (6 requirements)
+- [x] Phase 6: Foundation — CSS module + design tokens + page chrome (6 requirements) ✓ 2026-05-22
 - [ ] Phase 7: Splash screen — Helix-motif boot animation (4 requirements)
 - [ ] Phase 8: Screen restyle — Sidebar + main panel + chat editorial pass (12 requirements)
 - [ ] Phase 9: Data visualization — Editorial HTML table + collapsible interactive view + Altair theme (5 requirements)
@@ -46,7 +46,12 @@ Three Stitch mockups (`.planning/design-mockups/00-splash-helix.png`, `01-main-c
 4. A test button rendered via `st.button` shows cashmere brown `#8B7355` background, white text, 4px border-radius, uppercase tracked label (`letter-spacing: 0.1em`) — verified on at least three distinct button instances.
 5. Browser tab shows the refreshed `page_icon` (restrained mark, not brutalist `▣`); `page_title="SNOWGREP"` is preserved.
 
-**Plans-TBD**: To be decomposed by `/gsd:plan-phase 6`.
+**Plans:** 3 plans in 3 waves
+
+Plans:
+- [ ] 06-PLAN-01-create-css-module.md — Create `src/ui/__init__.py` + `src/ui/css.py` exporting `LORO_PIANA_TOKENS` dict and `LORO_PIANA_CSS` string (Wave 1)
+- [ ] 06-PLAN-02-wire-app-and-page-chrome.md — Delete brutalist CSS from `app.py`, inject `LORO_PIANA_CSS` once, flip `page_icon` from `▣` to `✦` (Wave 2)
+- [ ] 06-PLAN-03-smoke-render-verification.md — Static checks + visual checkpoint confirming warm bg, Inter body font, three cashmere buttons, `✦` favicon (Wave 3)
 
 ### Phase 7: Splash screen
 
@@ -161,7 +166,7 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 | 3. Anthropic MGTI Adapter            | v2.1      | 4/4            | Complete    | 2026-05-21 |
 | 4. Strict-Tools + Smoke Test         | v2.1      | 4/4            | Complete    | 2026-05-21 |
 | 5. Sidebar UI Toggle + Docs          | v2.1      | 5/5            | Complete    | 2026-05-22 |
-| 6. Foundation (CSS + tokens)         | v2.2      | 0/TBD          | Not started | —          |
+| 6. Foundation (CSS + tokens)         | v2.2      | 3/3            | Complete    | 2026-05-22 |
 | 7. Splash screen                     | v2.2      | 0/TBD          | Not started | —          |
 | 8. Screen restyle (sidebar + main)   | v2.2      | 0/TBD          | Not started | —          |
 | 9. Data visualization                | v2.2      | 0/TBD          | Not started | —          |
@@ -177,4 +182,4 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 Detailed traceability lives in `REQUIREMENTS.md` Traceability section.
 
 ---
-*Last updated: 2026-05-22 after v2.2 roadmap created.*
+*Last updated: 2026-05-22 after Phase 6 (Foundation) execution complete — all FND-01..06 verified, 5/5 success criteria PASS.*

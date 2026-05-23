@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 6 — Foundation (CSS module + design tokens + page chrome)
-Plan: 03 of 3 — `06-PLAN-03-smoke-render-verification.md` COMPLETE
-Status: Phase 6 / Plan 03 complete / Awaiting phase verification
-Last activity: 2026-05-22 — Plan 03 closed Phase 6 with user-approved visual checkpoint; all 5 success criteria + all 6 FND requirements verified PASS; three known inline-HTML cosmetic regressions explicitly deferred to Phase 8 (SBR-01/03/06)
+Phase: 7 — Splash screen (ready to plan/discuss)
+Plan: — (ready for `/gsd:discuss-phase 7` or `/gsd:plan-phase 7`)
+Status: Phase 6 COMPLETE + verified (5/5 must_haves PASS); FND-01..06 marked Complete in REQUIREMENTS.md; Phase 7 and Phase 8 both unblocked
+Last activity: 2026-05-22 — Phase 6 closeout: gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md updated; phase completion commit bundled
 
 Progress: v2.2 — Phase 6 COMPLETE (3 of 3 plans done); Phases 7 and 8 unblocked
 
