@@ -436,41 +436,63 @@ samp,
   margin: var(--lp-space-6) 0;
 }
 
-/* SBR-03 — MODE pill toggle */
-[data-testid="stSidebar"] .lp-mode-pill-row {
+/* SBR-03 — MODE selector (horizontal st.radio with sage dot indicator)
+   Renders three labels AUTO / SQL / SEMANTIC in a row. The native radio
+   circle is replaced with a sage dot that only shows when the option is
+   active — inactive labels have a hollow hairline ring instead. */
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] > div[role="radiogroup"] {
   display: flex;
-  gap: var(--lp-space-2);
+  flex-direction: row;
+  gap: var(--lp-space-4);
   margin-top: var(--lp-space-2);
 }
-[data-testid="stSidebar"] .lp-mode-pill .stButton > button {
-  width: 100%;
-  background: transparent;
-  color: var(--lp-text);
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label {
+  display: flex;
+  align-items: center;
+  gap: var(--lp-space-2);
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label > div:first-child {
+  /* The native circle wrapper — neutralize its default size/look */
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  min-height: 10px;
+  border-radius: 50%;
   border: 1px solid var(--lp-border);
-  border-radius: var(--lp-radius-md);
+  background: transparent;
+  box-shadow: none;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label > div:first-child > div {
+  /* Hide the inner native indicator (Streamlit emits an inner div for checked state) */
+  display: none;
+}
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label:has(input:checked) > div:first-child {
+  background: var(--lp-success);  /* sage filled dot when active */
+  border-color: var(--lp-success);
+}
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label > div:last-child,
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label p {
   font-family: var(--lp-font-body);
   font-weight: 500;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  padding: var(--lp-space-2) var(--lp-space-3);
-  box-shadow: none;
-  transition: var(--lp-transition-base);
+  color: var(--lp-text-muted);
+  margin: 0;
+  white-space: nowrap;
 }
-[data-testid="stSidebar"] .lp-mode-pill .stButton > button:hover {
-  background: var(--lp-neutral-100);
-  color: var(--lp-text);
-  border-color: var(--lp-border);
-  box-shadow: none;
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label:has(input:checked) p,
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label:has(input:checked) > div:last-child {
+  color: var(--lp-text);  /* active label darkens to charcoal */
 }
-[data-testid="stSidebar"] .lp-mode-pill--active .stButton > button,
-[data-testid="stSidebar"] .lp-mode-pill--active .stButton > button:hover {
-  background: var(--lp-accent);
-  color: var(--lp-neutral-0);
-  border-color: var(--lp-accent);
-}
-[data-testid="stSidebar"] .lp-mode-pill--blocked .stButton > button,
-[data-testid="stSidebar"] .lp-mode-pill--blocked .stButton > button:hover {
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"][aria-disabled="true"],
+[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"]:has(input:disabled) {
   opacity: 0.5;
   cursor: not-allowed;
 }

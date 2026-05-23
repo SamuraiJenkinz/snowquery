@@ -356,7 +356,9 @@ def render_sidebar():
         st.markdown('<hr class="lp-section-rule" />', unsafe_allow_html=True)
 
         # ----------------------------------------------------------------
-        # SBR-03 — MODE pill toggle (new in Phase 8 Wave A)
+        # SBR-03 — MODE selector (Phase 8 Wave A)
+        # Renders as a horizontal st.radio with a sage filled dot on the
+        # active label (custom CSS in src/ui/css.py .lp-mode-radio block).
         # Writes st.session_state["query_mode"] to "auto" / "structured" /
         # "semantic" — same internal values MODE_OPTIONS produces. The legacy
         # main-panel selectbox at app.py:684-699 is deleted by Plan 02 (Wave B).
@@ -364,32 +366,40 @@ def render_sidebar():
         st.markdown('<p class="lp-section-header">MODE</p>', unsafe_allow_html=True)
 
         # Initialize query_mode session state. MODE_OPTIONS at app.py:46-51 stays the
-        # source of truth; pill exposes 3 modes (AUTO/SQL/SEMANTIC). HYBRID is dropped
-        # from the visible pill in v2.2 but internal "hybrid" value still works if
+        # source of truth; radio exposes 3 modes (AUTO/SQL/SEMANTIC). HYBRID is dropped
+        # from the visible selector in v2.2 but internal "hybrid" value still works if
         # anything else writes it.
         if "query_mode" not in st.session_state:
             st.session_state["query_mode"] = "auto"  # MODE_OPTIONS["AUTO"] internal value
 
         _blocked = st.session_state.get("_llm_provider_blocked", False)
-        _block_class = " lp-mode-pill--blocked" if _blocked else ""
 
-        _pill_specs = [
-            ("AUTO",     "auto"),       # MODE_OPTIONS["AUTO"]
-            ("SQL",      "structured"), # MODE_OPTIONS["REPORT [SQL]"]
-            ("SEMANTIC", "semantic"),   # MODE_OPTIONS["SIMILAR [SEMANTIC]"]
-        ]
+        _MODE_LABEL_TO_INTERNAL = {
+            "AUTO":     "auto",       # MODE_OPTIONS["AUTO"]
+            "SQL":      "structured", # MODE_OPTIONS["REPORT [SQL]"]
+            "SEMANTIC": "semantic",   # MODE_OPTIONS["SIMILAR [SEMANTIC]"]
+        }
+        _INTERNAL_TO_MODE_LABEL = {v: k for k, v in _MODE_LABEL_TO_INTERNAL.items()}
+        _mode_labels = list(_MODE_LABEL_TO_INTERNAL.keys())
+        _current_label = _INTERNAL_TO_MODE_LABEL.get(
+            st.session_state["query_mode"], "AUTO"
+        )
 
-        st.markdown('<div class="lp-mode-pill-row">', unsafe_allow_html=True)
-        _pill_cols = st.columns(3)
-        for _col, (_label, _internal) in zip(_pill_cols, _pill_specs):
-            with _col:
-                _active = " lp-mode-pill--active" if st.session_state["query_mode"] == _internal else ""
-                st.markdown(f'<div class="lp-mode-pill{_active}{_block_class}">', unsafe_allow_html=True)
-                if st.button(_label, key=f"mode_pill_{_internal}", use_container_width=True, disabled=_blocked):
-                    st.session_state["query_mode"] = _internal
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="lp-mode-radio">', unsafe_allow_html=True)
+        _selected_label = st.radio(
+            "MODE",
+            options=_mode_labels,
+            index=_mode_labels.index(_current_label),
+            horizontal=True,
+            label_visibility="collapsed",
+            disabled=_blocked,
+            key="_mode_radio",
+        )
         st.markdown('</div>', unsafe_allow_html=True)
+
+        _new_internal = _MODE_LABEL_TO_INTERNAL[_selected_label]
+        if _new_internal != st.session_state["query_mode"]:
+            st.session_state["query_mode"] = _new_internal
 
         st.markdown('<hr class="lp-section-rule" />', unsafe_allow_html=True)
 
