@@ -9,16 +9,16 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 7 — Splash screen (in progress)
-Plan: 01 of 2 complete (Plan 01: create-splash-component done)
-Status: Plan 07-01 COMPLETE — src/ui/splash.py created; Plan 07-02 (wire into app.py) ready to execute
-Last activity: 2026-05-23 — Completed 07-PLAN-01-create-splash-component.md
+Phase: 7 — Splash screen (COMPLETE, awaiting phase verifier)
+Plan: 02 of 2 complete (all plans done)
+Status: Plan 07-02 COMPLETE — splash lifecycle wired into app.py::main(); all six human-verify checks passed
+Last activity: 2026-05-22 — Completed 07-PLAN-02-wire-splash-into-main.md
 
-Progress: v2.2 — Phase 6 COMPLETE + Phase 7 Plan 01 done (1/2 plans)
+Progress: v2.2 — Phase 6 COMPLETE + Phase 7 COMPLETE
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
-[█████     ] Phase 7  Splash screen                    ← IN PROGRESS (Plan 01/2 done)
+[██████████] Phase 7  Splash screen                    ← COMPLETE (Plans 01-02 done)
 [          ] Phase 8  Screen restyle (sidebar + main)  ← UNBLOCKED
 [          ] Phase 9  Data visualization
 [          ] Phase 10 Polish + edge states
@@ -57,6 +57,8 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 
 ### Decisions (recent)
 
+- **Phase 7 Plan 02 — Splash lifecycle owns timing client-side**: Python only emits `snowgrep-splash-dismiss` postMessage + sleeps 400ms for fade teardown. The 4s hard cap lives entirely in the iframe script. This pattern is reusable for any future iframe-based overlay: enforce timing constraints client-side; Python manages mount/dismiss only.
+- **Phase 7 Plan 02 — st.empty() placeholder handle stored in session_state**: Storing the `st.empty()` handle in `st.session_state._splash_placeholder` allows a later rerun to clear what a previous rerun mounted. Required pattern whenever a placeholder is created in one Streamlit rerun and torn down in another.
 - **Phase 7 Plan 01 — str.format() requires doubled CSS braces**: Plan 07-01 incorrectly stated "CSS braces pass through .format() untouched." Python's str.format() parses ALL {…} as placeholders. The template uses {{…}} for all CSS rule blocks, keyframe percentages, and JS function bodies. Only the 6 actual Python values use single braces. This is a carry-forward: any future phase using str.format() for HTML/CSS templates must double all non-placeholder braces.
 - **Phase 7 Plan 01 — JS const DISMISS_TYPE pattern**: Instead of writing JS object literals like `{type: 'snowgrep-splash-dismiss'}` inside a str.format() template (which causes KeyError), declare the string as a JS const first and reference it. This avoids {key: value} shapes in the template body.
 - **Phase 7 Plan 01 — splash comment hex quotes break grep invariant**: Python comments containing quoted hex strings like `# "#F5F0EB"` still match the brand-hex-literal grep test. Use descriptive comments instead (`# warm off-white`).
@@ -85,10 +87,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-23 — Phase 7 Plan 01 complete
-Stopped at: Completed 07-PLAN-01-create-splash-component.md — src/ui/splash.py created (419 lines), all 9 verification checks pass
+Last session: 2026-05-22 — Phase 7 Plan 02 complete (Phase 7 fully done)
+Stopped at: Completed 07-PLAN-02-wire-splash-into-main.md — splash lifecycle wired into app.py::main(); all six human-verify checks approved by user
 Resume file: None
-Next: Phase 7 Plan 02 (07-PLAN-02) — wire render_splash() into app.py::main() with _splash_shown session gating, data_loaded/embeddings_ready dismiss signal, and 400ms placeholder teardown
+Next: Phase 8 (08-screen-restyle) — sidebar SBR-* Wave A + main panel MAIN-* Wave B; depends on Phase 6 only (already complete)
 
 ---
-*Last updated: 2026-05-23 after Phase 7 Plan 01 completion.*
+*Last updated: 2026-05-22 after Phase 7 Plan 02 completion.*
