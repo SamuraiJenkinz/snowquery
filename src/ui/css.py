@@ -54,7 +54,7 @@ LORO_PIANA_TOKENS: dict[str, str | int] = {
 
 
 LORO_PIANA_CSS: str = """\
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@300;400&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=EB+Garamond:wght@300;400&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* Loro Piana tokens — see src/ui/css.py module docstring */
 
@@ -739,6 +739,29 @@ samp,
 
 /* === Main panel (Phase 8 MAIN-*) === */
 
+/* Main panel SNOWGREP wordmark — bold display logo (Anton) above the editorial
+   "Incident Intelligence" header. Inspired by the DaBrokeCollector display
+   wordmark style — heavy condensed sans, all caps, generous tracking, with a
+   hairline rule separating it from the page title below. */
+.lp-main-logo {
+  font-family: 'Anton', 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 64px;
+  line-height: 1;
+  color: var(--lp-text);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: var(--lp-space-8) 0 var(--lp-space-2) 0;
+  padding: 0;
+  display: block;
+}
+.lp-main-logo-rule {
+  height: 1px;
+  background: var(--lp-border);
+  border: 0;
+  margin: var(--lp-space-3) 0 var(--lp-space-6) 0;
+}
+
 /* MAIN-01 — Editorial page header + subtitle */
 .lp-page-header {
   font-family: var(--lp-font-headline);
@@ -746,7 +769,7 @@ samp,
   font-size: 36px;
   color: var(--lp-text);
   letter-spacing: -0.01em;
-  margin: var(--lp-space-8) 0 var(--lp-space-2) 0;
+  margin: 0 0 var(--lp-space-2) 0;
   line-height: 1.1;
 }
 .lp-page-subtitle {

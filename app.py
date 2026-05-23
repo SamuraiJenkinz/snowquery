@@ -709,9 +709,13 @@ def render_main_content():
     # st.chat_input.submit would take below.
     _pending_ghost = st.session_state.pop("_pending_ghost_query", None)
 
-    # MAIN-01 — Editorial page header + subtitle (renders ALWAYS, regardless of
-    # data_loaded / messages state per CONTEXT.md "Empty/initial main panel state").
+    # MAIN-01 — SNOWGREP wordmark logo (Anton bold display) + hairline rule
+    # above the editorial page header. Wordmark style inspired by the
+    # DaBrokeCollector display logo — heavy condensed sans, generous tracking.
+    # Renders ALWAYS, regardless of data_loaded / messages state.
     st.markdown(
+        '<div class="lp-main-logo">SNOWGREP</div>'
+        '<hr class="lp-main-logo-rule" />'
         '<h1 class="lp-page-header">Incident Intelligence</h1>'
         '<p class="lp-page-subtitle">Ask in natural language. All data stays local.</p>',
         unsafe_allow_html=True,
