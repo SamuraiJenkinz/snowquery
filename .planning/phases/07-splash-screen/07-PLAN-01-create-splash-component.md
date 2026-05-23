@@ -341,6 +341,8 @@ The splash is mounted in an iframe (`streamlit.components.v1.html`). Streamlit's
 
 This script must be INSIDE the same template as the HTML — interpolated via `.format(**locals())` along with everything else. The script contains no Python placeholders, but the curly braces in JS function bodies (`function() { ... }`) are fine under `.format()` because none of them collide with the placeholder names (`{bg}`, `{text}`, etc.).
 
+**Footgun — JS object literals DO collide with `.format()`:** the postMessage payload comparison `ev.data.type !== 'snowgrep-splash-dismiss'` is safe because it has no `{...}` around it, but if you write a literal object such as `{type: 'snowgrep-splash-dismiss'}` anywhere in the script, Python's `.format()` will read `{type}` as a placeholder named `type` and raise `KeyError: 'type'` at module import. Fix by either (a) escaping the literal as `{{type: 'snowgrep-splash-dismiss'}}`, or (b) assigning the dispatch type to a JS `const` at the top of the IIFE so the `{key:` shape never appears inside the formatted template body. Recommended: option (b) — declare `const DISMISS_TYPE = 'snowgrep-splash-dismiss';` once, then compare via `ev.data.type !== DISMISS_TYPE`. Verify step #7's smoke test would catch a missed escape at import time, but pre-empting is cheaper.
+
 **E. Finalize `components.v1.html(...)` call:**
 
 ```python
