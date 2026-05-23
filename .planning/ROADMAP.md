@@ -23,7 +23,7 @@ Three Stitch mockups (`.planning/design-mockups/00-splash-helix.png`, `01-main-c
 
 - [x] Phase 6: Foundation — CSS module + design tokens + page chrome (6 requirements) ✓ 2026-05-22
 - [x] Phase 7: Splash screen — Helix-motif boot animation (4 requirements) ✓ 2026-05-23
-- [ ] Phase 8: Screen restyle — Sidebar + main panel + chat editorial pass (12 requirements)
+- [x] Phase 8: Screen restyle — Sidebar + main panel + chat editorial pass (12 requirements) ✓ 2026-05-23
 - [ ] Phase 9: Data visualization — Editorial HTML table + collapsible interactive view + Altair theme (5 requirements)
 - [ ] Phase 10: Polish + edge states — Empty state, loading indicators, error rendering, toasts (4 requirements)
 - [ ] Phase 11: Documentation + acceptance gate — USER_GUIDE/README + visual regression test suite + WCAG check (5 requirements)
@@ -93,8 +93,8 @@ Plans:
 **Plans:** 2 plans in 2 waves (sequential — both edit disjoint regions of app.py, but serialised via wave structure to eliminate merge-race; Plan 02 depends on Plan 01)
 
 Plans:
-- [ ] 08-01-PLAN.md — Wave A: Sidebar editorial restyle (SBR-01..06) — wordmark, section headers, MODE pill, EMBEDDINGS pill, bottom-border-only LLM provider select, warm-beige warning card
-- [ ] 08-02-PLAN.md — Wave B: Main panel editorial restyle (MAIN-01..06) — page header, ghost example queries, user/assistant message cards, provenance caption, bottom-border-only chat input
+- [x] 08-01-PLAN.md — Wave A: Sidebar editorial restyle (SBR-01..06) — wordmark, section headers, MODE radio (sage dot), EMBEDDINGS pill, bottom-border-only LLM provider select, warm-beige warning card ✓ 2026-05-23
+- [x] 08-02-PLAN.md — Wave B: Main panel editorial restyle (MAIN-01..06) — branded SNOWGREP logo hero, ghost example queries, user/assistant message cards, provenance caption, bottom-border-only chat input ✓ 2026-05-23
 
 ### Phase 9: Data visualization
 
@@ -176,7 +176,7 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 | 5. Sidebar UI Toggle + Docs          | v2.1      | 5/5            | Complete    | 2026-05-22 |
 | 6. Foundation (CSS + tokens)         | v2.2      | 3/3            | Complete    | 2026-05-22 |
 | 7. Splash screen                     | v2.2      | 2/2            | Complete    | 2026-05-23 |
-| 8. Screen restyle (sidebar + main)   | v2.2      | 0/2            | Not started | —          |
+| 8. Screen restyle (sidebar + main)   | v2.2      | 2/2            | Complete    | 2026-05-23 |
 | 9. Data visualization                | v2.2      | 0/TBD          | Not started | —          |
 | 10. Polish + edge states             | v2.2      | 0/TBD          | Not started | —          |
 | 11. Documentation + acceptance gate  | v2.2      | 0/TBD          | Not started | —          |
@@ -190,4 +190,4 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 Detailed traceability lives in `REQUIREMENTS.md` Traceability section.
 
 ---
-*Last updated: 2026-05-23 after Phase 7 (Splash screen) execution complete — all SPL-01..04 verified (4/4), human-verify checkpoint approved, gsd-verifier status: passed.*
+*Last updated: 2026-05-23 after Phase 8 (Screen restyle) execution complete — all SBR-01..06 + MAIN-01..06 verified (12/12), Wave A + Wave B human-verify checkpoints approved, gsd-verifier status: passed. Final form deviates from spec in two user-approved ways: SBR-03 uses st.radio(horizontal=True) with a sage dot instead of three pill buttons; MAIN-01 uses a branded SNOWGREP logo PNG (also placed in the sidebar) instead of plain EB Garamond text.*

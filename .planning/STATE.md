@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 8 — Screen restyle (sidebar + main) — UNBLOCKED, ready to plan/discuss
-Plan: — (ready for `/gsd:discuss-phase 8` or `/gsd:plan-phase 8`)
-Status: Phase 7 COMPLETE + verified (4/4 must_haves PASS, 22/22 Phase 5 UI tests green); SPL-01..04 marked Complete in REQUIREMENTS.md; Phase 8 unblocked (had been since Phase 6)
-Last activity: 2026-05-23 — Phase 7 closeout: gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md updated; phase completion commit bundled
+Phase: 9 — Data visualization — UNBLOCKED, ready to plan/discuss
+Plan: — (ready for `/gsd:discuss-phase 9` or `/gsd:plan-phase 9`)
+Status: Phase 8 COMPLETE + verified (12/12 must_haves PASS, 22/22 Phase 5 UI tests green); SBR-01..06 + MAIN-01..06 marked Complete in REQUIREMENTS.md; Phase 9 unblocked (depends on Phase 8 assistant-card DOM bay)
+Last activity: 2026-05-23 — Phase 8 closeout: gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md + STATE.md updated; phase completion commit bundled
 
-Progress: v2.2 — Phases 6-7 COMPLETE; Phase 8 unblocked
+Progress: v2.2 — Phases 6-8 COMPLETE; Phase 9 unblocked
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
 [██████████] Phase 7  Splash screen                    ← COMPLETE (Plans 01-02 done)
-[          ] Phase 8  Screen restyle (sidebar + main)  ← UNBLOCKED
-[          ] Phase 9  Data visualization
+[██████████] Phase 8  Screen restyle (sidebar + main)  ← COMPLETE (Plans 01-02 done)
+[          ] Phase 9  Data visualization               ← UNBLOCKED
 [          ] Phase 10 Polish + edge states
 [          ] Phase 11 Documentation + acceptance gate
 ```
@@ -57,6 +57,12 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 
 ### Decisions (recent)
 
+- **Phase 8 — Branded logo PNG replaces both sidebar wordmark and main panel hero**: Single asset at `static/snowgrep-logo.png` (copper SNOWGREP box outline + blue INCIDENT INTELLIGENCE tagline on dark backdrop). Served via Streamlit static serving (`.streamlit/config.toml: enableStaticServing = true`). Sidebar uses `max-width: 240px` (fits 320px sidebar), main panel uses `max-width: 480px`. The dark backdrop of the PNG is intentional — it provides high contrast against the warm-beige page bg, framing the logo as a deliberate brand mark. Future asset additions should drop into `static/` and reference via `app/static/<filename>`. Original PNG had a "SNOWGRP" typo; patched via Pillow (cover existing text with bg color, re-render with Impact font + matching copper #aa7346) — original grunge stencil texture lost in the patch (not recoverable without source PSD).
+- **Phase 8 SBR-03 — MODE selector uses `st.radio(horizontal=True)` not three st.button pills**: The button-in-columns approach failed because `st.markdown('<div class="...">')` + subsequent `st.button` render as sibling DOM nodes, so the active-state CSS selector never matched. Also at 320px / 3 cols, "SEMANTIC" wrapped per-character. The radio uses a custom sage dot (`#8A9A7D` filled circle when checked) via `:has(input:checked) > div:first-child` — clean active-state contract with no Python-side class juggling. Pattern is reusable for other small toggle groups: native primitives with `:has(input:checked)` beats manual sibling-state tracking.
+- **Phase 8 — `.lp-pill-warn` is the v2.2 soft-warning pill primitive**: Used by USING DEFAULT PASSWORD, NO DATA LOADED, and UNLOCK UPLOAD (via per-button `.st-key-unlock_upload` override). Warm-beige tint bg + terracotta text + rounded pill. Phase 9-10 should reuse this class for sibling status indicators rather than re-rolling.
+- **Phase 8 — `.st-key-{key}` is the per-button CSS override pattern** for Streamlit 1.36+. Used here to make UNLOCK UPLOAD a soft pill that overrides Phase 6's global cashmere fill. Future phases needing per-button visual variants should use this pattern. Streamlit emits `class="st-key-<key>"` on the button wrapper when `key=` is set on `st.button(...)`.
+- **Phase 8 — Sidebar is non-collapsible in v2.2**: Phase 6 hides Streamlit's `<header>` element globally, which also hides the sidebar expand toggle. Once collapsed, no in-UI recovery. Forced sidebar always-visible via `transform: none !important; margin-left: 0 !important; visibility: visible !important` on `[data-testid="stSidebar"]` regardless of `aria-expanded`; collapse buttons hidden via `display: none`. Sidebar is mission-critical for this app (only place to upload data + configure LLM).
+- **Phase 8 — Streamlit `*` font-family override breaks Material Symbols icons**: Phase 6's universal `[data-testid="stSidebar"] *` font-family override clobbered Streamlit's Material Symbols font, causing icon names like `keyboard_arrow_down` to render as literal text in the expander chevron and help tooltips. Fixed by restoring Material Symbols on `[class*="material-symbols"]`, `[class*="material-icons"]`, `[data-testid*="Icon"]` inside the universal rule's scope. Future phases adding broad font-family rules MUST exclude icon-bearing spans.
 - **Phase 7 Plan 02 — Splash lifecycle owns timing client-side**: Python only emits `snowgrep-splash-dismiss` postMessage + sleeps 400ms for fade teardown. The 4s hard cap lives entirely in the iframe script. This pattern is reusable for any future iframe-based overlay: enforce timing constraints client-side; Python manages mount/dismiss only.
 - **Phase 7 Plan 02 — st.empty() placeholder handle stored in session_state**: Storing the `st.empty()` handle in `st.session_state._splash_placeholder` allows a later rerun to clear what a previous rerun mounted. Required pattern whenever a placeholder is created in one Streamlit rerun and torn down in another.
 - **Phase 7 Plan 01 — str.format() requires doubled CSS braces**: Plan 07-01 incorrectly stated "CSS braces pass through .format() untouched." Python's str.format() parses ALL {…} as placeholders. The template uses {{…}} for all CSS rule blocks, keyframe percentages, and JS function bodies. Only the 6 actual Python values use single braces. This is a carry-forward: any future phase using str.format() for HTML/CSS templates must double all non-placeholder braces.
@@ -87,10 +93,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-23 — Phase 7 closeout (verifier passed, requirements + roadmap updated, phase commit bundled)
-Stopped at: Phase 7 COMPLETE — all plans done, gsd-verifier `passed` (4/4 must_haves, 22/22 Phase 5 UI tests still green); SPL-01..04 marked Complete
+Last session: 2026-05-23 — Phase 8 closeout (verifier passed, requirements + roadmap updated, phase commit bundled)
+Stopped at: Phase 8 COMPLETE — all plans done, gsd-verifier `passed` (12/12 must_haves, 22/22 Phase 5 UI tests still green); SBR-01..06 + MAIN-01..06 marked Complete; final form deviates from spec in two user-approved ways: SBR-03 uses st.radio with sage dot instead of three pill buttons, MAIN-01 uses a branded SNOWGREP PNG (in both sidebar + main panel) instead of plain EB Garamond text
 Resume file: None
-Next: Phase 8 (08-screen-restyle) — sidebar SBR-* Wave A + main panel MAIN-* Wave B; depends on Phase 6 only (already complete)
+Next: Phase 9 (data visualization) — DVZ-01..05 — editorial HTML table + Altair theme; depends on Phase 8 assistant-card DOM bay (already complete)
 
 ---
-*Last updated: 2026-05-23 after Phase 7 closeout (verifier passed, requirements + roadmap updated).*
+*Last updated: 2026-05-23 after Phase 8 closeout (verifier passed, requirements + roadmap updated).*
