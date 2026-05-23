@@ -754,6 +754,7 @@ samp,
   margin: var(--lp-space-8) 0 var(--lp-space-2) 0;
   padding: 0;
   display: block;
+  text-align: center;
 }
 .lp-main-logo-rule {
   height: 1px;
