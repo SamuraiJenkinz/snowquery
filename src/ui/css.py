@@ -374,6 +374,180 @@ samp,
   border-color: var(--lp-accent);
   box-shadow: var(--lp-shadow-focus);
 }
+
+/* === Sidebar (Phase 8 SBR-*) === */
+
+/* SBR-01 — Wordmark hero */
+[data-testid="stSidebar"] .lp-sidebar-wordmark {
+  font-family: var(--lp-font-headline);
+  font-weight: 300;
+  font-size: 28px;
+  color: var(--lp-text);
+  letter-spacing: 0.02em;
+  padding: var(--lp-space-6) 0 var(--lp-space-4) 0;
+  margin: 0;
+  line-height: 1;
+}
+
+[data-testid="stSidebar"] {
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 320px !important;
+}
+[data-testid="stSidebar"] [data-testid="stSidebarContent"],
+[data-testid="stSidebar"] > div:first-child {
+  background: var(--lp-bg);  /* override Phase 6 --lp-neutral-100 to match mockup */
+  padding-left: var(--lp-space-6);
+  padding-right: var(--lp-space-6);
+}
+
+/* SBR-02 — Section headers (small-caps tracked) */
+[data-testid="stSidebar"] .lp-section-header {
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-text-muted);
+  margin: 0 0 var(--lp-space-3) 0;
+  padding: 0;
+}
+[data-testid="stSidebar"] .lp-section-rule {
+  height: 1px;
+  background: var(--lp-border);
+  border: 0;
+  margin: var(--lp-space-6) 0;
+}
+
+/* SBR-03 — MODE pill toggle */
+[data-testid="stSidebar"] .lp-mode-pill-row {
+  display: flex;
+  gap: var(--lp-space-2);
+  margin-top: var(--lp-space-2);
+}
+[data-testid="stSidebar"] .lp-mode-pill .stButton > button {
+  width: 100%;
+  background: transparent;
+  color: var(--lp-text);
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-radius-md);
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--lp-space-2) var(--lp-space-3);
+  box-shadow: none;
+  transition: var(--lp-transition-base);
+}
+[data-testid="stSidebar"] .lp-mode-pill .stButton > button:hover {
+  background: var(--lp-neutral-100);
+  color: var(--lp-text);
+  border-color: var(--lp-border);
+  box-shadow: none;
+}
+[data-testid="stSidebar"] .lp-mode-pill--active .stButton > button,
+[data-testid="stSidebar"] .lp-mode-pill--active .stButton > button:hover {
+  background: var(--lp-accent);
+  color: var(--lp-neutral-0);
+  border-color: var(--lp-accent);
+}
+[data-testid="stSidebar"] .lp-mode-pill--blocked .stButton > button,
+[data-testid="stSidebar"] .lp-mode-pill--blocked .stButton > button:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* SBR-04 — EMBEDDINGS status pill */
+[data-testid="stSidebar"] .lp-status-pill {
+  display: inline-block;
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: var(--lp-space-1) var(--lp-space-3);
+  border-radius: var(--lp-radius-full);
+}
+[data-testid="stSidebar"] .lp-status-pill--ready {
+  background: rgba(138, 154, 125, 0.12);  /* warm-base-color at ~12% */
+  color: var(--lp-success);
+}
+[data-testid="stSidebar"] .lp-status-pill--missing {
+  background: rgba(166, 120, 102, 0.12);  /* warm-base-color at ~12% */
+  color: var(--lp-danger);
+}
+
+/* SBR-05 — Bottom-border-only LLM PROVIDER selectbox */
+[data-testid="stSidebar"] .lp-bb-select .stSelectbox [data-baseweb="select"] {
+  background: var(--lp-surface);
+  border: 0;
+  border-bottom: 1px solid var(--lp-border);
+  border-radius: 0;
+  box-shadow: none;
+}
+[data-testid="stSidebar"] .lp-bb-select .stSelectbox [data-baseweb="select"]:focus-within {
+  border-bottom-color: var(--lp-accent);
+  box-shadow: none;
+}
+[data-testid="stSidebar"] .lp-bb-select .stSelectbox label {
+  font-family: var(--lp-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-text-muted);
+}
+[data-testid="stSidebar"] .lp-active-model {
+  font-family: var(--lp-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--lp-neutral-400);  /* muted gold */
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: var(--lp-space-2);
+}
+
+/* SBR-06 — Provider warning container */
+[data-testid="stSidebar"] .lp-warn-card {
+  background: var(--lp-bg);
+  border-left: 3px solid var(--lp-danger);
+  border-top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 0 var(--lp-radius-md) var(--lp-radius-md) 0;
+  padding: var(--lp-space-4);
+  margin: var(--lp-space-3) 0;
+}
+[data-testid="stSidebar"] .lp-warn-card .lp-warn-label {
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-danger);
+  margin: 0 0 var(--lp-space-2) 0;
+}
+[data-testid="stSidebar"] .lp-warn-card .lp-warn-body {
+  font-family: var(--lp-font-body);
+  font-size: 14px;
+  color: var(--lp-text);
+  margin: 0 0 var(--lp-space-2) 0;
+  line-height: 1.4;
+}
+[data-testid="stSidebar"] .lp-warn-card .lp-warn-fix {
+  font-family: var(--lp-font-body);
+  font-size: 13px;
+  color: var(--lp-text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+[data-testid="stSidebar"] .lp-warn-card code {
+  background: rgba(166, 120, 102, 0.08);
+  padding: 1px 4px;
+  border-radius: 2px;
+  /* font-family inherits JetBrains Mono via Phase 6 mono boundary */
+}
 """
 
 
