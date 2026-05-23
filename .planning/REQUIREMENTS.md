@@ -47,11 +47,11 @@
 
 ### Data Visualization (DVZ) — Editorial dataframe + charts
 
-- [ ] **DVZ-01**: New helper `_render_editorial_table(df: pd.DataFrame) -> str` in `src/utils.py` returns an HTML table string with: italic priority labels in cells where the column name matches "priority" (case-insensitive), warm-beige `#E8E0D8` 1px row dividers, no zebra stripes, no vertical column borders, EB Garamond serif column headers in small-caps tracked, generous cell padding (16px vertical, 24px horizontal), warm-beige background only on header row.
-- [ ] **DVZ-02**: Every assistant response that returns a DataFrame renders the editorial HTML table FIRST (as the hero view, matches mockup), followed by a single `st.expander("EXPAND · INTERACTIVE VIEW", expanded=False)` containing the full native `st.dataframe(df, use_container_width=True, hide_index=True)` plus a CSV download button. Zero functionality loss vs. v2.1.
-- [ ] **DVZ-03**: When the result DataFrame has >1000 rows, the editorial HTML table shows only the first 50 rows with a small-caps tracked caption beneath: "SHOWING 50 OF <N> ROWS  ·  EXPAND BELOW FOR FULL DATA". The `st.dataframe` inside the expander always renders the full frame.
-- [ ] **DVZ-04**: New `src/ui/altair_theme.py` registers a custom Altair theme `loro_piana` (via `alt.themes.register` + `alt.themes.enable`) with: cashmere graduated palette for bar marks (`['#8B7355', '#A89178', '#C4B5A0', '#D4C5B0', '#E5DACB']`), warm-beige `#E8E0D8` gridlines at 1px, no axis box stroke, EB Garamond chart titles 20px weight 300 color `#2C2420`, Inter axis labels 11px warm-gray `#6B5E52`.
-- [ ] **DVZ-05**: All chart rendering call sites (`src/chart_generator.py::generate_chart`) consume the new theme — verified by removing `theme="dark"` references and confirming no Altair chart renders with a dark background or default colors. Single-series charts have no legend (`legend=None`).
+- [x] **DVZ-01**: New helper `_render_editorial_table(df: pd.DataFrame) -> str` in `src/utils.py` returns an HTML table string with: italic priority labels in cells where the column name matches "priority" (case-insensitive), warm-beige `#E8E0D8` 1px row dividers, no zebra stripes, no vertical column borders, EB Garamond serif column headers in small-caps tracked, generous cell padding (16px vertical, 24px horizontal), warm-beige background only on header row.
+- [x] **DVZ-02**: Every assistant response that returns a DataFrame renders the editorial HTML table FIRST (as the hero view, matches mockup), followed by a single `st.expander("EXPAND · INTERACTIVE VIEW", expanded=False)` containing the full native `st.dataframe(df, use_container_width=True, hide_index=True)` plus a CSV download button. Zero functionality loss vs. v2.1.
+- [x] **DVZ-03**: When the result DataFrame has >1000 rows, the editorial HTML table shows only the first 50 rows with a small-caps tracked caption beneath: "SHOWING 50 OF <N> ROWS  ·  EXPAND BELOW FOR FULL DATA". The `st.dataframe` inside the expander always renders the full frame.
+- [x] **DVZ-04**: New `src/ui/altair_theme.py` registers a custom Altair theme `loro_piana` (via `alt.themes.register` + `alt.themes.enable`) with: cashmere graduated palette for bar marks (`['#8B7355', '#A89178', '#C4B5A0', '#D4C5B0', '#E5DACB']`), warm-beige `#E8E0D8` gridlines at 1px, no axis box stroke, EB Garamond chart titles 20px weight 300 color `#2C2420`, Inter axis labels 11px warm-gray `#6B5E52`.
+- [x] **DVZ-05**: All chart rendering call sites (`src/chart_generator.py::generate_chart`) consume the new theme — verified by removing `theme="dark"` references and confirming no Altair chart renders with a dark background or default colors. Single-series charts have no legend (`legend=None`).
 
 ### Polish (POL) — Edge states + indicators
 
@@ -135,11 +135,11 @@ Phases mapped during roadmap creation 2026-05-22.
 | MAIN-04     | 8     | Complete |
 | MAIN-05     | 8     | Complete |
 | MAIN-06     | 8     | Complete |
-| DVZ-01      | 9     | Pending |
-| DVZ-02      | 9     | Pending |
-| DVZ-03      | 9     | Pending |
-| DVZ-04      | 9     | Pending |
-| DVZ-05      | 9     | Pending |
+| DVZ-01      | 9     | Complete |
+| DVZ-02      | 9     | Complete |
+| DVZ-03      | 9     | Complete |
+| DVZ-04      | 9     | Complete |
+| DVZ-05      | 9     | Complete |
 | POL-01      | 10    | Pending |
 | POL-02      | 10    | Pending |
 | POL-03      | 10    | Pending |

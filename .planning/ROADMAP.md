@@ -24,7 +24,7 @@ Three Stitch mockups (`.planning/design-mockups/00-splash-helix.png`, `01-main-c
 - [x] Phase 6: Foundation — CSS module + design tokens + page chrome (6 requirements) ✓ 2026-05-22
 - [x] Phase 7: Splash screen — Helix-motif boot animation (4 requirements) ✓ 2026-05-23
 - [x] Phase 8: Screen restyle — Sidebar + main panel + chat editorial pass (12 requirements) ✓ 2026-05-23
-- [ ] Phase 9: Data visualization — Editorial HTML table + collapsible interactive view + Altair theme (5 requirements)
+- [x] Phase 9: Data visualization — Editorial HTML table + collapsible interactive view + Altair theme (5 requirements) ✓ 2026-05-23
 - [ ] Phase 10: Polish + edge states — Empty state, loading indicators, error rendering, toasts (4 requirements)
 - [ ] Phase 11: Documentation + acceptance gate — USER_GUIDE/README + visual regression test suite + WCAG check (5 requirements)
 
@@ -112,7 +112,13 @@ Plans:
 4. A new module `src/ui/altair_theme.py` registers and enables a `loro_piana` Altair theme with cashmere graduated bar palette (`['#8B7355', '#A89178', '#C4B5A0', '#D4C5B0', '#E5DACB']`), warm-beige `#E8E0D8` 1px gridlines, no axis box stroke, EB Garamond 20px chart titles, Inter 11px warm-gray axis labels.
 5. Every Altair chart rendered by `src/chart_generator.py::generate_chart` uses the new theme — DOM inspection confirms no dark background, no default Altair colors; single-series charts have no legend.
 
-**Plans-TBD**: To be decomposed by `/gsd:plan-phase 9`.
+**Plans:** 4 plans in 3 waves
+
+Plans:
+- [x] 09-01-PLAN.md — Wave 1: Altair `loro_piana` theme module (DVZ-04) — `src/ui/altair_theme.py` registers theme via `@alt.theme.register("loro_piana", enable=True)` decorator, exports `VIBRANT_PALETTE` ✓ 2026-05-23
+- [x] 09-02-PLAN.md — Wave 1: Editorial table renderer + CSS extension (DVZ-01, DVZ-03) — `src/ui/results.py` exports `_render_editorial_table`, `_render_empty_state`, `_render_chart_unavailable`; `LORO_PIANA_CSS` extended with 11 new classes ✓ 2026-05-23
+- [x] 09-03-PLAN.md — Wave 2: Chart generator restyle (DVZ-05) — `src/chart_generator.py` deletes `CHART_COLORS` + `configure_chart_theme`, rewrites bar branch horizontal with layered value labels, consumes `VIBRANT_PALETTE` ✓ 2026-05-23
+- [x] 09-04-PLAN.md — Wave 3: Integrate into `app.py` (DVZ-02, DVZ-03, DVZ-05) — side-effect theme import + 3 renderer imports; `display_results` rewritten with 0-row early return + editorial hero + `EXPAND · INTERACTIVE VIEW` expander; stale `.empty` guards + `_No results._` line removed ✓ 2026-05-23
 
 ### Phase 10: Polish + edge states
 
@@ -177,7 +183,7 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 | 6. Foundation (CSS + tokens)         | v2.2      | 3/3            | Complete    | 2026-05-22 |
 | 7. Splash screen                     | v2.2      | 2/2            | Complete    | 2026-05-23 |
 | 8. Screen restyle (sidebar + main)   | v2.2      | 2/2            | Complete    | 2026-05-23 |
-| 9. Data visualization                | v2.2      | 0/TBD          | Not started | —          |
+| 9. Data visualization                | v2.2      | 4/4            | Complete    | 2026-05-23 |
 | 10. Polish + edge states             | v2.2      | 0/TBD          | Not started | —          |
 | 11. Documentation + acceptance gate  | v2.2      | 0/TBD          | Not started | —          |
 
@@ -190,4 +196,4 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 Detailed traceability lives in `REQUIREMENTS.md` Traceability section.
 
 ---
-*Last updated: 2026-05-23 after Phase 8 (Screen restyle) execution complete — all SBR-01..06 + MAIN-01..06 verified (12/12), Wave A + Wave B human-verify checkpoints approved, gsd-verifier status: passed. Final form deviates from spec in two user-approved ways: SBR-03 uses st.radio(horizontal=True) with a sage dot instead of three pill buttons; MAIN-01 uses a branded SNOWGREP logo PNG (also placed in the sidebar) instead of plain EB Garamond text.*
+*Last updated: 2026-05-23 after Phase 9 (Data visualization) execution complete — all DVZ-01..05 verified (5/5), gsd-verifier status: passed, 22/22 Phase 5 UI tests green. Phase 9 ships `src/ui/altair_theme.py` (loro_piana theme + VIBRANT_PALETTE), `src/ui/results.py` (3 HTML renderers), extended `LORO_PIANA_CSS` (11 new classes), restyled `src/chart_generator.py` (horizontal bars with layered value labels, CHART_COLORS + configure_chart_theme deleted), and rewritten `app.py::display_results` with 0-row early return + editorial hero + EXPAND · INTERACTIVE VIEW expander. User-approved deviations: DVZ-01 module lives in src/ui/results.py (not src/utils.py), DVZ-03 truncates at 50 rows (not >1000), DVZ-04 data palette is vibrant categorical (chrome stays cashmere).*
