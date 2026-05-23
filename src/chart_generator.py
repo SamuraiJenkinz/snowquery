@@ -1,6 +1,6 @@
-"""
-Chart generation module for SNOWGREP.
-Renders HTML charts (Pie, Bar, Line) using Altair with vibrant colors on dark background.
+"""Chart generation module for SNOWGREP.
+Renders Pie / Bar / Line charts using Altair, styled by the loro_piana theme
+(see src/ui/altair_theme.py).
 """
 from __future__ import annotations
 
@@ -11,21 +11,7 @@ import altair as alt
 import pandas as pd
 
 from src.utils import logger
-
-
-# Vibrant color palette for charts
-CHART_COLORS = [
-    "#FF6B6B",  # Coral Red
-    "#4ECDC4",  # Teal
-    "#45B7D1",  # Sky Blue
-    "#96CEB4",  # Sage Green
-    "#FFEAA7",  # Soft Yellow
-    "#DDA0DD",  # Plum
-    "#98D8C8",  # Mint
-    "#F7DC6F",  # Gold
-    "#BB8FCE",  # Lavender
-    "#85C1E9",  # Light Blue
-]
+from src.ui.altair_theme import VIBRANT_PALETTE
 
 # Chart detection patterns
 CHART_PATTERNS = {
@@ -258,43 +244,6 @@ def infer_chart_type(query: str, df: pd.DataFrame) -> dict[str, Any] | None:
     return {"type": None, "feedback": "Unable to determine suitable chart type for this data."}
 
 
-def configure_chart_theme(chart: alt.Chart) -> alt.Chart:
-    """
-    Apply dark theme configuration to Altair chart.
-
-    Args:
-        chart: Altair chart object
-
-    Returns:
-        Configured chart with dark theme
-    """
-    return chart.configure(
-        background="#0a0a0a"
-    ).configure_view(
-        strokeWidth=0
-    ).configure_axis(
-        labelColor="#e0e0e0",
-        titleColor="#e0e0e0",
-        gridColor="#333333",
-        domainColor="#333333",
-        labelFont="JetBrains Mono, monospace",
-        titleFont="JetBrains Mono, monospace",
-        labelFontSize=11,
-        titleFontSize=12
-    ).configure_legend(
-        labelColor="#e0e0e0",
-        titleColor="#e0e0e0",
-        labelFont="JetBrains Mono, monospace",
-        titleFont="JetBrains Mono, monospace",
-        labelFontSize=11,
-        titleFontSize=12
-    ).configure_title(
-        color="#e0e0e0",
-        font="JetBrains Mono, monospace",
-        fontSize=14
-    )
-
-
 def generate_chart(df: pd.DataFrame, chart_config: dict[str, Any]) -> alt.Chart | None:
     """
     Generate Altair chart based on configuration.
@@ -340,7 +289,7 @@ def generate_chart(df: pd.DataFrame, chart_config: dict[str, Any]) -> alt.Chart 
                 color=alt.Color(
                     field=x_col,
                     type="nominal",
-                    scale=alt.Scale(range=CHART_COLORS),
+                    scale=alt.Scale(range=VIBRANT_PALETTE),
                     legend=alt.Legend(title=x_col.replace("_", " ").title())
                 ),
                 tooltip=[
@@ -360,31 +309,54 @@ def generate_chart(df: pd.DataFrame, chart_config: dict[str, Any]) -> alt.Chart 
                     chart_df, x_col, y_col, MAX_BAR_CATEGORIES
                 )
 
-            chart = alt.Chart(chart_df).mark_bar().encode(
+            # Phase 9 DVZ-05: HORIZONTAL bar — value (Q) on x, category (N) on y.
+            # sort='-x' on the Y encoding produces "largest bar at top" ordering.
+            # See 09-RESEARCH.md Pitfall 5 for the -x vs -y sort gotcha.
+            base = alt.Chart(chart_df)
+
+            bars = base.mark_bar().encode(
                 x=alt.X(
-                    field=x_col,
-                    type="nominal",
-                    title=x_col.replace("_", " ").title(),
-                    sort="-y"
-                ),
-                y=alt.Y(
                     field=y_col,
                     type="quantitative",
                     title=y_col.replace("_", " ").title()
                 ),
+                y=alt.Y(
+                    field=x_col,
+                    type="nominal",
+                    sort="-x",
+                    title=x_col.replace("_", " ").title()
+                ),
                 color=alt.Color(
                     field=x_col,
                     type="nominal",
-                    scale=alt.Scale(range=CHART_COLORS),
+                    scale=alt.Scale(range=VIBRANT_PALETTE),
                     legend=None
                 ),
                 tooltip=[
                     alt.Tooltip(x_col, title=x_col.replace("_", " ").title()),
                     alt.Tooltip(y_col, title=y_col.replace("_", " ").title())
                 ]
-            ).properties(
+            )
+
+            # Layered text marks — value labels to the right of each bar.
+            # Inter 12px charcoal, comma-formatted; matches mockup
+            # .planning/design-mockups/02-results-chart.png.
+            labels = base.mark_text(
+                align="left",
+                baseline="middle",
+                dx=4,
+                font="Inter",
+                fontSize=12,
+                color="#2C2420"
+            ).encode(
+                x=alt.X(field=y_col, type="quantitative"),
+                y=alt.Y(field=x_col, type="nominal", sort="-x"),
+                text=alt.Text(field=y_col, type="quantitative", format=",")
+            )
+
+            chart = alt.layer(bars, labels).properties(
                 width=600,
-                height=400,
+                height=max(200, len(chart_df) * 32),
                 title=f"{y_col.replace('_', ' ').title()} by {x_col.replace('_', ' ').title()}"
             )
 
@@ -394,7 +366,7 @@ def generate_chart(df: pd.DataFrame, chart_config: dict[str, Any]) -> alt.Chart 
 
             chart = alt.Chart(chart_df).mark_line(
                 point=True,
-                color=CHART_COLORS[0]
+                color="#C0392B"  # crimson — VIBRANT_PALETTE[0]
             ).encode(
                 x=alt.X(
                     field=x_col,
@@ -419,9 +391,6 @@ def generate_chart(df: pd.DataFrame, chart_config: dict[str, Any]) -> alt.Chart 
         else:
             logger.error(f"Unsupported chart type: {chart_type}")
             return None
-
-        # Apply dark theme
-        chart = configure_chart_theme(chart)
 
         logger.info(f"Generated {chart_type} chart successfully")
         return chart
