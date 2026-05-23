@@ -15,8 +15,8 @@ must_haves:
   truths:
     - "On a fresh browser session, `app.py::main()` calls `render_splash()` exactly once (verified by `st.session_state['_splash_shown']` going from missing → True over the first rerun cycle)."
     - "On any rerun within the same browser session where `st.session_state['_splash_shown']` is already True, `render_splash()` is NOT called again — the app renders the sidebar + main content immediately."
-    - "When `st.session_state['data_loaded']` AND `st.session_state['embeddings_ready']` are both True, the `st.empty()` placeholder is cleared (`.empty()` call fires), removing the splash from the DOM."
-    - "The splash is dismissed no later than 4 seconds (wall clock) after first render, even when data/embeddings are not yet ready — the 4s hard cap wins over data readiness."
+    - "When `st.session_state['data_loaded']` AND `st.session_state['embeddings_ready']` are both True AND `_splash_dismiss_sent` is False, the lifecycle helper emits a `snowgrep-splash-dismiss` postMessage into every iframe via a tiny inline `<script>`, sets `_splash_dismiss_sent=True`, then sleeps 400ms (the locked fade duration from CONTEXT.md line 48) and clears the `st.empty()` placeholder so the iframe's fade-out has visibly completed before the placeholder is removed."
+    - "The 4-second hard cap (SPL-02) is enforced ENTIRELY client-side inside the iframe (Plan 01 section D.2) — Python contains NO wall-clock check for the cap. Even if Streamlit never reruns after first mount, the splash fades on its own at 4s."
     - "Splash mounts at the TOP of `main()` BEFORE `init_session_state()` returns control to `render_sidebar()` / `render_main_content()` so it overlays everything else during the boot window."
     - "The locked v2.1 invariants are preserved: `page_title=\"SNOWGREP\"`, `page_icon=\"✦\"`, the `_render_provenance_caption` helper untouched, and `render_sidebar` runs BEFORE `render_main_content` (the `_llm_provider_blocked` order-load-bearing contract)."
   artifacts:
@@ -35,8 +35,12 @@ must_haves:
       pattern: "_splash_shown"
     - from: "app.py::main"
       to: "st.session_state['data_loaded'] AND st.session_state['embeddings_ready']"
-      via: "Boolean AND checked on each rerun while splash is active; triggers `placeholder.empty()` when both true OR 4s elapsed."
+      via: "Boolean AND checked on each rerun while splash is mounted; when both True (and dismiss-signal not yet sent), emit `postMessage({type:'snowgrep-splash-dismiss'})` into the iframe via a tiny inline `st.markdown` script, sleep 400ms (locked fade duration), then `placeholder.empty()`."
       pattern: "data_loaded.*embeddings_ready"
+    - from: "app.py::_run_splash_lifecycle"
+      to: "iframe `<script>` postMessage listener (Plan 01 section D.2)"
+      via: "`window.postMessage({type:'snowgrep-splash-dismiss'}, '*')` sent into every iframe — the splash iframe's listener (Plan 01) consumes it, adds `.is-dismissing`, CSS fades opacity over 400ms."
+      pattern: "snowgrep-splash-dismiss"
 ---
 
 <objective>
@@ -86,16 +90,23 @@ Find the existing `init_session_state()` function (currently at line ~89). Add t
 
 ```python
     # Phase 7 splash lifecycle. `_splash_shown` is the once-per-session gate
-    # (SPL-04); `_splash_start_ts` is the wall-clock timestamp captured the
-    # first time the splash renders so the 4-second hard cap can be enforced
-    # even when data load runs longer (SPL-02 anti-flash + anti-overstay).
+    # (SPL-04). `_splash_placeholder` holds the `st.empty()` handle returned
+    # at first mount so subsequent reruns can clear it after data is ready.
+    # `_splash_dismiss_sent` ensures the dismiss postMessage + 400ms-sleep
+    # path runs exactly once per session.
+    #
+    # NOTE: There is no `_splash_start_ts` and no Python-side 4s cap. The
+    # 4s hard cap (SPL-02) lives entirely in the iframe's <script> block
+    # (Plan 01 section D.2) — adding a Python wall-clock check is pointless
+    # because Streamlit does not rerun on a wall-clock timer, so any Python
+    # cap would only fire on the next user interaction (too late).
     if "_splash_shown" not in st.session_state:
         st.session_state._splash_shown = False
-    if "_splash_start_ts" not in st.session_state:
-        st.session_state._splash_start_ts = None
+    if "_splash_placeholder" not in st.session_state:
+        st.session_state._splash_placeholder = None
+    if "_splash_dismiss_sent" not in st.session_state:
+        st.session_state._splash_dismiss_sent = False
 ```
-
-No `_splash_dismissed` flag — the absence of the splash from the DOM after `placeholder.empty()` is the dismissed state; `_splash_shown` stays True for the rest of the session to prevent re-mount on reruns.
 
 **C. Add the splash lifecycle helper.**
 
@@ -103,96 +114,119 @@ Insert a new module-level function `_run_splash_lifecycle()` ABOVE `main()` (so 
 
 ```python
 def _run_splash_lifecycle() -> None:
-    """Mount, gate, and dismiss the boot splash. Phase 7 SPL-01..04.
+    """Mount + dismiss-signal the boot splash. Phase 7 SPL-01, SPL-02, SPL-04.
 
-    Contract:
-    - Called from the TOP of `main()`, BEFORE `render_sidebar()` and
-      `render_main_content()`. This runs every Streamlit rerun.
-    - On the FIRST rerun of a browser session, `_splash_shown` is False:
-      the splash is rendered into an `st.empty()` placeholder, the
-      start timestamp is captured, and `_splash_shown` is flipped to True.
-    - On EVERY subsequent rerun within the same session, `_splash_shown`
-      is True: this function short-circuits and returns immediately so
-      the splash is never re-mounted.
-    - Dismiss conditions (whichever fires first):
-      1. Both `data_loaded` AND `embeddings_ready` are True
-         (the happy path — data is ready).
-      2. 4 seconds have elapsed since `_splash_start_ts`
-         (anti-overstay hard cap — SPL-02).
-      When either fires, `placeholder.empty()` clears the splash from
-      the DOM and this function returns. Note: Streamlit's execution
-      model means the splash will visibly clear on the NEXT rerun
-      after the conditions are first met (which Streamlit triggers
-      automatically when `data_loaded` / `embeddings_ready` flip).
+    Two-state machine (Python side only — all timing-critical behavior lives
+    in the iframe; see Plan 01 section D.2):
+
+    State 1 — FIRST rerun of a browser session (`_splash_shown` is False):
+        Mount the splash into a fresh `st.empty()` placeholder, stash the
+        placeholder handle in session_state, and flip `_splash_shown` to True.
+        Return.
+
+    State 2 — subsequent reruns (`_splash_shown` is True):
+        If the placeholder has already been cleared and the dismiss signal
+        already sent, return immediately (steady-state, post-dismiss).
+
+        Otherwise, check `data_loaded AND embeddings_ready`. If both True
+        AND we haven't yet sent the dismiss signal:
+            (a) Render a tiny inline <script> via st.markdown that sends
+                `postMessage({type:'snowgrep-splash-dismiss'}, '*')` into
+                every iframe (the splash iframe's listener consumes it and
+                adds `.is-dismissing`, triggering the 400ms CSS fade).
+            (b) Set `_splash_dismiss_sent = True`.
+            (c) `time.sleep(0.4)` so the iframe's fade visibly completes
+                before we tear down its container.
+            (d) `placeholder.empty()` clears the iframe from the DOM.
+
+        If data is NOT yet ready, do nothing — the iframe is still on
+        screen, its own 4s hard-cap timer (Plan 01 section D.2) will fade
+        it out client-side if data never arrives. Next rerun re-checks.
+
+    Why no Python 4s cap: Streamlit only reruns on user interaction or
+    session_state mutation. A wall-clock cap in Python would only fire on
+    the next rerun, which may be never. The cap MUST live in the iframe.
     """
     import time
 
-    # Skip path: already shown this session.
-    if st.session_state.get("_splash_shown"):
+    # Fast path: dismiss already sent + placeholder cleared — nothing to do.
+    if st.session_state.get("_splash_shown") and st.session_state.get("_splash_dismiss_sent"):
         return
 
-    # Mount path: render into a placeholder we keep a handle to.
-    placeholder = st.empty()
-    with placeholder.container():
-        render_splash()
-    st.session_state._splash_shown = True
-    st.session_state._splash_start_ts = time.time()
+    # State 1: first mount of the session.
+    if not st.session_state.get("_splash_shown"):
+        placeholder = st.empty()
+        with placeholder.container():
+            render_splash()
+        st.session_state._splash_shown = True
+        st.session_state._splash_placeholder = placeholder
+        return
 
-    # Immediate-clear path: if both data_loaded AND embeddings_ready are
-    # already True at first mount (e.g., a quick reload after init), clear
-    # the placeholder right away. Anti-flash floor (800ms minimum visible)
-    # is NOT enforced in Python — the iframe's font load + paint time
-    # naturally floors the perceived duration, and adding a synchronous
-    # 800ms sleep would block the Streamlit thread (bad). The hard cap
-    # below is the only Python-side timing gate.
+    # State 2: splash is mounted, dismiss not yet sent. Check data readiness.
     if (
         st.session_state.get("data_loaded")
         and st.session_state.get("embeddings_ready")
     ):
-        placeholder.empty()
+        # (a) Send dismiss signal into every iframe. The splash iframe's
+        #     postMessage listener (Plan 01 section D.2) consumes
+        #     {type:'snowgrep-splash-dismiss'} and adds .is-dismissing.
+        #     Loop over window.frames so this targets the splash iframe
+        #     regardless of how many iframes Streamlit has spawned.
+        st.markdown(
+            """
+            <script>
+              (function() {
+                var payload = {type: 'snowgrep-splash-dismiss'};
+                for (var i = 0; i < window.frames.length; i++) {
+                  try { window.frames[i].postMessage(payload, '*'); } catch (e) {}
+                }
+              })();
+            </script>
+            """,
+            unsafe_allow_html=True,
+        )
+        # (b) Mark sent so we don't double-fire.
+        st.session_state._splash_dismiss_sent = True
+        # (c) Wait for the 400ms iframe fade to complete (CONTEXT.md line 48).
+        time.sleep(0.4)
+        # (d) Tear down the placeholder. The iframe is already fully faded.
+        placeholder = st.session_state.get("_splash_placeholder")
+        if placeholder is not None:
+            placeholder.empty()
+        st.session_state._splash_placeholder = None
         return
 
-    # On subsequent reruns (next time Streamlit re-executes the script,
-    # which happens whenever any session_state mutation triggers a rerun
-    # or the user interacts), `_splash_shown` is True and this function
-    # short-circuits at the top. The placeholder from this run is garbage-
-    # collected; the splash visibly clears as soon as the script reruns
-    # past this function and re-renders the page WITHOUT calling
-    # `render_splash` again.
+    # Data not ready yet. Iframe is still showing; its own 4s hard-cap
+    # timer will fade it out if data never arrives. Next rerun re-checks.
+    return
 ```
 
-Note the deliberate design: we mount the splash ONCE on first render. We do NOT re-render it on subsequent reruns (skip-path returns early). The splash visibly disappears on the NEXT rerun after first mount because the page is re-rendered without it.
+**Design notes:**
 
-To enforce the 4-second hard cap and the data-ready dismiss without infinite-loop polling, this plan's design relies on Streamlit's natural rerun triggers: any sidebar interaction, any data load completion (which mutates `data_loaded`), and any embeddings-ready flip will trigger a rerun. Most boot windows will see the splash clear on the rerun that follows `data_loaded` flipping to True.
-
-For the worst case (very slow load, no other reruns), we add a final-defense check. Modify `_run_splash_lifecycle` to also include:
-
-```python
-    # Defensive: if more than 4s have elapsed since first mount and we
-    # somehow got here a second time (shouldn't happen given the skip
-    # path above, but guards against future refactors), force the clear.
-    elapsed = time.time() - (st.session_state._splash_start_ts or time.time())
-    if elapsed >= 4.0:
-        placeholder.empty()
-```
-
-(Place this AFTER the immediate-clear path, BEFORE the function returns.)
-
-This guards `_run_splash_lifecycle()` for any future refactor where the early-return guard might be removed.
+- **No dead defensive 4s block.** The previous revision had an unreachable `elapsed >= 4.0` block that was guarded above by the skip-path early return. Removed entirely — the 4s cap is the iframe's job (Plan 01 section D.2).
+- **No `time.sleep(0.8)` floor in Python.** The 800ms soft floor (CONTEXT.md line 46) is also client-side — the iframe's listener defers any too-early dismiss signal until 800ms has elapsed since mount. Python can fire the dismiss signal whenever it wants; the iframe absorbs the race.
+- **The 400ms `time.sleep(0.4)` IS in Python** because it gates the placeholder teardown. Without it, `placeholder.empty()` would yank the iframe from the DOM before the CSS fade completes, producing the locked-against "snap" behavior. 400ms is a one-shot block on a one-shot path (state 2 fires exactly once per session), so it does not meaningfully harm Streamlit responsiveness.
+- **Placeholder handle survives across reruns** because we stash it in `st.session_state._splash_placeholder`. Streamlit's `st.empty()` containers are session-persistent objects — keeping the handle lets a later rerun clear what a previous rerun mounted.
   </action>
   <verify>
 1. `grep -n "from src.ui.splash import render_splash" app.py` returns one line — confirms the import is present.
 
-2. `grep -n "_splash_shown\|_splash_start_ts" app.py` returns at least 4 lines — init_session_state declarations + lifecycle helper reads/writes.
+2. `grep -n "_splash_shown\|_splash_placeholder\|_splash_dismiss_sent" app.py` returns at least 6 lines — three init_session_state declarations + lifecycle helper reads/writes for each of the three keys.
 
 3. `grep -c "def _run_splash_lifecycle" app.py` returns exactly 1.
 
-4. `python -c "import ast; tree = ast.parse(open('app.py').read()); fns = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}; assert '_run_splash_lifecycle' in fns; assert 'main' in fns; assert 'init_session_state' in fns; print('OK')"` prints `OK`.
+4. `grep -c "snowgrep-splash-dismiss" app.py` returns exactly 1 — the postMessage payload string is present and matches the iframe-side contract from Plan 01 section D.2.
 
-5. `python -c "import app; print('imports clean')"` — must succeed without ImportError or syntax error (note: actually importing app.py may trigger Streamlit page config; that's fine as long as no exception is raised before main() is called).
+5. `grep -c "time.sleep(0.4)" app.py` returns exactly 1 — the 400ms fade-window block before placeholder teardown is present.
+
+6. `grep -c "_splash_start_ts\|elapsed >= 4.0\|elapsed >= 4 " app.py` returns 0 — the Python-side 4s cap (and any wall-clock start timestamp) must NOT exist; the cap lives in the iframe.
+
+7. `python -c "import ast; tree = ast.parse(open('app.py').read()); fns = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}; assert '_run_splash_lifecycle' in fns; assert 'main' in fns; assert 'init_session_state' in fns; print('OK')"` prints `OK`.
+
+8. `python -c "import app; print('imports clean')"` — must succeed without ImportError or syntax error (note: actually importing app.py may trigger Streamlit page config; that's fine as long as no exception is raised before main() is called).
   </verify>
   <done>
-`app.py` imports `render_splash` from `src.ui.splash`. `init_session_state()` initializes `_splash_shown=False` and `_splash_start_ts=None`. `_run_splash_lifecycle()` exists as a module-level function above `main()`, with the early-return skip path, the `st.empty()` mount path, the immediate-clear path, and the 4s defensive cap. No invocation site yet — Task 2 wires it into `main()`.
+`app.py` imports `render_splash` from `src.ui.splash`. `init_session_state()` initializes `_splash_shown=False`, `_splash_placeholder=None`, `_splash_dismiss_sent=False`. `_run_splash_lifecycle()` exists as a module-level function above `main()`, implementing the two-state machine: (state 1) first-rerun mount + placeholder stash; (state 2) subsequent-rerun dismiss-signal send + 400ms sleep + placeholder teardown when data is ready. No Python-side 4s cap, no `_splash_start_ts`, no dead defensive blocks. No invocation site yet — Task 2 wires it into `main()`.
   </done>
 </task>
 
@@ -227,10 +261,14 @@ def main():
     Pitfall 5).
 
     Phase 7 (SPL-02, SPL-04): `_run_splash_lifecycle()` runs AFTER
-    `init_session_state()` (which creates the `_splash_shown` flag) and
-    BEFORE the sidebar/main render so the splash mounts at the very top of
-    the DOM during the boot window. Subsequent reruns short-circuit inside
-    the lifecycle helper (no double-mount, no flicker).
+    `init_session_state()` (which creates `_splash_shown` /
+    `_splash_placeholder` / `_splash_dismiss_sent`) and BEFORE the
+    sidebar/main render so the splash mounts at the very top of the DOM
+    during the boot window. First rerun mounts the splash; subsequent
+    reruns either (a) do nothing if dismiss already sent, or (b) send the
+    `snowgrep-splash-dismiss` postMessage into the iframe and tear down
+    the placeholder once data is ready. The 4s hard cap (SPL-02) is
+    enforced entirely client-side inside the iframe.
     """
     init_session_state()
     _run_splash_lifecycle()  # Phase 7: mount + gate + dismiss boot splash
@@ -280,7 +318,7 @@ The complete Phase 7 splash flow: `_run_splash_lifecycle()` mounts the helix spl
   <how-to-verify>
 1. **Fresh browser session — splash appears.** Open an Incognito / Private window and navigate to the running Streamlit app (`streamlit run app.py` first if not already running). Expected: the splash renders for several seconds — warm off-white background, "SNOWGREP" wordmark center in EB Garamond serif, "INCIDENT INTELLIGENCE" tagline in small-caps gold beneath, "LOADING YOUR DATA" near the bottom, 16 INC IDs (8 per diagonal stream) sparsely scattered and slowly drifting along two crossed diagonals. The mockup `.planning/design-mockups/00-splash-helix.png` is the visual contract.
 
-2. **Splash dismisses on data readiness.** Without uploading a CSV (data_loaded=False), the splash should still clear at 4 seconds (the hard cap). With a CSV already loaded from a previous session (via the persistent DuckDB store) and embeddings present, the splash should clear immediately on first paint — confirms the data-ready dismiss path.
+2. **Splash dismisses on data readiness (with 400ms fade).** Without uploading a CSV (data_loaded=False), the splash should still fade out at 4 seconds (the iframe's client-side hard cap — observe a visible 400ms opacity fade, NOT a snap-clear). With a CSV already loaded from a previous session (via the persistent DuckDB store) and embeddings present, the splash should still display for at least 800ms (soft floor), THEN fade out over 400ms — confirms both the data-ready dismiss path AND the 400ms fade. If you observe a snap-clear (no fade), the iframe `<script>` block from Plan 01 section D.2 is broken.
 
 3. **Single-shot per session.** With the splash already shown in the same browser window, click any sidebar control (e.g., the QUERY SETTINGS expander) or trigger any rerun. Expected: the splash does NOT re-appear; the app renders straight into the main view. The `_splash_shown` flag is doing its job.
 
@@ -317,13 +355,16 @@ Visual checkpoint (Task 3) confirms the runtime behavior matches the four succes
 
 <success_criteria>
 - `app.py` imports `render_splash` from `src.ui.splash`.
-- `init_session_state()` initializes `_splash_shown=False` and `_splash_start_ts=None`.
+- `init_session_state()` initializes `_splash_shown=False`, `_splash_placeholder=None`, `_splash_dismiss_sent=False`.
 - `_run_splash_lifecycle()` exists as a module-level function and is called from `main()` between `init_session_state()` and `render_sidebar()`.
-- Fresh browser session: splash renders, then clears when `data_loaded` AND `embeddings_ready` are both True OR 4 seconds elapsed.
+- `app.py` contains NO `_splash_start_ts`, no Python-side wall-clock 4s cap, and no dead defensive `elapsed >= 4.0` block — the 4s cap is the iframe's responsibility (Plan 01 section D.2).
+- `app.py` contains the postMessage payload string `snowgrep-splash-dismiss` exactly once (the dismiss-signal `st.markdown` script inside `_run_splash_lifecycle`).
+- `app.py` contains exactly one `time.sleep(0.4)` (the 400ms fade-window block before placeholder teardown).
+- Fresh browser session: splash renders, displays at least 800ms, then fades over 400ms when `data_loaded` AND `embeddings_ready` are both True. If data never readies, the iframe's own 4s hard-cap fade triggers regardless.
 - Same browser session, subsequent reruns: splash does NOT re-render (`_splash_shown` short-circuits).
-- Reduced motion: INC IDs fade at fixed positions; wordmark/tagline/status render identically.
+- Reduced motion: INC IDs fade at fixed positions; wordmark/tagline/status render identically; the 400ms dismiss fade is retained (CONTEXT.md line 56).
 - v2.1 invariants preserved: page_title="SNOWGREP", page_icon="✦", `_render_provenance_caption` untouched, `pytest tests/test_phase5_ui.py` returns 22 passed.
-- Satisfies SPL-02 (clear on data-ready + 4s cap) and SPL-04 (once per browser session via `_splash_shown`).
+- Satisfies SPL-04 (once per browser session via `_splash_shown`). Co-satisfies SPL-02 with Plan 01 (Python side sends the data-ready dismiss signal; iframe enforces the 4s hard cap and the 400ms fade).
 </success_criteria>
 
 <output>

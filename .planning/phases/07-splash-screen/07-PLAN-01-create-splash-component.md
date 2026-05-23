@@ -19,6 +19,8 @@ must_haves:
     - "The HTML string contains all four brand hex values consumed from `LORO_PIANA_TOKENS` — `#F5F0EB` (bg), `#2C2420` (text), `#8A7A6B` (text_subtle), `#B8A88A` (gold_decorative) — and `src/ui/splash.py` contains zero literal brand hex constants (every brand color is string-interpolated from `LORO_PIANA_TOKENS`)."
     - "The HTML string contains 16 synthetic INC IDs (8 per stream) generated once at module load with a fixed `random.Random(seed)` so the same IDs render across reruns inside a session."
     - "The HTML string contains a `@media (prefers-reduced-motion: reduce)` block that disables `translate` keyframes on the INC ID elements and keeps only opacity animation — wordmark/tagline/status label are NOT inside any reduced-motion override (they render identically in both modes)."
+    - "The HTML string contains a CSS rule `.splash { transition: opacity 400ms ...; }` (matches CONTEXT.md line 48 — `--lp-transition-slow`) and a `.splash.is-dismissing { opacity: 0; }` rule, so adding the `is-dismissing` class triggers the locked 400ms fade-out."
+    - "The HTML string contains a `<script>` block that owns ALL client-side splash timing: (1) `setTimeout(800ms)` sets an internal `readyToDismiss` flag (soft floor — CONTEXT.md line 46); (2) `setTimeout(4000ms)` adds `.is-dismissing` to `.splash` (hard cap — CONTEXT.md line 47 / SPL-02); (3) `window.addEventListener('message', ...)` listens for a parent-sent `{type:'snowgrep-splash-dismiss'}` postMessage and adds `.is-dismissing` — but defers if elapsed < 800ms until the floor is hit."
     - "Calling `render_splash()` invokes `streamlit.components.v1.html(html_str, height=N, scrolling=False)` once — verified by a unit-style smoke that monkey-patches `streamlit.components.v1.html` and captures the call."
   artifacts:
     - path: "src/ui/splash.py"
@@ -158,7 +160,17 @@ For Task 1, draft the HTML/CSS string scaffolding inside `render_splash()` with 
 
 Inline styles per INC ID may carry the diagonal position and stagger delay — keyframe motion is finalized in Task 2.
 
-Use Python f-strings (or a single `.format(**locals())` at the bottom) to interpolate. Triple-quoted raw strings keep the CSS readable. Be careful with `{` and `}` inside CSS — they must be escaped as `{{` and `}}` when using f-strings (or use `.format()` and leave CSS braces single).
+**Interpolation strategy — LOCKED to `.format(**locals())`. Do NOT use f-strings for the HTML/CSS template.**
+
+The HTML template is 150+ lines of CSS containing dozens of `{...}` selector blocks. Under f-strings, every CSS brace must be escaped as `{{` / `}}` — a single missed escape produces silently broken CSS that still parses Python-side. To eliminate this footgun:
+
+1. Build the HTML/CSS as one large triple-quoted plain string (NOT an f-string — no `f""" ... """` prefix).
+2. Use `{bg}`, `{text}`, `{text_subtle}`, `{gold}`, `{stream_a_html}`, `{stream_b_html}` (and any other Python-side computed values) as the ONLY `{...}` placeholders.
+3. CSS braces remain single (`.splash { ... }`) — they pass through `.format()` untouched because the CSS doesn't contain any `{name}` patterns that collide with our placeholders.
+4. At the bottom of `render_splash()`, do exactly one substitution: `html = template.format(**locals())`.
+5. If any computed value's name collides with a CSS token (e.g., never name a local `keyframes`), rename the local. The `str.format()` placeholder set is the union of `{bg, text, text_subtle, gold, stream_a_html, stream_b_html}` — keep it tight.
+
+The smoke test in Task 2 step #5 catches broken interpolation by asserting the four brand hexes + three locked strings are present in the rendered HTML, so any escape bug fails the verify step loudly.
   </action>
   <verify>
 1. `python -c "from src.ui.splash import render_splash, _INC_IDS; assert callable(render_splash); assert len(_INC_IDS) == 16; assert all(s.startswith('INC') and len(s) == 10 and s[3:].isdigit() for s in _INC_IDS); print('OK', _INC_IDS[:3])"` prints `OK` plus three INC IDs.
@@ -255,7 +267,81 @@ Key contract: under `prefers-reduced-motion: reduce`, INC IDs fade in/out at FIX
 
 Wordmark, tagline, and status label MUST render identically in both modes — they have no animation, so they need no reduced-motion override. Verify the `@media` block only touches `.stream-a .inc-id` and `.stream-b .inc-id`.
 
-**D. Finalize `components.v1.html(...)` call:**
+**D. Client-side dismiss timing — owns ALL timing (CONTEXT.md lines 44-48).**
+
+The splash is mounted in an iframe (`streamlit.components.v1.html`). Streamlit's Python side cannot reliably re-render on a wall-clock timer — reruns only happen on user interaction or session_state mutation. So ALL timing-critical splash behavior (soft floor, hard cap, fade-out) lives client-side inside this iframe. The Python side (Plan 02) is a one-shot mount + a dismiss-signal sender.
+
+**D.1. CSS fade-out rule** — add to the `<style>` block alongside the `.splash` container rule:
+
+```css
+.splash {
+  /* ... existing rules ... */
+  opacity: 1;
+  transition: opacity 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.splash.is-dismissing {
+  opacity: 0;
+}
+```
+
+400ms matches CONTEXT.md line 48 (`--lp-transition-slow`). The cubic-bezier matches `--lp-easing-smooth`. The reduced-motion variant does NOT override this — per CONTEXT.md line 56, "400ms fade-out on dismiss retained (low motion budget, doesn't trigger vestibular concerns)."
+
+**D.2. Inline `<script>` block** — add IMMEDIATELY BEFORE `</body>` in the HTML template:
+
+```html
+<script>
+  (function() {
+    var splash = document.querySelector('.splash');
+    var mountedAt = Date.now();
+    var readyToDismiss = false;
+    var dismissPending = false;
+    var FLOOR_MS = 800;   // CONTEXT.md line 46 — soft floor
+    var CAP_MS = 4000;    // CONTEXT.md line 47 / SPL-02 — hard cap
+
+    function doDismiss() {
+      if (splash && !splash.classList.contains('is-dismissing')) {
+        splash.classList.add('is-dismissing');
+      }
+    }
+
+    // Soft floor: after 800ms, flag readyToDismiss. If a dismiss signal
+    // arrived earlier, it set dismissPending — fire it now.
+    setTimeout(function() {
+      readyToDismiss = true;
+      if (dismissPending) doDismiss();
+    }, FLOOR_MS);
+
+    // Hard cap: at 4000ms, fade regardless of any external signal.
+    setTimeout(function() {
+      doDismiss();
+    }, CAP_MS);
+
+    // External dismiss signal from parent (Plan 02 sends this when
+    // data_loaded AND embeddings_ready are both true).
+    window.addEventListener('message', function(ev) {
+      if (!ev.data || ev.data.type !== 'snowgrep-splash-dismiss') return;
+      var elapsed = Date.now() - mountedAt;
+      if (elapsed >= FLOOR_MS) {
+        doDismiss();
+      } else {
+        dismissPending = true;  // floor-timer will fire it at 800ms
+      }
+    });
+  })();
+</script>
+```
+
+**Notes:**
+- The script is plain JS, no dependencies, runs synchronously after `.splash` is in the DOM (placement before `</body>` guarantees this).
+- `Date.now()` is used (not `performance.now()`) for max compatibility inside Streamlit's iframe sandbox.
+- The `(function(){ ... })()` IIFE keeps `mountedAt` / `readyToDismiss` / `dismissPending` out of any global namespace.
+- The postMessage payload shape (`{type: 'snowgrep-splash-dismiss'}`) is the contract Plan 02 will produce. Keep this string stable.
+- Adding `is-dismissing` triggers the CSS `transition: opacity 400ms`. The iframe still occupies its placeholder for those 400ms; Plan 02's Python side sleeps 400ms before clearing the placeholder so the fade visibly completes.
+- Under reduced-motion, the 400ms fade IS retained per CONTEXT.md line 56. No special handling needed.
+
+This script must be INSIDE the same template as the HTML — interpolated via `.format(**locals())` along with everything else. The script contains no Python placeholders, but the curly braces in JS function bodies (`function() { ... }`) are fine under `.format()` because none of them collide with the placeholder names (`{bg}`, `{text}`, etc.).
+
+**E. Finalize `components.v1.html(...)` call:**
 
 ```python
 components.v1.html(html, height=720, scrolling=False)
@@ -274,9 +360,9 @@ __all__ = ["render_splash"]
 **Non-goals (do NOT add in this plan):**
 
 - Do NOT add session-state checks, `_splash_shown` gating, `data_loaded` / `embeddings_ready` polling, or `placeholder.empty()` calls — that's Plan 02's contract.
-- Do NOT add a fade-out animation triggered by external state — Plan 02 dismisses the splash by clearing the `st.empty()` placeholder; the component itself doesn't need to know about dismiss.
 - Do NOT import `streamlit as st` — only `streamlit.components.v1` is needed.
 - Do NOT add unit tests in this plan (tests are TST-02 work in Phase 11).
+- Do NOT add a Python-side `time.sleep` or wall-clock check for the 4s cap — the cap lives entirely in the iframe's `<script>` block (section D.2).
   </action>
   <verify>
 1. `python -c "from src.ui.splash import render_splash; import inspect; src = inspect.getsource(render_splash); assert 'components.v1.html' in src or 'components.html' in src; assert 'prefers-reduced-motion' in src or 'reduced-motion' in src; print('OK')"` prints `OK` — proves the iframe call site and the reduced-motion media query are wired.
@@ -316,9 +402,42 @@ print('OK: 1 call, all 3 verbatim strings + 4 brand hexes + reduced-motion prese
 Prints `OK: 1 call, all 3 verbatim strings + 4 brand hexes + reduced-motion present`.
 
 6. `grep -c "JetBrains Mono" src/ui/splash.py` returns at least 1 (the INC IDs use mono — Phase 6 mono-boundary exception for data identifiers).
+
+7. Client-side timing + fade-out invariants (CONTEXT.md lines 44-48). The smoke from step 5 produced `html`; extend it (or re-run with these extra asserts after the existing ones):
+
+```
+python -c "
+import sys, types
+calls = []
+class FakeComponents:
+    @staticmethod
+    def html(html, **kwargs): calls.append((html, kwargs))
+fake_pkg = types.ModuleType('streamlit.components.v1')
+fake_pkg.html = FakeComponents.html
+sys.modules['streamlit.components.v1'] = fake_pkg
+fake_root = types.ModuleType('streamlit.components')
+fake_root.v1 = fake_pkg
+sys.modules['streamlit.components'] = fake_root
+sys.modules.setdefault('streamlit', types.ModuleType('streamlit'))
+from src.ui.splash import render_splash
+render_splash()
+html, _ = calls[0]
+# CSS fade-out rule
+assert 'transition: opacity 400ms' in html, 'missing 400ms opacity transition (CONTEXT.md line 48)'
+assert 'is-dismissing' in html, 'missing .is-dismissing class for fade-out trigger'
+# Client-side timing script
+assert '<script>' in html, 'missing inline <script> for client-side timing'
+assert '800' in html, 'missing 800ms soft-floor literal (CONTEXT.md line 46)'
+assert '4000' in html, 'missing 4000ms hard-cap literal (CONTEXT.md line 47 / SPL-02)'
+assert 'snowgrep-splash-dismiss' in html, 'missing postMessage contract string'
+assert 'addEventListener' in html and 'message' in html, 'missing postMessage listener'
+print('OK: client-side timing + 400ms fade-out present')
+"
+```
+Prints `OK: client-side timing + 400ms fade-out present`.
   </verify>
   <done>
-`render_splash()` emits a self-contained HTML document containing: the three locked verbatim strings, all four `LORO_PIANA_TOKENS` brand hex values (interpolated, not literal), 16 INC IDs split into two diagonal streams, motion-variant keyframes with ~120px translation + 6-8s loop, and a `prefers-reduced-motion: reduce` media query that disables translation and slows opacity loop to 10-12s with max 0.4 opacity. The function makes exactly one `streamlit.components.v1.html(...)` call with `scrolling=False`. No brand hex literals in the source.
+`render_splash()` emits a self-contained HTML document containing: the three locked verbatim strings, all four `LORO_PIANA_TOKENS` brand hex values (interpolated, not literal), 16 INC IDs split into two diagonal streams, motion-variant keyframes with ~120px translation + 6-8s loop, a `prefers-reduced-motion: reduce` media query that disables translation and slows opacity loop to 10-12s with max 0.4 opacity, a `.splash { transition: opacity 400ms }` + `.splash.is-dismissing { opacity: 0 }` CSS pair, and an inline `<script>` block that owns the 800ms soft floor, the 4000ms hard cap, and a `message` listener for the `snowgrep-splash-dismiss` postMessage contract. The function makes exactly one `streamlit.components.v1.html(...)` call with `scrolling=False`. No brand hex literals in the source.
   </done>
 </task>
 
@@ -363,8 +482,10 @@ Expected: no output (exit code 1 = no matches found, which is the pass condition
 - The HTML contains the four required brand hex values from `LORO_PIANA_TOKENS` — `#F5F0EB`, `#2C2420`, `#8A7A6B`, `#B8A88A` — and `src/ui/splash.py` contains zero brand hex literals (every brand color is interpolated from `LORO_PIANA_TOKENS`).
 - The CSS contains motion keyframes (~120px translation per stream, 6-8s loop, easing `cubic-bezier(0.4, 0, 0.2, 1)`).
 - The CSS contains a `@media (prefers-reduced-motion: reduce)` block that overrides only the INC ID animations (not the wordmark/tagline/status) — disables `translate`, slows opacity loop to 10-12s, caps max opacity at 0.4.
-- Satisfies SPL-01 (component emits the helix via `streamlit.components.v1.html`) and SPL-03 (reduced-motion variant).
-- Does NOT satisfy SPL-02 (dismiss logic) or SPL-04 (`_splash_shown` session gating) — those are Plan 02's contract.
+- The CSS contains `.splash { transition: opacity 400ms ...; }` + `.splash.is-dismissing { opacity: 0; }` — the locked 400ms fade-out from CONTEXT.md line 48.
+- The HTML contains an inline `<script>` block that owns ALL client-side splash timing: 800ms soft floor (CONTEXT.md line 46), 4000ms hard cap (CONTEXT.md line 47 / SPL-02), and a `postMessage` listener for `{type: 'snowgrep-splash-dismiss'}` that adds `.is-dismissing` (deferring until the 800ms floor if signaled earlier).
+- Satisfies SPL-01 (component emits the helix via `streamlit.components.v1.html`), SPL-02 (4s hard cap enforced client-side regardless of Python rerun cadence), and SPL-03 (reduced-motion variant).
+- Does NOT satisfy SPL-04 (`_splash_shown` session gating) — that's Plan 02's contract.
 </success_criteria>
 
 <output>
