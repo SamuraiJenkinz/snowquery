@@ -610,6 +610,7 @@ samp,
    button to match the EMBEDDINGS MISSING pill aesthetic.
    ============================================================ */
 
+
 /* Expander — editorial header instead of Streamlit's bold default */
 [data-testid="stSidebar"] [data-testid="stExpander"] summary,
 [data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stExpanderToggleIcon"] + div,
@@ -734,6 +735,179 @@ samp,
   color: var(--lp-danger) !important;
   line-height: 1 !important;
   margin: 0 !important;
+}
+
+/* === Main panel (Phase 8 MAIN-*) === */
+
+/* MAIN-01 — Editorial page header + subtitle */
+.lp-page-header {
+  font-family: var(--lp-font-headline);
+  font-weight: 300;
+  font-size: 36px;
+  color: var(--lp-text);
+  letter-spacing: -0.01em;
+  margin: var(--lp-space-8) 0 var(--lp-space-2) 0;
+  line-height: 1.1;
+}
+.lp-page-subtitle {
+  font-family: var(--lp-font-body);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--lp-text-muted);
+  margin: 0 0 var(--lp-space-8) 0;
+  line-height: 1.5;
+}
+
+/* MAIN-01 — Ghost example queries (data loaded, no messages yet) */
+.lp-ghost-queries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lp-space-3);
+  margin: var(--lp-space-6) 0;
+}
+.lp-ghost-queries .stButton > button {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-family: var(--lp-font-body);
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--lp-text);
+  padding: var(--lp-space-2) 0;
+  text-align: left;
+  justify-content: flex-start;
+}
+.lp-ghost-queries .stButton > button:hover {
+  background: transparent;
+  color: var(--lp-accent);
+  border: 0;
+  box-shadow: none;
+}
+.lp-ghost-queries .stButton > button::before {
+  content: "·  ";
+  color: var(--lp-text-muted);
+}
+
+/* MAIN-02 — User message card (right-aligned, warm-beige) */
+.lp-msg-user {
+  background: var(--lp-bg);
+  border-radius: var(--lp-radius-md);
+  padding: var(--lp-space-4) var(--lp-space-5);
+  max-width: 70%;
+  margin-left: auto;
+  margin-right: 0;
+  margin-bottom: var(--lp-space-3);
+  font-family: var(--lp-font-body);
+  font-size: 15px;
+  color: var(--lp-text);
+  line-height: 1.5;
+}
+/* Hide Streamlit's default chat-message avatar + role label for user messages.
+   The `.lp-msg-user` wrapper sits inside the chat message body, so we target
+   the parent stChatMessage that contains it via :has() (Chromium 105+). */
+[data-testid="stChatMessage"]:has(.lp-msg-user) {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+[data-testid="stChatMessage"]:has(.lp-msg-user) [data-testid="chatAvatarIcon-user"],
+[data-testid="stChatMessage"]:has(.lp-msg-user) [data-testid="stChatMessageAvatarUser"] {
+  display: none;
+}
+
+/* MAIN-03 — Assistant message card (left-aligned, white, thin border — DOM bay for Phase 9) */
+.lp-msg-assistant {
+  background: var(--lp-surface);
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-radius-md);
+  padding: var(--lp-space-5) var(--lp-space-6);
+  max-width: 85%;
+  margin-left: 0;
+  margin-right: auto;
+  margin-bottom: var(--lp-space-4);
+  font-family: var(--lp-font-body);
+  font-size: 15px;
+  color: var(--lp-text);
+  line-height: 1.6;
+  box-shadow: var(--lp-shadow-soft);  /* 0 1px 2px rgba(139,115,85,0.06) */
+}
+[data-testid="stChatMessage"]:has(.lp-msg-assistant) {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+[data-testid="stChatMessage"]:has(.lp-msg-assistant) [data-testid="chatAvatarIcon-assistant"],
+[data-testid="stChatMessage"]:has(.lp-msg-assistant) [data-testid="stChatMessageAvatarAssistant"] {
+  display: none;
+}
+
+/* MAIN-04 — Per-message provenance caption (muted gold small-caps) */
+.lp-provenance [data-testid="stCaptionContainer"],
+.lp-provenance small,
+.lp-provenance p {
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-neutral-400);  /* #B8A88A muted gold */
+  margin: 0 0 var(--lp-space-2) 0;
+  padding: 0;
+}
+/* Render "via" → "VIA" via text-transform above. The model name in backticks
+   stays in JetBrains Mono via the existing Phase 6 mono boundary (inline
+   <code> tag emitted by markdown backticks). */
+.lp-provenance code {
+  font-family: var(--lp-font-mono);
+  font-size: 11px;
+  color: var(--lp-neutral-400);
+  background: transparent;
+  padding: 0;
+}
+
+/* MAIN-05 / MAIN-06 — Bottom-border-only chat input + blocked state */
+[data-testid="stChatInput"] {
+  background: transparent;
+}
+[data-testid="stChatInput"] [data-baseweb="textarea"],
+[data-testid="stChatInput"] > div:first-child {
+  background: var(--lp-surface);
+  border: 0;
+  border-bottom: 1px solid var(--lp-border);
+  border-radius: 0;
+  box-shadow: none;
+  padding-bottom: var(--lp-space-2);
+}
+[data-testid="stChatInput"]:focus-within [data-baseweb="textarea"],
+[data-testid="stChatInput"]:focus-within > div:first-child {
+  border-bottom-color: var(--lp-accent);
+  box-shadow: none;
+}
+[data-testid="stChatInput"] textarea {
+  background: transparent;
+  border: 0;
+  font-family: var(--lp-font-body);
+  font-size: 15px;
+  color: var(--lp-text);
+}
+[data-testid="stChatInput"] textarea::placeholder {
+  font-family: var(--lp-font-body);
+  font-size: 15px;
+  color: var(--lp-text-muted);
+}
+/* Blocked state — Streamlit sets aria-disabled on the textarea when
+   st.chat_input(disabled=True). Soften the whole row to mirror SBR-03
+   blocked MODE pills. */
+[data-testid="stChatInput"]:has(textarea[disabled]),
+[data-testid="stChatInput"]:has(textarea[aria-disabled="true"]) {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 """
 
