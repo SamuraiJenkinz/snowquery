@@ -10,17 +10,17 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 ## Current Position
 
 Phase: 9 — Data visualization — In progress
-Plan: 1 of 4 complete
-Status: Phase 8 COMPLETE + verified; Phase 9 Plan 01 complete (altair_theme.py created, loro_piana theme registered)
-Last activity: 2026-05-23 — Completed 09-01-PLAN.md (loro_piana Altair theme module)
+Plan: 2 of 4 complete
+Status: Phase 8 COMPLETE + verified; Phase 9 Plans 01-02 complete
+Last activity: 2026-05-23 — Completed 09-02-PLAN.md (editorial table renderer + CSS extension)
 
-Progress: v2.2 — Phases 6-8 COMPLETE; Phase 9 in progress (1/4 plans done)
+Progress: v2.2 — Phases 6-8 COMPLETE; Phase 9 in progress (2/4 plans done)
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
 [██████████] Phase 7  Splash screen                    ← COMPLETE (Plans 01-02 done)
 [██████████] Phase 8  Screen restyle (sidebar + main)  ← COMPLETE (Plans 01-02 done)
-[██        ] Phase 9  Data visualization               ← IN PROGRESS (Plan 01 done)
+[████      ] Phase 9  Data visualization               ← IN PROGRESS (Plans 01-02 done)
 [          ] Phase 10 Polish + edge states
 [          ] Phase 11 Documentation + acceptance gate
 ```
@@ -57,6 +57,10 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 
 ### Decisions (recent)
 
+- **Phase 9 Plan 02 — results.py in src/ui/ (NOT src/utils.py)**: utils.py has zero Streamlit-adjacent helpers; results.py is the logical home alongside css.py and splash.py. Plan 04 imports from `src.ui.results`.
+- **Phase 9 Plan 02 — DVZ-03 truncation cap confirmed at 50**: User-approved deviation from REQUIREMENTS.md `>1000` literal; editorial table is the hero view and must be scannable at a glance. The 50-row cap is encoded in `_TRUNCATION_CAP` constant; caption spec-locked verbatim with U+00B7 middot and comma-formatted N.
+- **Phase 9 Plan 02 — hover background rgba(245,240,235,0.5) is a literal exception**: No half-alpha token exists in the design system; this one CSS value is kept as a literal and documented in the SUMMARY. All other new CSS uses existing `var(--lp-*)` tokens.
+- **Phase 9 Plan 02 — Pure-HTML-string renderer pattern**: `results.py` functions return strings; `st.markdown(html, unsafe_allow_html=True)` call lives at the Plan 04 integration site in `display_results`. No Streamlit import in `results.py`.
 - **Phase 9 Plan 01 — Altair 6 `@alt.theme.register` API**: Use `@alt.theme.register('loro_piana', enable=True)` decorator — NOT the deprecated `alt.themes.*` namespace. The `enable=True` kwarg registers and activates in one call; no separate `.enable()` needed. This is the SNOWGREP canonical pattern for Altair theme registration; applies process-wide at import time.
 - **Phase 9 Plan 01 — VIBRANT_PALETTE is the canonical chart data palette source**: `src/ui/altair_theme.py` is the single source of truth for the 5-color vibrant palette. Plan 03 (chart_generator.py) imports `VIBRANT_PALETTE` from here; Plan 04 (app.py) adds the side-effect import. No other module may redefine these colors.
 - **Phase 9 Plan 01 — `background: transparent` in chart theme**: Chart background inherits the assistant-card white; setting transparent future-proofs against card color changes. Charts visually integrate with the card without needing a matching hardcoded color.
@@ -96,10 +100,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-23 — Phase 9 Plan 01 execution (altair_theme.py created, all verifications passed)
-Stopped at: Phase 9 Plan 01 COMPLETE — f36c8c5 feat(9-1): src/ui/altair_theme.py with loro_piana theme; 22/22 Phase 5 tests green
+Last session: 2026-05-23 — Phase 9 Plan 02 execution (results.py created, css.py extended, 22/22 Phase 5 tests green)
+Stopped at: Phase 9 Plan 02 COMPLETE — 0d11b1a feat(9-2): src/ui/results.py; 0080bda feat(9-2): LORO_PIANA_CSS extended
 Resume file: None
-Next: Phase 9 Plan 02 (CSS extension for editorial table) — DVZ-01..03 CSS classes appended to css.py
+Next: Phase 9 Plan 03 (chart_generator restyle — horizontal bars, vibrant palette, value labels, pie/line restyle)
 
 ---
 *Last updated: 2026-05-23 after Phase 9 Plan 01 completion.*
