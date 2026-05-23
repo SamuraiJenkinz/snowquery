@@ -90,7 +90,7 @@ Plans:
 4. **Main panel — provenance + invariant**: caption above each assistant message renders as `VIA <PROVIDER> · <model>` in Inter 500 small-caps 11px muted gold `#B8A88A`; switching providers mid-session and re-rendering history keeps the ORIGINAL provenance on historical messages — the v2.1 AST-based test in `tests/test_phase5_ui.py` still passes (helper never reads `st.session_state`).
 5. **Main panel — chat input**: `st.chat_input` shows thin bottom-border-only style with placeholder "Ask anything about your incidents…" and a cashmere ASK submit; when `_llm_provider_blocked=True`, `st.chat_input(disabled=True)` renders the locked v2.1 placeholder "QUERY DISABLED — see sidebar warning" verbatim.
 
-**Plans:** 2 plans in 1 wave (both parallelizable)
+**Plans:** 2 plans in 2 waves (sequential — both edit disjoint regions of app.py, but serialised via wave structure to eliminate merge-race; Plan 02 depends on Plan 01)
 
 Plans:
 - [ ] 08-01-PLAN.md — Wave A: Sidebar editorial restyle (SBR-01..06) — wordmark, section headers, MODE pill, EMBEDDINGS pill, bottom-border-only LLM provider select, warm-beige warning card
