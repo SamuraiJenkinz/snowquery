@@ -22,10 +22,10 @@
 
 ### Splash (SPL) — Boot animation
 
-- [ ] **SPL-01**: `src/ui/splash.py` exports a `render_splash()` function that emits a self-contained `streamlit.components.v1.html(...)` block with the helix-motif CSS keyframes — two diagonal streams of INC IDs animating slowly with opacity fades, EB Garamond wordmark anchored center in protected whitespace exclusion zone.
-- [ ] **SPL-02**: Splash renders in an `st.empty()` placeholder at the top of `main()` and clears once `data_loaded` AND `embeddings_ready` are both true in `st.session_state`. Total visible duration capped at 4 seconds maximum even if data load is faster (anti-flash).
-- [ ] **SPL-03**: Helix animation respects `prefers-reduced-motion: reduce` — when set, INC IDs fade in/out at fixed positions instead of translating (no horizontal motion). Wordmark and labels render identically in both modes.
-- [ ] **SPL-04**: Splash is shown ONCE per browser session (tracked via `st.session_state['_splash_shown']` flag). Subsequent reruns within the session skip the splash. New browser session re-shows it.
+- [x] **SPL-01**: `src/ui/splash.py` exports a `render_splash()` function that emits a self-contained `streamlit.components.v1.html(...)` block with the helix-motif CSS keyframes — two diagonal streams of INC IDs animating slowly with opacity fades, EB Garamond wordmark anchored center in protected whitespace exclusion zone.
+- [x] **SPL-02**: Splash renders in an `st.empty()` placeholder at the top of `main()` and clears once `data_loaded` AND `embeddings_ready` are both true in `st.session_state`. Total visible duration capped at 4 seconds maximum even if data load is faster (anti-flash).
+- [x] **SPL-03**: Helix animation respects `prefers-reduced-motion: reduce` — when set, INC IDs fade in/out at fixed positions instead of translating (no horizontal motion). Wordmark and labels render identically in both modes.
+- [x] **SPL-04**: Splash is shown ONCE per browser session (tracked via `st.session_state['_splash_shown']` flag). Subsequent reruns within the session skip the splash. New browser session re-shows it.
 
 ### Sidebar (SBR) — Editorial sidebar restyle
 
@@ -119,10 +119,10 @@ Phases mapped during roadmap creation 2026-05-22.
 | FND-04      | 6     | Complete |
 | FND-05      | 6     | Complete |
 | FND-06      | 6     | Complete |
-| SPL-01      | 7     | Pending |
-| SPL-02      | 7     | Pending |
-| SPL-03      | 7     | Pending |
-| SPL-04      | 7     | Pending |
+| SPL-01      | 7     | Complete |
+| SPL-02      | 7     | Complete |
+| SPL-03      | 7     | Complete |
+| SPL-04      | 7     | Complete |
 | SBR-01      | 8     | Pending |
 | SBR-02      | 8     | Pending |
 | SBR-03      | 8     | Pending |

@@ -22,7 +22,7 @@ Three Stitch mockups (`.planning/design-mockups/00-splash-helix.png`, `01-main-c
 ## Phases (v2.2)
 
 - [x] Phase 6: Foundation — CSS module + design tokens + page chrome (6 requirements) ✓ 2026-05-22
-- [ ] Phase 7: Splash screen — Helix-motif boot animation (4 requirements)
+- [x] Phase 7: Splash screen — Helix-motif boot animation (4 requirements) ✓ 2026-05-23
 - [ ] Phase 8: Screen restyle — Sidebar + main panel + chat editorial pass (12 requirements)
 - [ ] Phase 9: Data visualization — Editorial HTML table + collapsible interactive view + Altair theme (5 requirements)
 - [ ] Phase 10: Polish + edge states — Empty state, loading indicators, error rendering, toasts (4 requirements)
@@ -71,8 +71,8 @@ Plans:
 **Plans:** 2 plans in 2 waves
 
 Plans:
-- [ ] 07-PLAN-01-create-splash-component.md — Create `src/ui/splash.py` exporting `render_splash()` (helix HTML/CSS, 16 INC IDs fixed seed, reduced-motion variant) (Wave 1)
-- [ ] 07-PLAN-02-wire-splash-into-main.md — Wire splash into `app.py::main()` via `st.empty()` placeholder + `_splash_shown` session gate + 4s hard cap (Wave 2)
+- [x] 07-PLAN-01-create-splash-component.md — Create `src/ui/splash.py` exporting `render_splash()` (helix HTML/CSS, 16 INC IDs fixed seed, reduced-motion variant) (Wave 1) ✓ 2026-05-22
+- [x] 07-PLAN-02-wire-splash-into-main.md — Wire splash into `app.py::main()` via `st.empty()` placeholder + `_splash_shown` session gate + 4s hard cap (Wave 2) ✓ 2026-05-23
 
 ### Phase 8: Screen restyle (sidebar + main panel + chat)
 
@@ -171,7 +171,7 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 | 4. Strict-Tools + Smoke Test         | v2.1      | 4/4            | Complete    | 2026-05-21 |
 | 5. Sidebar UI Toggle + Docs          | v2.1      | 5/5            | Complete    | 2026-05-22 |
 | 6. Foundation (CSS + tokens)         | v2.2      | 3/3            | Complete    | 2026-05-22 |
-| 7. Splash screen                     | v2.2      | 0/TBD          | Not started | —          |
+| 7. Splash screen                     | v2.2      | 2/2            | Complete    | 2026-05-23 |
 | 8. Screen restyle (sidebar + main)   | v2.2      | 0/TBD          | Not started | —          |
 | 9. Data visualization                | v2.2      | 0/TBD          | Not started | —          |
 | 10. Polish + edge states             | v2.2      | 0/TBD          | Not started | —          |
@@ -186,4 +186,4 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 Detailed traceability lives in `REQUIREMENTS.md` Traceability section.
 
 ---
-*Last updated: 2026-05-22 after Phase 6 (Foundation) execution complete — all FND-01..06 verified, 5/5 success criteria PASS.*
+*Last updated: 2026-05-23 after Phase 7 (Splash screen) execution complete — all SPL-01..04 verified (4/4), human-verify checkpoint approved, gsd-verifier status: passed.*

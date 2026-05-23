@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 7 — Splash screen (COMPLETE, awaiting phase verifier)
-Plan: 02 of 2 complete (all plans done)
-Status: Plan 07-02 COMPLETE — splash lifecycle wired into app.py::main(); all six human-verify checks passed
-Last activity: 2026-05-22 — Completed 07-PLAN-02-wire-splash-into-main.md
+Phase: 8 — Screen restyle (sidebar + main) — UNBLOCKED, ready to plan/discuss
+Plan: — (ready for `/gsd:discuss-phase 8` or `/gsd:plan-phase 8`)
+Status: Phase 7 COMPLETE + verified (4/4 must_haves PASS, 22/22 Phase 5 UI tests green); SPL-01..04 marked Complete in REQUIREMENTS.md; Phase 8 unblocked (had been since Phase 6)
+Last activity: 2026-05-23 — Phase 7 closeout: gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md updated; phase completion commit bundled
 
-Progress: v2.2 — Phase 6 COMPLETE + Phase 7 COMPLETE
+Progress: v2.2 — Phases 6-7 COMPLETE; Phase 8 unblocked
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
@@ -87,10 +87,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-22 — Phase 7 Plan 02 complete (Phase 7 fully done)
-Stopped at: Completed 07-PLAN-02-wire-splash-into-main.md — splash lifecycle wired into app.py::main(); all six human-verify checks approved by user
+Last session: 2026-05-23 — Phase 7 closeout (verifier passed, requirements + roadmap updated, phase commit bundled)
+Stopped at: Phase 7 COMPLETE — all plans done, gsd-verifier `passed` (4/4 must_haves, 22/22 Phase 5 UI tests still green); SPL-01..04 marked Complete
 Resume file: None
 Next: Phase 8 (08-screen-restyle) — sidebar SBR-* Wave A + main panel MAIN-* Wave B; depends on Phase 6 only (already complete)
 
 ---
-*Last updated: 2026-05-22 after Phase 7 Plan 02 completion.*
+*Last updated: 2026-05-23 after Phase 7 closeout (verifier passed, requirements + roadmap updated).*
