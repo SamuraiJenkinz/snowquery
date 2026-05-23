@@ -27,6 +27,8 @@ from src.utils import (
     logger,
 )
 from src.ui.css import LORO_PIANA_CSS
+import src.ui.altair_theme  # noqa: F401  Phase 9 DVZ-04 side-effect: registers + enables loro_piana Altair theme
+from src.ui.results import _render_editorial_table, _render_empty_state, _render_chart_unavailable
 from src.ui.splash import render_splash
 
 # Page configuration
@@ -528,58 +530,76 @@ def render_chat_history():
 
 
 def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None, chart=None, chart_feedback: str | None = None):
-    """Display query results with formatting and export."""
-    # Executive summary
+    """Display query results with editorial hero + interactive expander.
+
+    Phase 9 contract:
+    - 0-row df → editorial NO RESULTS card ONLY (no table, no expander, no chart,
+      no chart_feedback warning). Short-circuits before any other render.
+    - 1-50 row df → editorial HTML table as hero, expander beneath holds native
+      st.dataframe + EXPORT CSV.
+    - >50 row df → editorial hero shows df.head(50) + truncation caption;
+      expander's st.dataframe receives the FULL df.
+    - chart is None AND chart_feedback is set (1-data-point case) → editorial
+      CHART UNAVAILABLE restyle replaces the v2.1 st.warning/st.info pattern.
+
+    The loro_piana Altair theme is active globally via the side-effect import
+    of src.ui.altair_theme at module top — st.altair_chart(chart) inherits it
+    automatically.
+    """
+    # Phase 9 DVZ-02 edge: 0-row → editorial empty state ONLY.
+    # Suppresses chart_feedback per 09-CONTEXT.md edge states.
+    if df.empty:
+        st.markdown(_render_empty_state(), unsafe_allow_html=True)
+        return
+
+    # Executive summary (unchanged from v2.1)
     if executive_summary:
         st.markdown("### EXECUTIVE SUMMARY")
         st.markdown(f'<div class="query-box">{executive_summary}</div>', unsafe_allow_html=True)
         st.divider()
 
-    # Chart display
+    # Chart display (theme baked in via altair_theme side-effect import).
     if chart is not None:
         st.markdown("### VISUALIZATION")
         # Show feedback about chart adjustments (e.g., "Switched to bar chart")
         if chart_feedback:
-            st.info(f"📊 {chart_feedback}")
+            st.markdown(_render_chart_unavailable(chart_feedback), unsafe_allow_html=True)
         st.altair_chart(chart, use_container_width=True)
         st.divider()
     elif chart_feedback:
-        # Show feedback when chart couldn't be generated
-        st.warning(f"📊 {chart_feedback}")
+        # 1-data-point or other "chart couldn't be generated" case.
+        # Phase 9 DVZ-05 edge: editorial restyle, not st.warning.
+        st.markdown(_render_chart_unavailable(chart_feedback), unsafe_allow_html=True)
 
-    # Results table
-    display_df = format_dataframe_for_display(df)
+    # Phase 9 DVZ-01 — editorial hero table.
+    # Pass RAW df (renderer applies its own 140-char short_description truncation
+    # and 50-row cap). The expander below shows the full df via native st.dataframe.
+    st.markdown(_render_editorial_table(df), unsafe_allow_html=True)
 
-    priority_cols = ["number", "short_description", "priority", "opened_at", "similarity_score"]
-    available_priority = [c for c in priority_cols if c in display_df.columns]
-    other_cols = [c for c in display_df.columns if c not in priority_cols]
-    column_order = available_priority + other_cols
+    # Phase 9 DVZ-02 — interactive expander beneath the editorial hero.
+    # st.expander has NO key= parameter in Streamlit 1.52.1 — no widget-id
+    # collision in chat history because the expander itself owns no state.
+    with st.expander("EXPAND · INTERACTIVE VIEW", expanded=False):
+        st.dataframe(
+            df,
+            use_container_width=True,
+            hide_index=True,
+        )
 
-    display_df = display_df[column_order]
-
-    st.dataframe(
-        display_df,
-        use_container_width=True,
-        hide_index=True
-    )
-
-    # Export and SQL section
-    col1, col2 = st.columns([1, 3])
-
-    with col1:
         csv_data = dataframe_to_csv_bytes(df)
         st.download_button(
             label="EXPORT CSV",
             data=csv_data,
             file_name=generate_export_filename("incidents"),
             mime="text/csv",
-            key=f"export_{query_id}"
+            key=f"export_{query_id}",
         )
 
-    with col2:
-        if sql and st.session_state.get("show_sql", True):
-            with st.expander("GENERATED SQL"):
-                st.code(sql, language="sql")
+    # SQL expander (unchanged — outside the EXPAND · INTERACTIVE VIEW for
+    # visual separation; SQL is a debugging affordance, not data).
+    if sql and st.session_state.get("show_sql", True):
+        with st.expander("GENERATED SQL"):
+            st.code(sql, language="sql")
 
 
 def process_query(user_query: str, mode: str):
