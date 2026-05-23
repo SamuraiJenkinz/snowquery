@@ -749,7 +749,11 @@ samp,
    so the splash-to-app transition feels like the logo "takes the place"
    of the splash wordmark. */
 .lp-main-header-block {
-  min-height: 60vh;
+  /* Tall enough to vertically center the logo cluster in the upper portion of
+     the viewport, short enough that st.chat_input's auto-scroll doesn't push
+     it off-screen. ~35vh lands the logo at roughly the same vertical position
+     the splash wordmark occupies while leaving room for the chat input below. */
+  min-height: 35vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
