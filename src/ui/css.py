@@ -742,7 +742,21 @@ samp,
 /* Main panel SNOWGREP wordmark — bold display logo (Anton) above the editorial
    "Incident Intelligence" header. Inspired by the DaBrokeCollector display
    wordmark style — heavy condensed sans, all caps, generous tracking, with a
-   hairline rule separating it from the page title below. */
+   hairline rule separating it from the page title below.
+
+   The wrapping .lp-main-header-block is sized so the logo lands at roughly
+   50vh — the same vertical position the Phase 7 splash wordmark occupies —
+   so the splash-to-app transition feels like the logo "takes the place"
+   of the splash wordmark. */
+.lp-main-header-block {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
+}
 .lp-main-logo {
   font-family: 'Anton', 'Inter', sans-serif;
   font-weight: 400;
@@ -751,7 +765,7 @@ samp,
   color: var(--lp-text);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin: var(--lp-space-8) 0 var(--lp-space-2) 0;
+  margin: 0 0 var(--lp-space-2) 0;
   padding: 0;
   display: block;
   text-align: center;

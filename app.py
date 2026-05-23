@@ -712,12 +712,17 @@ def render_main_content():
     # MAIN-01 — SNOWGREP wordmark logo (Anton bold display) + hairline rule
     # above the editorial page header. Wordmark style inspired by the
     # DaBrokeCollector display logo — heavy condensed sans, generous tracking.
+    # Wrapped in .lp-main-header-block (min-height 60vh, flex-center) so the
+    # logo lands at the same vertical position the Phase 7 splash wordmark
+    # occupied — the splash-to-app transition feels seamless.
     # Renders ALWAYS, regardless of data_loaded / messages state.
     st.markdown(
+        '<div class="lp-main-header-block">'
         '<div class="lp-main-logo">SNOWGREP</div>'
         '<hr class="lp-main-logo-rule" />'
         '<h1 class="lp-page-header">Incident Intelligence</h1>'
-        '<p class="lp-page-subtitle">Ask in natural language. All data stays local.</p>',
+        '<p class="lp-page-subtitle">Ask in natural language. All data stays local.</p>'
+        '</div>',
         unsafe_allow_html=True,
     )
 
