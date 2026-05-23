@@ -393,6 +393,23 @@ samp,
   width: 320px !important;
   min-width: 320px !important;
   max-width: 320px !important;
+  /* Phase 6 hides <header> globally — including the expand toggle — so a
+     collapsed sidebar has no in-UI recovery affordance. Force the section
+     visible regardless of Streamlit's aria-expanded state. */
+  transform: none !important;
+  margin-left: 0 !important;
+  visibility: visible !important;
+}
+[data-testid="stSidebar"][aria-expanded="false"] {
+  transform: none !important;
+  margin-left: 0 !important;
+  visibility: visible !important;
+}
+/* Hide the in-sidebar collapse button so users can't strand themselves. */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebar"] button[kind="header"] {
+  display: none !important;
 }
 [data-testid="stSidebar"] [data-testid="stSidebarContent"],
 [data-testid="stSidebar"] > div:first-child {
