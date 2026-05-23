@@ -244,12 +244,12 @@ def render_sidebar():
                     st.metric("COLUMNS", len(schema['columns']))
             else:
                 st.markdown(
-                    '<p class="lp-label" style="color: var(--lp-danger);">NO DATA LOADED</p>',
+                    '<span class="lp-pill-warn">NO DATA LOADED</span>',
                     unsafe_allow_html=True,
                 )
         else:
             st.markdown(
-                '<p class="lp-label" style="color: var(--lp-danger);">NO DATA LOADED</p>',
+                '<span class="lp-pill-warn">NO DATA LOADED</span>',
                 unsafe_allow_html=True,
             )
 
