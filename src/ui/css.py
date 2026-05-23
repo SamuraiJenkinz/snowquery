@@ -739,48 +739,49 @@ samp,
 
 /* === Main panel (Phase 8 MAIN-*) === */
 
-/* SNOWGREP background wordmark — fixed-position display logo (Anton) that
-   sits at the same viewport coordinates as the Phase 7 splash wordmark
-   (top: 50%, left: 50%, translate(-50%, -50%)). The splash iframe overlays
-   it during the boot window; when the splash dismisses, this logo is
-   revealed in place — no positioning jump, no auto-scroll issues. Pointer
-   events disabled so it doesn't intercept clicks on chat content above. */
-.lp-bg-logo {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+/* SNOWGREP hero — bold display logo (Anton) with the editorial page header
+   directly below. Inspired by the DaBrokeCollector wordmark style — heavy
+   condensed sans, all caps, generous tracking. The cluster sits at the top
+   of the main panel; the page renders top-aligned so the cluster is always
+   the first thing visible after the splash dismisses. */
+.lp-main-hero {
+  text-align: center;
+  margin: var(--lp-space-6) 0 var(--lp-space-8) 0;
+  padding: 0;
+}
+.lp-main-logo {
   font-family: 'Anton', 'Inter', sans-serif;
   font-weight: 400;
-  font-size: 96px;
+  font-size: 112px;
   line-height: 1;
   color: var(--lp-text);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  white-space: nowrap;
-  z-index: 0;
-  opacity: 0.15;
-  pointer-events: none;
-  user-select: none;
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
-/* MAIN-01 — Editorial page header + subtitle */
+/* MAIN-01 — Editorial page header + subtitle (sit directly below .lp-main-logo
+   inside .lp-main-hero — centered for visual continuity with the logo). */
 .lp-page-header {
   font-family: var(--lp-font-headline);
   font-weight: 300;
   font-size: 36px;
   color: var(--lp-text);
   letter-spacing: -0.01em;
-  margin: 0 0 var(--lp-space-2) 0;
+  margin: var(--lp-space-2) 0 var(--lp-space-2) 0;
   line-height: 1.1;
+  text-align: center;
 }
 .lp-page-subtitle {
   font-family: var(--lp-font-body);
   font-size: 15px;
   font-weight: 400;
   color: var(--lp-text-muted);
-  margin: 0 0 var(--lp-space-8) 0;
+  margin: 0;
   line-height: 1.5;
+  text-align: center;
 }
 
 /* MAIN-01 — Ghost example queries (data loaded, no messages yet) */
