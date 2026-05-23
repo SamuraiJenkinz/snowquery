@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 9 — Data visualization — In progress
-Plan: 3 of 4 complete
-Status: Phase 8 COMPLETE + verified; Phase 9 Plans 01-03 complete
-Last activity: 2026-05-23 — Completed 09-03-PLAN.md (chart_generator restyle — horizontal bars, vibrant palette, value labels)
+Phase: 9 — Data visualization — COMPLETE
+Plan: 4 of 4 complete
+Status: Phase 8 COMPLETE + verified; Phase 9 ALL 4 PLANS COMPLETE
+Last activity: 2026-05-23 — Completed 09-04-PLAN.md (app.py integration — editorial table, theme activation, edge states)
 
-Progress: v2.2 — Phases 6-8 COMPLETE; Phase 9 in progress (2/4 plans done)
+Progress: v2.2 — Phases 6-9 COMPLETE; Phase 10 next
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
 [██████████] Phase 7  Splash screen                    ← COMPLETE (Plans 01-02 done)
 [██████████] Phase 8  Screen restyle (sidebar + main)  ← COMPLETE (Plans 01-02 done)
-[██████    ] Phase 9  Data visualization               ← IN PROGRESS (Plans 01-03 done)
+[██████████] Phase 9  Data visualization               ← COMPLETE (Plans 01-04 done)
 [          ] Phase 10 Polish + edge states
 [          ] Phase 11 Documentation + acceptance gate
 ```
@@ -62,6 +62,9 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 - **Phase 9 Plan 02 — hover background rgba(245,240,235,0.5) is a literal exception**: No half-alpha token exists in the design system; this one CSS value is kept as a literal and documented in the SUMMARY. All other new CSS uses existing `var(--lp-*)` tokens.
 - **Phase 9 Plan 02 — Pure-HTML-string renderer pattern**: `results.py` functions return strings; `st.markdown(html, unsafe_allow_html=True)` call lives at the Plan 04 integration site in `display_results`. No Streamlit import in `results.py`.
 - **Phase 9 Plan 01 — Altair 6 `@alt.theme.register` API**: Use `@alt.theme.register('loro_piana', enable=True)` decorator — NOT the deprecated `alt.themes.*` namespace. The `enable=True` kwarg registers and activates in one call; no separate `.enable()` needed. This is the SNOWGREP canonical pattern for Altair theme registration; applies process-wide at import time.
+- **Phase 9 Plan 04 — chart_feedback unified under `_render_chart_unavailable`**: Both "chart present + adjustment notice" and "chart absent + reason" branches now use the same editorial CHART UNAVAILABLE restyle. v2.1's `st.info`/`st.warning` with emoji removed. CHART UNAVAILABLE label acceptable even for "Switched to bar chart" sub-case — body text carries specifics.
+- **Phase 9 Plan 04 — `#2C2420` in chart_generator.py mark_text is an acceptable exception**: Smoke 8 single-match known exception for `mark_text(color="#2C2420")`. Phase 11 TST-02 may enforce `LABEL_COLOR_CHARCOAL` constant import from `altair_theme.py`; Phase 9 documents and defers.
+- **Phase 9 Plan 04 — Side-effect import pattern for Altair theme**: `import src.ui.altair_theme  # noqa: F401` activates `loro_piana` Altair theme globally at module load. Module is never referenced by name; importing it runs the `@alt.theme.register("loro_piana", enable=True)` decorator. Canonical SNOWGREP pattern for process-wide Altair theme activation.
 - **Phase 9 Plan 03 — Bar chart height dynamic**: `max(200, len(chart_df) * 32)` — 32px per bar, 200px floor. Old fixed 400px would crowd many-bar horizontal layouts.
 - **Phase 9 Plan 03 — Line mark color is literal '#C0392B'**: `mark_line(color=...)` is a mark property not a color encoding; theme `range.category` does not apply to mark properties. Literal matches VIBRANT_PALETTE[0].
 - **Phase 9 Plan 01 — VIBRANT_PALETTE is the canonical chart data palette source**: `src/ui/altair_theme.py` is the single source of truth for the 5-color vibrant palette. Plan 03 (chart_generator.py) imports `VIBRANT_PALETTE` from here; Plan 04 (app.py) adds the side-effect import. No other module may redefine these colors.
@@ -102,10 +105,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-23 — Phase 9 Plan 03 execution (chart_generator restyle, horizontal bars, VIBRANT_PALETTE, value labels, 22/22 tests green)
-Stopped at: Phase 9 Plan 03 COMPLETE — 2ecb8cd feat(9-3): restyle chart_generator horizontal bars vibrant palette theme
+Last session: 2026-05-23 — Phase 9 Plan 04 execution (app.py integration — editorial table, theme activation, edge states, 22/22 tests green)
+Stopped at: Phase 9 Plan 04 COMPLETE — 6c619c4 feat(9-4): remove stale .empty guards + No results line
 Resume file: None
-Next: Phase 9 Plan 04 (app.py integration — wire altair_theme side-effect import, display_results wiring)
+Next: Phase 10 (Polish + edge states — POL-01..04)
 
 ---
-*Last updated: 2026-05-23 after Phase 9 Plan 01 completion.*
+*Last updated: 2026-05-23 after Phase 9 Plan 04 completion (Phase 9 COMPLETE).*
