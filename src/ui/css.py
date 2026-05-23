@@ -944,6 +944,138 @@ samp,
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ============================================================
+ * Phase 9 DVZ-01 — Editorial results table
+ * ============================================================ */
+
+.lp-editorial-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-family: var(--lp-font-body);
+  background: transparent;
+  margin: var(--lp-space-3) 0;
+}
+
+/* Header — warm-beige bg, EB Garamond small-caps tracked */
+.lp-editorial-table thead th {
+  background: var(--lp-border);
+  color: var(--lp-text);
+  font-family: var(--lp-font-headline);
+  font-variant: small-caps;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--lp-border);
+  text-align: left;
+}
+
+/* Body rows — warm-beige 1px row dividers, no zebra, no vertical borders */
+.lp-editorial-table tbody td {
+  border-bottom: 1px solid var(--lp-border);
+  border-left: none;
+  border-right: none;
+  padding: 16px 24px;
+  color: var(--lp-text);
+  font-size: 15px;
+  vertical-align: top;
+}
+
+/* Quiet warm-beige hover — no animation */
+.lp-editorial-table tbody tr:hover td {
+  background: rgba(245, 240, 235, 0.5);
+}
+
+/* Per-column type overrides */
+.lp-editorial-table td.lp-et-priority {
+  font-style: italic;
+  font-size: 15px;
+}
+
+.lp-editorial-table td.lp-et-date {
+  font-style: italic;
+  font-size: 14px;
+}
+
+.lp-editorial-table td.lp-et-desc {
+  min-width: 320px;
+  font-size: 15px;
+}
+
+.lp-editorial-table td.lp-et-right,
+.lp-editorial-table th.lp-et-right {
+  text-align: right;
+}
+
+/* Truncation caption — small-caps tracked CHARCOAL (NOT muted gold).
+ * Contrast principle: body labels are charcoal unless intentionally
+ * decorative (provenance caption, chart axis labels). */
+.lp-et-caption {
+  font-family: var(--lp-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-text);
+  margin: var(--lp-space-3) 0 0 0;
+  text-align: right;
+}
+
+/* ============================================================
+ * Phase 9 DVZ-02 edge — 0-row "NO RESULTS" empty state
+ * ============================================================ */
+
+.lp-et-empty {
+  padding: 48px 0;
+  text-align: center;
+}
+
+.lp-et-empty-label {
+  font-family: var(--lp-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-text);
+  margin: 0 0 var(--lp-space-3) 0;
+}
+
+.lp-et-empty-body {
+  font-family: var(--lp-font-body);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--lp-text);
+  margin: 0;
+}
+
+/* ============================================================
+ * Phase 9 DVZ-05 edge — 1-data-point "CHART UNAVAILABLE" restyle
+ * ============================================================ */
+
+.lp-chart-unavailable {
+  padding: var(--lp-space-3) 0;
+}
+
+.lp-chart-unavailable-label {
+  font-family: var(--lp-font-body);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-text);
+  margin: 0 0 var(--lp-space-2) 0;
+}
+
+.lp-chart-unavailable-body {
+  font-family: var(--lp-font-body);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--lp-text);
+  margin: 0;
+}
 """
 
 
