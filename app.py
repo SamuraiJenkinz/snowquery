@@ -516,15 +516,14 @@ def render_chat_history():
                     st.markdown('</div>', unsafe_allow_html=True)
                 st.markdown(message["content"])
                 if "results" in message and message["results"] is not None:
-                    if not message["results"].empty:
-                        display_results(
-                            message["results"],
-                            message.get("sql"),
-                            message.get("query_id", ""),
-                            message.get("executive_summary"),
-                            message.get("chart"),
-                            message.get("chart_feedback"),
-                        )
+                    display_results(
+                        message["results"],
+                        message.get("sql"),
+                        message.get("query_id", ""),
+                        message.get("executive_summary"),
+                        message.get("chart"),
+                        message.get("chart_feedback"),
+                    )
                 # Assistant card closes
                 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -682,9 +681,6 @@ def process_query(user_query: str, mode: str):
 
         content_parts.append(f'\n\n<span class="results-count">{row_count:,}</span> <span style="color: #666; font-size: 0.8rem; text-transform: uppercase;">INCIDENTS FOUND</span>')
 
-        if row_count == 0:
-            content_parts.append("\n\n_No results. Try different query or mode._")
-
         executive_summary = None
         if row_count > 0 and st.session_state.get("show_summary", True):
             executive_summary = generate_executive_summary(
@@ -832,7 +828,7 @@ def render_main_content():
 
             st.markdown(response["content"], unsafe_allow_html=True)
 
-            if response["results"] is not None and not response["results"].empty:
+            if response["results"] is not None:
                 display_results(
                     response["results"],
                     response["sql"],
