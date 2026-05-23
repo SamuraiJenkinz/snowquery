@@ -721,6 +721,20 @@ samp,
   border: 0 !important;
   box-shadow: none !important;
 }
+/* Streamlit wraps button text in <p>/<div>/<span> — propagate the
+   pill typography down so it matches .lp-pill-warn exactly. */
+[data-testid="stSidebar"] .st-key-unlock_upload button p,
+[data-testid="stSidebar"] .st-key-unlock_upload button div,
+[data-testid="stSidebar"] .st-key-unlock_upload button span {
+  font-family: var(--lp-font-body) !important;
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  color: var(--lp-danger) !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+}
 """
 
 
