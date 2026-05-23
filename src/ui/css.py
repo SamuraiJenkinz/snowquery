@@ -739,46 +739,29 @@ samp,
 
 /* === Main panel (Phase 8 MAIN-*) === */
 
-/* Main panel SNOWGREP wordmark — bold display logo (Anton) above the editorial
-   "Incident Intelligence" header. Inspired by the DaBrokeCollector display
-   wordmark style — heavy condensed sans, all caps, generous tracking, with a
-   hairline rule separating it from the page title below.
-
-   The wrapping .lp-main-header-block is sized so the logo lands at roughly
-   50vh — the same vertical position the Phase 7 splash wordmark occupies —
-   so the splash-to-app transition feels like the logo "takes the place"
-   of the splash wordmark. */
-.lp-main-header-block {
-  /* Tall enough to vertically center the logo cluster in the upper portion of
-     the viewport, short enough that st.chat_input's auto-scroll doesn't push
-     it off-screen. ~35vh lands the logo at roughly the same vertical position
-     the splash wordmark occupies while leaving room for the chat input below. */
-  min-height: 35vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: stretch;
-  margin: 0;
-  padding: 0;
-}
-.lp-main-logo {
+/* SNOWGREP background wordmark — fixed-position display logo (Anton) that
+   sits at the same viewport coordinates as the Phase 7 splash wordmark
+   (top: 50%, left: 50%, translate(-50%, -50%)). The splash iframe overlays
+   it during the boot window; when the splash dismisses, this logo is
+   revealed in place — no positioning jump, no auto-scroll issues. Pointer
+   events disabled so it doesn't intercept clicks on chat content above. */
+.lp-bg-logo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   font-family: 'Anton', 'Inter', sans-serif;
   font-weight: 400;
-  font-size: 64px;
+  font-size: 96px;
   line-height: 1;
   color: var(--lp-text);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin: 0 0 var(--lp-space-2) 0;
-  padding: 0;
-  display: block;
-  text-align: center;
-}
-.lp-main-logo-rule {
-  height: 1px;
-  background: var(--lp-border);
-  border: 0;
-  margin: var(--lp-space-3) 0 var(--lp-space-6) 0;
+  white-space: nowrap;
+  z-index: 0;
+  opacity: 0.15;
+  pointer-events: none;
+  user-select: none;
 }
 
 /* MAIN-01 — Editorial page header + subtitle */

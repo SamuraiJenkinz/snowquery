@@ -709,20 +709,14 @@ def render_main_content():
     # st.chat_input.submit would take below.
     _pending_ghost = st.session_state.pop("_pending_ghost_query", None)
 
-    # MAIN-01 — SNOWGREP wordmark logo (Anton bold display) + hairline rule
-    # above the editorial page header. Wordmark style inspired by the
-    # DaBrokeCollector display logo — heavy condensed sans, generous tracking.
-    # Wrapped in .lp-main-header-block (min-height 60vh, flex-center) so the
-    # logo lands at the same vertical position the Phase 7 splash wordmark
-    # occupied — the splash-to-app transition feels seamless.
-    # Renders ALWAYS, regardless of data_loaded / messages state.
+    # MAIN-01 — Editorial page header + subtitle. The SNOWGREP wordmark itself
+    # is rendered as a fixed-position background watermark in main() so it
+    # occupies the same viewport coordinates as the Phase 7 splash wordmark —
+    # splash overlays it during boot; when splash dismisses, the wordmark is
+    # revealed in place. Renders ALWAYS, regardless of data_loaded state.
     st.markdown(
-        '<div class="lp-main-header-block">'
-        '<div class="lp-main-logo">SNOWGREP</div>'
-        '<hr class="lp-main-logo-rule" />'
         '<h1 class="lp-page-header">Incident Intelligence</h1>'
-        '<p class="lp-page-subtitle">Ask in natural language. All data stays local.</p>'
-        '</div>',
+        '<p class="lp-page-subtitle">Ask in natural language. All data stays local.</p>',
         unsafe_allow_html=True,
     )
 
@@ -949,6 +943,13 @@ def main():
     client-side inside the iframe.
     """
     init_session_state()
+    # Render the background SNOWGREP wordmark FIRST so it sits at the bottom of
+    # the DOM stack (z-index: 0, position: fixed, centered). Phase 7's splash
+    # iframe mounts AFTER this and overlays it during the boot window; when
+    # the splash dismisses, the wordmark is revealed at the same viewport
+    # coordinates the splash wordmark occupied. Solves the auto-scroll
+    # positioning problem entirely — the logo is locked to the viewport.
+    st.markdown('<div class="lp-bg-logo">SNOWGREP</div>', unsafe_allow_html=True)
     _run_splash_lifecycle()  # Phase 7: mount + gate + dismiss boot splash
     render_sidebar()
     render_main_content()
