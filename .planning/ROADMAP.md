@@ -68,7 +68,11 @@ Plans:
 3. Setting the browser's `prefers-reduced-motion: reduce` swaps the helix translation for fixed-position opacity fades — INC IDs do not move horizontally; wordmark and labels render identically in both modes.
 4. Reloading the page within the same browser session (`st.session_state['_splash_shown']` already true) skips the splash and goes straight to the main app; opening a new browser session shows it again.
 
-**Plans-TBD**: To be decomposed by `/gsd:plan-phase 7`.
+**Plans:** 2 plans in 2 waves
+
+Plans:
+- [ ] 07-PLAN-01-create-splash-component.md — Create `src/ui/splash.py` exporting `render_splash()` (helix HTML/CSS, 16 INC IDs fixed seed, reduced-motion variant) (Wave 1)
+- [ ] 07-PLAN-02-wire-splash-into-main.md — Wire splash into `app.py::main()` via `st.empty()` placeholder + `_splash_shown` session gate + 4s hard cap (Wave 2)
 
 ### Phase 8: Screen restyle (sidebar + main panel + chat)
 
