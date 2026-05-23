@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 9 — Data visualization — UNBLOCKED, ready to plan/discuss
-Plan: — (ready for `/gsd:discuss-phase 9` or `/gsd:plan-phase 9`)
-Status: Phase 8 COMPLETE + verified (12/12 must_haves PASS, 22/22 Phase 5 UI tests green); SBR-01..06 + MAIN-01..06 marked Complete in REQUIREMENTS.md; Phase 9 unblocked (depends on Phase 8 assistant-card DOM bay)
-Last activity: 2026-05-23 — Phase 8 closeout: gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md + STATE.md updated; phase completion commit bundled
+Phase: 9 — Data visualization — In progress
+Plan: 1 of 4 complete
+Status: Phase 8 COMPLETE + verified; Phase 9 Plan 01 complete (altair_theme.py created, loro_piana theme registered)
+Last activity: 2026-05-23 — Completed 09-01-PLAN.md (loro_piana Altair theme module)
 
-Progress: v2.2 — Phases 6-8 COMPLETE; Phase 9 unblocked
+Progress: v2.2 — Phases 6-8 COMPLETE; Phase 9 in progress (1/4 plans done)
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
 [██████████] Phase 7  Splash screen                    ← COMPLETE (Plans 01-02 done)
 [██████████] Phase 8  Screen restyle (sidebar + main)  ← COMPLETE (Plans 01-02 done)
-[          ] Phase 9  Data visualization               ← UNBLOCKED
+[██        ] Phase 9  Data visualization               ← IN PROGRESS (Plan 01 done)
 [          ] Phase 10 Polish + edge states
 [          ] Phase 11 Documentation + acceptance gate
 ```
@@ -57,6 +57,9 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 
 ### Decisions (recent)
 
+- **Phase 9 Plan 01 — Altair 6 `@alt.theme.register` API**: Use `@alt.theme.register('loro_piana', enable=True)` decorator — NOT the deprecated `alt.themes.*` namespace. The `enable=True` kwarg registers and activates in one call; no separate `.enable()` needed. This is the SNOWGREP canonical pattern for Altair theme registration; applies process-wide at import time.
+- **Phase 9 Plan 01 — VIBRANT_PALETTE is the canonical chart data palette source**: `src/ui/altair_theme.py` is the single source of truth for the 5-color vibrant palette. Plan 03 (chart_generator.py) imports `VIBRANT_PALETTE` from here; Plan 04 (app.py) adds the side-effect import. No other module may redefine these colors.
+- **Phase 9 Plan 01 — `background: transparent` in chart theme**: Chart background inherits the assistant-card white; setting transparent future-proofs against card color changes. Charts visually integrate with the card without needing a matching hardcoded color.
 - **Phase 8 — Branded logo PNG replaces both sidebar wordmark and main panel hero**: Single asset at `static/snowgrep-logo.png` (copper SNOWGREP box outline + blue INCIDENT INTELLIGENCE tagline on dark backdrop). Served via Streamlit static serving (`.streamlit/config.toml: enableStaticServing = true`). Sidebar uses `max-width: 240px` (fits 320px sidebar), main panel uses `max-width: 480px`. The dark backdrop of the PNG is intentional — it provides high contrast against the warm-beige page bg, framing the logo as a deliberate brand mark. Future asset additions should drop into `static/` and reference via `app/static/<filename>`. Original PNG had a "SNOWGRP" typo; patched via Pillow (cover existing text with bg color, re-render with Impact font + matching copper #aa7346) — original grunge stencil texture lost in the patch (not recoverable without source PSD).
 - **Phase 8 SBR-03 — MODE selector uses `st.radio(horizontal=True)` not three st.button pills**: The button-in-columns approach failed because `st.markdown('<div class="...">')` + subsequent `st.button` render as sibling DOM nodes, so the active-state CSS selector never matched. Also at 320px / 3 cols, "SEMANTIC" wrapped per-character. The radio uses a custom sage dot (`#8A9A7D` filled circle when checked) via `:has(input:checked) > div:first-child` — clean active-state contract with no Python-side class juggling. Pattern is reusable for other small toggle groups: native primitives with `:has(input:checked)` beats manual sibling-state tracking.
 - **Phase 8 — `.lp-pill-warn` is the v2.2 soft-warning pill primitive**: Used by USING DEFAULT PASSWORD, NO DATA LOADED, and UNLOCK UPLOAD (via per-button `.st-key-unlock_upload` override). Warm-beige tint bg + terracotta text + rounded pill. Phase 9-10 should reuse this class for sibling status indicators rather than re-rolling.
@@ -93,10 +96,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-23 — Phase 8 closeout (verifier passed, requirements + roadmap updated, phase commit bundled)
-Stopped at: Phase 8 COMPLETE — all plans done, gsd-verifier `passed` (12/12 must_haves, 22/22 Phase 5 UI tests still green); SBR-01..06 + MAIN-01..06 marked Complete; final form deviates from spec in two user-approved ways: SBR-03 uses st.radio with sage dot instead of three pill buttons, MAIN-01 uses a branded SNOWGREP PNG (in both sidebar + main panel) instead of plain EB Garamond text
+Last session: 2026-05-23 — Phase 9 Plan 01 execution (altair_theme.py created, all verifications passed)
+Stopped at: Phase 9 Plan 01 COMPLETE — f36c8c5 feat(9-1): src/ui/altair_theme.py with loro_piana theme; 22/22 Phase 5 tests green
 Resume file: None
-Next: Phase 9 (data visualization) — DVZ-01..05 — editorial HTML table + Altair theme; depends on Phase 8 assistant-card DOM bay (already complete)
+Next: Phase 9 Plan 02 (CSS extension for editorial table) — DVZ-01..03 CSS classes appended to css.py
 
 ---
-*Last updated: 2026-05-23 after Phase 8 closeout (verifier passed, requirements + roadmap updated).*
+*Last updated: 2026-05-23 after Phase 9 Plan 01 completion.*
