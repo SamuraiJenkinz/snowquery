@@ -486,29 +486,40 @@ def render_schema_details():
 
 def render_chat_history():
     """Render chat message history."""
+    from html import escape
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
-            # Phase 5: provenance caption ABOVE content for assistant messages
-            # that carry provider metadata. Read from the stored dict — never
-            # from session_state — so historical messages keep their original
-            # provenance after a provider switch (SC #4 + RESEARCH.md Pitfall 11).
-            if message["role"] == "assistant" and message.get("provider"):
-                _render_provenance_caption(
-                    message["provider"], message.get("model")
+            if message["role"] == "user":
+                st.markdown(
+                    f'<div class="lp-msg-user">{escape(message["content"])}</div>',
+                    unsafe_allow_html=True,
                 )
-
-            st.markdown(message["content"])
-
-            if "results" in message and message["results"] is not None:
-                if not message["results"].empty:
-                    display_results(
-                        message["results"],
-                        message.get("sql"),
-                        message.get("query_id", ""),
-                        message.get("executive_summary"),
-                        message.get("chart"),
-                        message.get("chart_feedback")
+            else:
+                # Assistant card opens — DOM bay for Phase 9 editorial table
+                st.markdown('<div class="lp-msg-assistant">', unsafe_allow_html=True)
+                # Phase 5: provenance caption ABOVE content for assistant messages
+                # that carry provider metadata. Read from the stored dict — never
+                # from session_state — so historical messages keep their original
+                # provenance after a provider switch (SC #4 + RESEARCH.md Pitfall 11).
+                if message.get("provider"):
+                    st.markdown('<div class="lp-provenance">', unsafe_allow_html=True)
+                    _render_provenance_caption(
+                        message["provider"], message.get("model")
                     )
+                    st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown(message["content"])
+                if "results" in message and message["results"] is not None:
+                    if not message["results"].empty:
+                        display_results(
+                            message["results"],
+                            message.get("sql"),
+                            message.get("query_id", ""),
+                            message.get("executive_summary"),
+                            message.get("chart"),
+                            message.get("chart_feedback"),
+                        )
+                # Assistant card closes
+                st.markdown('</div>', unsafe_allow_html=True)
 
 
 def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None, chart=None, chart_feedback: str | None = None):
@@ -691,66 +702,47 @@ def process_query(user_query: str, mode: str):
 
 def render_main_content():
     """Render the main content area."""
-    # Custom header
-    st.markdown("""
-    <div class="terminal-header">
-        <div class="terminal-header-icon">S</div>
-        <div class="terminal-header-text">
-            <h1>SNOWGREP</h1>
-            <p>ServiceNow Incident Query Tool</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    from html import escape
+
+    # Drain pending ghost-query click from prior rerun. Pop (don't peek) so the
+    # value is consumed exactly once, then route it through the same path that
+    # st.chat_input.submit would take below.
+    _pending_ghost = st.session_state.pop("_pending_ghost_query", None)
+
+    # MAIN-01 — Editorial page header + subtitle (renders ALWAYS, regardless of
+    # data_loaded / messages state per CONTEXT.md "Empty/initial main panel state").
+    st.markdown(
+        '<h1 class="lp-page-header">Incident Intelligence</h1>'
+        '<p class="lp-page-subtitle">Ask in natural language. All data stays local.</p>',
+        unsafe_allow_html=True,
+    )
 
     if not st.session_state.data_loaded:
-        st.markdown("""
-        <div style="border: 1px solid #333; padding: 2rem; margin: 2rem 0;">
-            <p style="color: #00ff00; font-size: 0.9rem; margin-bottom: 1rem;">> READY FOR INPUT</p>
-            <p style="color: #666; font-size: 0.8rem;">Upload ServiceNow incident CSV via sidebar to begin.</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("### EXAMPLE QUERIES")
-        st.markdown("""
-        <div class="example-query">Show all P1 incidents from last month</div>
-        <div class="example-query">Find incidents similar to Outlook crashes</div>
-        <div class="example-query">Top 5 assignment groups by volume</div>
-        <div class="example-query">How many incidents opened this week?</div>
-        """, unsafe_allow_html=True)
+        # No-CSV-loaded empty card is Phase 10 (POL-01). Phase 8 just exits gracefully
+        # after rendering the editorial header — the sidebar shows the upload UI.
         return
-
-    # Status bar
-    schema = st.session_state.schema
-    embeddings_status = "READY" if st.session_state.embeddings_ready else "NOT BUILT"
-    embeddings_color = "green" if st.session_state.embeddings_ready else "yellow"
-    
-    st.markdown(f"""
-    <div class="status-bar">
-        <div class="status-item"><div class="status-dot green"></div>DATA: {schema['row_count']:,} ROWS</div>
-        <div class="status-item"><div class="status-dot {embeddings_color}"></div>EMBEDDINGS: {embeddings_status}</div>
-        <div class="status-item"><div class="status-dot green"></div>MODE: ACTIVE</div>
-    </div>
-    """, unsafe_allow_html=True)
 
     render_schema_details()
 
-    # Mode selection
-    col1, col2 = st.columns([3, 1])
+    # MODE source: reads from sidebar MODE pill (Plan 01 SBR-03, Wave 1).
+    # The sidebar initializes and writes st.session_state["query_mode"] before
+    # render_main_content() is called (function call order in main() is load-bearing).
+    selected_mode = st.session_state.get("query_mode", "auto")
 
-    with col1:
-        st.markdown("### QUERY INTERFACE")
-
-    with col2:
-        selected_mode_label = st.selectbox(
-            "MODE",
-            options=list(MODE_OPTIONS.keys()),
-            index=0,
-            help=get_mode_description(MODE_OPTIONS[list(MODE_OPTIONS.keys())[0]]),
-            label_visibility="collapsed"
-        )
-        selected_mode = MODE_OPTIONS[selected_mode_label]
-
-    st.caption(f"MODE: {get_mode_description(selected_mode).upper()}")
+    # Ghost example queries — only when data loaded AND no messages yet
+    if not st.session_state.messages:
+        _EXAMPLE_QUERIES = [
+            "Show all P1 incidents from last month",
+            "Find incidents similar to Outlook crashes",
+            "Top 5 assignment groups by volume",
+            "How many incidents opened this week?",
+        ]
+        st.markdown('<div class="lp-ghost-queries">', unsafe_allow_html=True)
+        for _i, _q in enumerate(_EXAMPLE_QUERIES):
+            if st.button(_q, key=f"_ghost_{_i}", use_container_width=True):
+                st.session_state["_pending_ghost_query"] = _q
+                st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     render_chat_history()
 
@@ -759,9 +751,20 @@ def render_main_content():
     # and swap placeholder so users see WHY they can't submit. The blocked flag
     # is set by render_sidebar() on every rerun (Phase 5 RESEARCH.md Pitfall 5
     # — order is load-bearing; see main()).
+    # LOCKED STRINGS: "QUERY DISABLED — see sidebar warning" (em-dash U+2014, Phase 5 SC #3)
+    #                 "Ask anything about your incidents…" (ellipsis U+2026, Phase 8 MAIN-05)
     _blocked = st.session_state.get("_llm_provider_blocked", False)
-    _placeholder = "ENTER QUERY..." if not _blocked else "QUERY DISABLED — see sidebar warning"
-    if user_query := st.chat_input(_placeholder, disabled=_blocked):
+    _placeholder = (
+        "Ask anything about your incidents…"
+        if not _blocked
+        else "QUERY DISABLED — see sidebar warning"
+    )
+    # st.chat_input must always be called once per run (Streamlit widget lifecycle)
+    # so the input box renders. The pending ghost query feeds the same submit path.
+    _typed_query = st.chat_input(_placeholder, disabled=_blocked)
+    user_query = _pending_ghost or _typed_query
+
+    if user_query:
         query_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
 
         st.session_state.messages.append({
@@ -770,11 +773,17 @@ def render_main_content():
         })
 
         with st.chat_message("user"):
-            st.markdown(user_query)
+            st.markdown(
+                f'<div class="lp-msg-user">{escape(user_query)}</div>',
+                unsafe_allow_html=True,
+            )
 
         with st.chat_message("assistant"):
             with st.spinner("PROCESSING..."):
                 response = process_query(user_query, selected_mode)
+
+            # Assistant card opens — DOM bay for Phase 9 editorial table
+            st.markdown('<div class="lp-msg-assistant">', unsafe_allow_html=True)
 
             # Phase 5: provenance caption for the fresh response (SC #4).
             # Same render contract as history: explicit args, only render when
@@ -782,9 +791,11 @@ def render_main_content():
             # process_query don't carry provider/model — caption is skipped
             # gracefully).
             if response.get("provider"):
+                st.markdown('<div class="lp-provenance">', unsafe_allow_html=True)
                 _render_provenance_caption(
                     response["provider"], response.get("model")
                 )
+                st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown(response["content"], unsafe_allow_html=True)
 
@@ -795,8 +806,11 @@ def render_main_content():
                     query_id,
                     response.get("executive_summary"),
                     response.get("chart"),
-                    response.get("chart_feedback")
+                    response.get("chart_feedback"),
                 )
+
+            # Assistant card closes
+            st.markdown('</div>', unsafe_allow_html=True)
 
         st.session_state.messages.append({
             "role": "assistant",
@@ -807,11 +821,11 @@ def render_main_content():
             "executive_summary": response.get("executive_summary"),
             "chart": response.get("chart"),
             "chart_feedback": response.get("chart_feedback"),
-            "provider": response.get("provider"),       # NEW Phase 5 (SC #4)
-            "model": response.get("model"),             # NEW Phase 5 (SC #4)
+            "provider": response.get("provider"),       # Phase 5 (SC #4)
+            "model": response.get("model"),             # Phase 5 (SC #4)
         })
 
-    # Clear chat button
+    # Clear chat button — already cashmere via Phase 6. Keep label "CLEAR HISTORY".
     if st.session_state.messages:
         if st.button("CLEAR HISTORY"):
             st.session_state.messages = []

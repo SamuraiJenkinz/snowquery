@@ -498,7 +498,9 @@ def test_sc3_chat_input_disabled_when_blocked_flag_true(azure_env):
 def test_sc3_chat_input_enabled_when_not_blocked(azure_env):
     """SC #3 UNBLOCKED branch (Warning 5 fix): when _llm_provider_blocked is False,
     chat_input is called with disabled=False AND the default placeholder.
-    Locks the placeholder string 'ENTER QUERY...' against drift (Warning 7 fix).
+    Locks the placeholder string 'Ask anything about your incidents…' against
+    drift (Warning 7 fix). Phase 8 MAIN-05 updated the placeholder from the old
+    brutalist 'ENTER QUERY...' to the editorial ellipsis form.
 
     Without this test, a regression that always sets disabled=True (or that drifts
     the default placeholder) would still pass the BLOCKED-only assertion above.
@@ -532,8 +534,9 @@ def test_sc3_chat_input_enabled_when_not_blocked(azure_env):
         f"chat_input must be disabled=False when NOT blocked; got {disabled!r}. "
         f"A regression that always sets disabled=True would now be caught."
     )
-    assert placeholder == "ENTER QUERY...", (
-        f"Default chat_input placeholder drifted — must be exactly 'ENTER QUERY...'; "
+    assert placeholder == "Ask anything about your incidents…", (
+        f"Default chat_input placeholder drifted — must be exactly "
+        f"'Ask anything about your incidents…' (Phase 8 MAIN-05); "
         f"got {placeholder!r}. This locks the default UI string against silent drift."
     )
 
