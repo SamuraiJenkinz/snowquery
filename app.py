@@ -860,8 +860,19 @@ def main():
     render_main_content() reads at the st.chat_input call site. Reversing the
     order would leak stale blocked state across reruns (Phase 5 SC #3 + RESEARCH
     Pitfall 5).
+
+    Phase 7 (SPL-02, SPL-04): `_run_splash_lifecycle()` runs AFTER
+    `init_session_state()` (which creates `_splash_shown` /
+    `_splash_placeholder` / `_splash_dismiss_sent`) and BEFORE the
+    sidebar/main render so the splash mounts at the very top of the DOM
+    during the boot window. First rerun mounts the splash; subsequent
+    reruns either (a) do nothing if dismiss already sent, or (b) send the
+    dismiss postMessage into the iframe and tear down the placeholder once
+    data is ready. The 4s hard cap (SPL-02) is enforced entirely
+    client-side inside the iframe.
     """
     init_session_state()
+    _run_splash_lifecycle()  # Phase 7: mount + gate + dismiss boot splash
     render_sidebar()
     render_main_content()
 
