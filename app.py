@@ -27,6 +27,7 @@ from src.utils import (
     logger,
 )
 from src.ui.css import LORO_PIANA_CSS
+from src.ui.splash import render_splash
 
 # Page configuration
 st.set_page_config(
@@ -98,6 +99,23 @@ def init_session_state():
         st.session_state.embeddings_ready = False
     if "upload_authenticated" not in st.session_state:
         st.session_state.upload_authenticated = False
+    # Phase 7 splash lifecycle. `_splash_shown` is the once-per-session gate
+    # (SPL-04). `_splash_placeholder` holds the `st.empty()` handle returned
+    # at first mount so subsequent reruns can clear it after data is ready.
+    # `_splash_dismiss_sent` ensures the dismiss postMessage + 400ms-sleep
+    # path runs exactly once per session.
+    #
+    # NOTE: There is no start-timestamp and no Python-side 4s cap. The
+    # 4s hard cap (SPL-02) lives entirely in the iframe's <script> block
+    # (Plan 01 section D.2) — adding a Python wall-clock check is pointless
+    # because Streamlit does not rerun on a wall-clock timer, so any Python
+    # cap would only fire on the next user interaction (too late).
+    if "_splash_shown" not in st.session_state:
+        st.session_state._splash_shown = False
+    if "_splash_placeholder" not in st.session_state:
+        st.session_state._splash_placeholder = None
+    if "_splash_dismiss_sent" not in st.session_state:
+        st.session_state._splash_dismiss_sent = False
 
 
 def _load_csv_data(uploaded_file, append: bool = False):
@@ -744,6 +762,94 @@ def render_main_content():
         if st.button("CLEAR HISTORY"):
             st.session_state.messages = []
             st.rerun()
+
+
+def _run_splash_lifecycle() -> None:
+    """Mount + dismiss-signal the boot splash. Phase 7 SPL-01, SPL-02, SPL-04.
+
+    Two-state machine (Python side only — all timing-critical behavior lives
+    in the iframe; see Plan 01 section D.2):
+
+    State 1 — FIRST rerun of a browser session (`_splash_shown` is False):
+        Mount the splash into a fresh `st.empty()` placeholder, stash the
+        placeholder handle in session_state, and flip `_splash_shown` to True.
+        Return.
+
+    State 2 — subsequent reruns (`_splash_shown` is True):
+        If the placeholder has already been cleared and the dismiss signal
+        already sent, return immediately (steady-state, post-dismiss).
+
+        Otherwise, check `data_loaded AND embeddings_ready`. If both True
+        AND we haven't yet sent the dismiss signal:
+            (a) Render a tiny inline <script> via st.markdown that sends
+                the dismiss postMessage into every iframe (the splash
+                iframe's listener consumes it and adds `.is-dismissing`,
+                triggering the 400ms CSS fade).
+            (b) Set `_splash_dismiss_sent = True`.
+            (c) Sleep 400ms so the iframe's fade visibly completes
+                before we tear down its container.
+            (d) `placeholder.empty()` clears the iframe from the DOM.
+
+        If data is NOT yet ready, do nothing — the iframe is still on
+        screen, its own 4s hard-cap timer (Plan 01 section D.2) will fade
+        it out client-side if data never arrives. Next rerun re-checks.
+
+    Why no Python 4s cap: Streamlit only reruns on user interaction or
+    session_state mutation. A wall-clock cap in Python would only fire on
+    the next rerun, which may be never. The cap MUST live in the iframe.
+    """
+    import time
+
+    # Fast path: dismiss already sent + placeholder cleared — nothing to do.
+    if st.session_state.get("_splash_shown") and st.session_state.get("_splash_dismiss_sent"):
+        return
+
+    # State 1: first mount of the session.
+    if not st.session_state.get("_splash_shown"):
+        placeholder = st.empty()
+        with placeholder.container():
+            render_splash()
+        st.session_state._splash_shown = True
+        st.session_state._splash_placeholder = placeholder
+        return
+
+    # State 2: splash is mounted, dismiss not yet sent. Check data readiness.
+    if (
+        st.session_state.get("data_loaded")
+        and st.session_state.get("embeddings_ready")
+    ):
+        # (a) Send dismiss signal into every iframe. The splash iframe's
+        #     postMessage listener (Plan 01 section D.2) consumes the
+        #     dismiss type and adds .is-dismissing to the splash element.
+        #     Loop over window.frames so this targets the splash iframe
+        #     regardless of how many iframes Streamlit has spawned.
+        st.markdown(
+            """
+            <script>
+              (function() {
+                var payload = {type: 'snowgrep-splash-dismiss'};
+                for (var i = 0; i < window.frames.length; i++) {
+                  try { window.frames[i].postMessage(payload, '*'); } catch (e) {}
+                }
+              })();
+            </script>
+            """,
+            unsafe_allow_html=True,
+        )
+        # (b) Mark sent so we don't double-fire.
+        st.session_state._splash_dismiss_sent = True
+        # (c) Wait for the 400ms iframe fade to complete (CONTEXT.md line 48).
+        time.sleep(0.4)
+        # (d) Tear down the placeholder. The iframe is already fully faded.
+        placeholder = st.session_state.get("_splash_placeholder")
+        if placeholder is not None:
+            placeholder.empty()
+        st.session_state._splash_placeholder = None
+        return
+
+    # Data not ready yet. Iframe is still showing; its own 4s hard-cap
+    # timer will fade it out if data never arrives. Next rerun re-checks.
+    return
 
 
 def main():
