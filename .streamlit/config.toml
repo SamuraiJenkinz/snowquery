@@ -1,0 +1,5 @@
+[server]
+# Serve files from the `static/` folder at /app/static/<filename>.
+# Used by app.py to reference the SNOWGREP logo (static/snowgrep-logo.png)
+# without base64-embedding 2MB into the page HTML on every rerun.
+enableStaticServing = true

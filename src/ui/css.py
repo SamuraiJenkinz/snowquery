@@ -739,27 +739,24 @@ samp,
 
 /* === Main panel (Phase 8 MAIN-*) === */
 
-/* SNOWGREP hero — bold display logo (Anton) with the editorial page header
-   directly below. Inspired by the DaBrokeCollector wordmark style — heavy
-   condensed sans, all caps, generous tracking. The cluster sits at the top
-   of the main panel; the page renders top-aligned so the cluster is always
-   the first thing visible after the splash dismisses. */
+/* SNOWGREP hero — branded logo image (static/snowgrep-logo.png) with the
+   editorial subtitle directly below. The PNG contains both wordmark and
+   "INCIDENT INTELLIGENCE" tagline + the brand copper/blue palette on a
+   dark backdrop. The dark backdrop is intentional — it acts as a small
+   contrast-anchor against the warm-beige page background, framing the
+   logo as a deliberate brand mark. */
 .lp-main-hero {
   text-align: center;
   margin: var(--lp-space-6) 0 var(--lp-space-8) 0;
   padding: 0;
 }
-.lp-main-logo {
-  font-family: 'Anton', 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: 112px;
-  line-height: 1;
-  color: var(--lp-text);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin: 0;
-  padding: 0;
+.lp-main-logo-img {
   display: block;
+  margin: 0 auto var(--lp-space-3) auto;
+  max-width: 480px;
+  width: 100%;
+  height: auto;
+  border-radius: var(--lp-radius-md);
 }
 
 /* MAIN-01 — Editorial page header + subtitle (sit directly below .lp-main-logo

@@ -709,13 +709,17 @@ def render_main_content():
     # st.chat_input.submit would take below.
     _pending_ghost = st.session_state.pop("_pending_ghost_query", None)
 
-    # MAIN-01 — SNOWGREP hero: bold Anton wordmark with the editorial page
-    # header tucked directly beneath it. Centered, prominent, sits at the top
-    # of the main panel. Renders ALWAYS, regardless of data_loaded state.
+    # MAIN-01 — SNOWGREP hero: branded logo image served from /app/static/
+    # (Streamlit static serving enabled in .streamlit/config.toml). The logo
+    # contains both "SNOWGRP" wordmark + "INCIDENT INTELLIGENCE" tagline, so
+    # the inline h1 page header is replaced by the image's alt text for
+    # accessibility. Subtitle remains below. Centered + sized via CSS in
+    # .lp-main-hero / .lp-main-logo-img. Renders ALWAYS regardless of state.
     st.markdown(
         '<div class="lp-main-hero">'
-        '<div class="lp-main-logo">SNOWGREP</div>'
-        '<h1 class="lp-page-header">Incident Intelligence</h1>'
+        '<img class="lp-main-logo-img" '
+        'src="app/static/snowgrep-logo.png" '
+        'alt="SNOWGREP — Incident Intelligence" />'
         '<p class="lp-page-subtitle">Ask in natural language. All data stays local.</p>'
         '</div>',
         unsafe_allow_html=True,
