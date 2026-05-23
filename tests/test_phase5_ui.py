@@ -414,7 +414,12 @@ def test_sc3_missing_vars_returns_required_list_for_anthropic():
 
 def test_sc3_sidebar_renders_warning_with_missing_vars_named(monkeypatch):
     """SC #3: when Anthropic creds are missing AND Anthropic is selected,
-    sidebar renders st.warning naming each missing variable.
+    sidebar renders a provider warning naming each missing variable and sets
+    _llm_provider_blocked = True.
+
+    Phase 8 update: the warning is rendered via st.markdown() as an
+    editorial lp-warn-card div (replacing the Phase 5 st.warning() call).
+    The business contract is unchanged: warning appears, blocked flag set.
     """
     import app
     import streamlit as st
@@ -431,20 +436,24 @@ def test_sc3_sidebar_renders_warning_with_missing_vars_named(monkeypatch):
     with patch.multiple("streamlit", **surface):
         app.render_sidebar()
 
-    warning_calls = surface["warning"].call_args_list
-    assert len(warning_calls) >= 1, "Expected at least one st.warning call"
-    llm_warnings = [
-        c for c in warning_calls
-        if "not configured" in str(c) or "Missing env vars" in str(c)
-    ]
+    # Phase 8: the warning path sets _llm_provider_blocked = True and renders
+    # an editorial lp-warn-card via st.markdown(). Verify the flag was set
+    # (proves the `if _missing:` branch executed) and the markdown call
+    # includes the env-var names (proves the warn card was emitted).
+    assert st.session_state["_llm_provider_blocked"] is True, (
+        "_llm_provider_blocked must be True when Anthropic creds are missing"
+    )
+
+    # Find the markdown call that contains the warning card HTML.
+    markdown_calls = surface["markdown"].call_args_list
+    llm_warnings = [c for c in markdown_calls if "lp-warn-card" in str(c)]
     assert len(llm_warnings) >= 1, (
-        f"No LLM-provider warning matched; all warnings: {warning_calls}"
+        f"No lp-warn-card found in st.markdown calls; "
+        f"all markdown calls: {[str(c)[:120] for c in markdown_calls]}"
     )
     warning_text = str(llm_warnings[0])
     for var in ("ANTHROPIC_BASE_URL", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL"):
-        assert var in warning_text, f"Warning must name missing var {var}"
-
-    assert st.session_state["_llm_provider_blocked"] is True
+        assert var in warning_text, f"Warning must name missing var {var!r}"
 
 
 def test_sc3_chat_input_disabled_when_blocked_flag_true(azure_env):

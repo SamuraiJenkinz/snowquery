@@ -148,18 +148,19 @@ def _load_csv_data(uploaded_file, append: bool = False):
 def render_sidebar():
     """Render the sidebar with data management controls."""
     with st.sidebar:
-        # Logo header
-        st.markdown("""
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #00ff00;">
-            <div style="width: 40px; height: 40px; border: 2px solid #00ff00; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #00ff00; font-weight: 800;">S</div>
-            <div>
-                <div style="font-size: 1.1rem; font-weight: 800; color: #fff; letter-spacing: -0.5px;">SNOWGREP</div>
-                <div style="font-size: 0.6rem; color: #666; text-transform: uppercase; letter-spacing: 1px;">INCIDENT QUERY</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("### DATA INGEST")
+        # ----------------------------------------------------------------
+        # SBR-01 — Wordmark hero (Phase 8: replaces brutalist terminal logo)
+        # ----------------------------------------------------------------
+        st.markdown(
+            '<h1 class="lp-sidebar-wordmark">SNOWGREP</h1>',
+            unsafe_allow_html=True,
+        )
+        st.markdown('<hr class="lp-section-rule" />', unsafe_allow_html=True)
+
+        # ----------------------------------------------------------------
+        # DATA section (merged from legacy DATA INGEST + DATA STATUS)
+        # ----------------------------------------------------------------
+        st.markdown('<p class="lp-section-header">DATA</p>', unsafe_allow_html=True)
 
         # Password protection for upload
         # Password can be set via SNOWGREP_UPLOAD_PASSWORD environment variable
@@ -185,23 +186,18 @@ def render_sidebar():
                     else:
                         st.error("[ERR] INVALID PASSWORD")
 
-            with col2:
-                st.markdown("""
-                <div style="color: #ff5f56; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; padding: 0.5rem 0; text-align: center;">
-                    <span style="font-size: 1rem;">🔒</span><br/>LOCKED
-                </div>
-                """, unsafe_allow_html=True)
-
             # Show warning if using default password
             if upload_password == "admin123":
-                st.caption("⚠️ USING DEFAULT PASSWORD")
+                st.markdown(
+                    '<p class="lp-label" style="color: var(--lp-warning);">USING DEFAULT PASSWORD</p>',
+                    unsafe_allow_html=True,
+                )
         else:
             # Show unlocked status
-            st.markdown("""
-            <div style="color: #00ff00; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; padding: 0.25rem 0; margin-bottom: 0.5rem;">
-                <span style="font-size: 1rem;">🔓</span> UPLOAD UNLOCKED
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                '<p class="lp-label">UPLOAD UNLOCKED</p>',
+                unsafe_allow_html=True,
+            )
 
             # CSV Upload (only visible when authenticated)
             uploaded_file = st.file_uploader(
@@ -228,11 +224,7 @@ def render_sidebar():
                 st.session_state.upload_authenticated = False
                 st.rerun()
 
-        st.divider()
-
-        # Display current data status
-        st.markdown("### DATA STATUS")
-
+        # Data status (consolidated into DATA section)
         if st.session_state.schema:
             schema = st.session_state.schema
             col1, col2 = st.columns(2)
@@ -251,34 +243,36 @@ def render_sidebar():
                 with col2:
                     st.metric("COLUMNS", len(schema['columns']))
             else:
-                st.markdown('<div class="status-item"><div class="status-dot red"></div>NO DATA</div>', unsafe_allow_html=True)
+                st.markdown(
+                    '<p class="lp-label" style="color: var(--lp-danger);">NO DATA LOADED</p>',
+                    unsafe_allow_html=True,
+                )
         else:
-            st.markdown("""
-            <div style="color: #666; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
-                <span style="color: #ff5f56;">●</span> NO DATA LOADED
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                '<p class="lp-label" style="color: var(--lp-danger);">NO DATA LOADED</p>',
+                unsafe_allow_html=True,
+            )
 
-        st.divider()
+        st.markdown('<hr class="lp-section-rule" />', unsafe_allow_html=True)
 
-        # Embeddings management
-        st.markdown("### EMBEDDINGS")
+        # ----------------------------------------------------------------
+        # SBR-04 — EMBEDDINGS section with sage/terracotta status pill
+        # ----------------------------------------------------------------
+        st.markdown('<p class="lp-section-header">EMBEDDINGS</p>', unsafe_allow_html=True)
 
         if embeddings_exist():
             stats = get_embedding_stats()
             st.session_state.embeddings_ready = True
-            st.markdown(f"""
-            <div style="color: #00ff00; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
-                <span>●</span> {stats['document_count']:,} DOCS INDEXED
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                f'<span class="lp-status-pill lp-status-pill--ready">READY · {stats["document_count"]:,} DOCS</span>',
+                unsafe_allow_html=True,
+            )
         else:
             st.session_state.embeddings_ready = False
-            st.markdown("""
-            <div style="color: #ffbd2e; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">
-                <span>●</span> NO EMBEDDINGS
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(
+                '<span class="lp-status-pill lp-status-pill--missing">MISSING</span>',
+                unsafe_allow_html=True,
+            )
 
         if st.session_state.data_loaded:
             st.write("")
@@ -290,10 +284,12 @@ def render_sidebar():
                 if st.button("UPDATE", use_container_width=True):
                     _build_embeddings_with_progress(force=False)
 
-        st.divider()
+        st.markdown('<hr class="lp-section-rule" />', unsafe_allow_html=True)
 
-        # ---------- LLM PROVIDER (Phase 5) ----------
-        st.markdown("### LLM PROVIDER")
+        # ----------------------------------------------------------------
+        # SBR-05 — LLM PROVIDER section with bottom-border-only selectbox
+        # ----------------------------------------------------------------
+        st.markdown('<p class="lp-section-header">LLM PROVIDER</p>', unsafe_allow_html=True)
 
         # Initialize session_state on first render. Clamp unknown values to
         # azure_openai (defense against typos in LLM_PROVIDER_DEFAULT — RESEARCH.md
@@ -308,17 +304,19 @@ def render_sidebar():
                 default = "azure_openai"
             st.session_state["llm_provider"] = default
 
-        # Selectbox: locked label "LLM provider"; options exactly ["Azure OpenAI",
+        # Selectbox wrapped in lp-bb-select for bottom-border-only styling.
+        # Locked label "LLM provider"; options exactly ["Azure OpenAI",
         # "Anthropic Claude (MGTI)"]; index resolved from current session_state so
-        # reruns preserve the selection. Help text matches the one-sentence
-        # convention used elsewhere in render_sidebar().
+        # reruns preserve the selection.
+        st.markdown('<div class="lp-bb-select">', unsafe_allow_html=True)
         selected_label = st.selectbox(
-            "LLM provider",
+            "LLM provider",  # LOCKED v2.1 string — VERBATIM
             options=list(_PROVIDER_OPTIONS.keys()),
             index=_PROVIDER_KEYS.index(st.session_state["llm_provider"]),
             help="Which LLM serves classification, SQL generation, and executive summaries. Default is Azure OpenAI.",
         )
         st.session_state["llm_provider"] = _PROVIDER_OPTIONS[selected_label]
+        st.markdown('</div>', unsafe_allow_html=True)
 
         # Read-only active-model caption beneath the selector. Use load_settings()
         # NOT get_llm() — sidebar render must not side-effect adapter construction
@@ -330,29 +328,75 @@ def render_sidebar():
             _active_model = _extract_model_from_endpoint(_settings.azure_endpoint) if _settings.azure_endpoint else ""
         else:
             _active_model = _settings.anthropic_model
-        st.caption(f"MODEL: `{_active_model or 'NOT CONFIGURED'}`")
+        st.markdown(
+            f'<p class="lp-active-model">MODEL · {(_active_model or "NOT CONFIGURED")}</p>',
+            unsafe_allow_html=True,
+        )
 
         # Missing-creds warning + blocked-flag set. Called every rerun — cheap
         # (os.getenv is O(1)). Do NOT @st.cache_data this — adding env vars
         # between runs must invalidate immediately (RESEARCH.md Pitfall 10).
+        # SBR-06: replaced st.warning() with editorial warm-beige warning card.
         _missing = missing_vars(st.session_state["llm_provider"])
         if _missing:
             _human_name = _PROVIDER_LABELS[st.session_state["llm_provider"]]
-            _missing_str = ", ".join(f"`{v}`" for v in _missing)
-            st.warning(
-                f"**{_human_name}** is not configured. Missing env vars: {_missing_str}.\n\n"
-                f"Add them to your `.env` and restart the app, or switch back to Azure OpenAI above.",
-                icon=":material/warning:",
+            _missing_code = ", ".join(f"<code>{v}</code>" for v in _missing)
+            st.markdown(
+                f'''<div class="lp-warn-card">
+  <p class="lp-warn-label">WARNING — PROVIDER NOT CONFIGURED</p>
+  <p class="lp-warn-body"><strong>{_human_name}</strong> is not configured. Missing: {_missing_code}.</p>
+  <p class="lp-warn-fix">Add them to <code>.env</code> and restart, or switch provider above.</p>
+</div>''',
+                unsafe_allow_html=True,
             )
             st.session_state["_llm_provider_blocked"] = True
         else:
             st.session_state["_llm_provider_blocked"] = False
 
-        st.divider()
+        st.markdown('<hr class="lp-section-rule" />', unsafe_allow_html=True)
 
-        # ---------- CONFIG (existing) ----------
-        # Settings
-        st.markdown("### CONFIG")
+        # ----------------------------------------------------------------
+        # SBR-03 — MODE pill toggle (new in Phase 8 Wave A)
+        # Writes st.session_state["query_mode"] to "auto" / "structured" /
+        # "semantic" — same internal values MODE_OPTIONS produces. The legacy
+        # main-panel selectbox at app.py:684-699 is deleted by Plan 02 (Wave B).
+        # ----------------------------------------------------------------
+        st.markdown('<p class="lp-section-header">MODE</p>', unsafe_allow_html=True)
+
+        # Initialize query_mode session state. MODE_OPTIONS at app.py:46-51 stays the
+        # source of truth; pill exposes 3 modes (AUTO/SQL/SEMANTIC). HYBRID is dropped
+        # from the visible pill in v2.2 but internal "hybrid" value still works if
+        # anything else writes it.
+        if "query_mode" not in st.session_state:
+            st.session_state["query_mode"] = "auto"  # MODE_OPTIONS["AUTO"] internal value
+
+        _blocked = st.session_state.get("_llm_provider_blocked", False)
+        _block_class = " lp-mode-pill--blocked" if _blocked else ""
+
+        _pill_specs = [
+            ("AUTO",     "auto"),       # MODE_OPTIONS["AUTO"]
+            ("SQL",      "structured"), # MODE_OPTIONS["REPORT [SQL]"]
+            ("SEMANTIC", "semantic"),   # MODE_OPTIONS["SIMILAR [SEMANTIC]"]
+        ]
+
+        st.markdown('<div class="lp-mode-pill-row">', unsafe_allow_html=True)
+        _pill_cols = st.columns(3)
+        for _col, (_label, _internal) in zip(_pill_cols, _pill_specs):
+            with _col:
+                _active = " lp-mode-pill--active" if st.session_state["query_mode"] == _internal else ""
+                st.markdown(f'<div class="lp-mode-pill{_active}{_block_class}">', unsafe_allow_html=True)
+                if st.button(_label, key=f"mode_pill_{_internal}", use_container_width=True, disabled=_blocked):
+                    st.session_state["query_mode"] = _internal
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<hr class="lp-section-rule" />', unsafe_allow_html=True)
+
+        # ----------------------------------------------------------------
+        # CONFIG section (preserved from v2.1)
+        # ----------------------------------------------------------------
+        st.markdown('<p class="lp-section-header">CONFIG</p>', unsafe_allow_html=True)
 
         with st.expander("QUERY SETTINGS"):
             st.session_state.top_k = st.slider(
