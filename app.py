@@ -179,7 +179,7 @@ def render_sidebar():
 
             col1, col2 = st.columns([2, 1])
             with col1:
-                if st.button("UNLOCK UPLOAD", type="primary", use_container_width=True):
+                if st.button("UNLOCK UPLOAD", type="primary", use_container_width=True, key="unlock_upload"):
                     if password_input == upload_password:
                         st.session_state.upload_authenticated = True
                         st.rerun()
@@ -189,7 +189,7 @@ def render_sidebar():
             # Show warning if using default password
             if upload_password == "admin123":
                 st.markdown(
-                    '<p class="lp-label" style="color: var(--lp-warning);">USING DEFAULT PASSWORD</p>',
+                    '<span class="lp-pill-warn">USING DEFAULT PASSWORD</span>',
                     unsafe_allow_html=True,
                 )
         else:

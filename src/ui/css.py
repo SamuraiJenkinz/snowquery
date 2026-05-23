@@ -273,6 +273,21 @@ a:hover {
   color: var(--lp-text);
 }
 
+/* Restore Material Symbols font for icon spans. The universal *
+   rule above clobbers Streamlit's icon font (used by st.expander
+   chevron, help tooltips, etc.) and causes raw icon names like
+   "keyboard_arrow_down" to render as text. */
+[data-testid="stSidebar"] [class*="material-symbols"],
+[data-testid="stSidebar"] [class*="material-icons"],
+[data-testid="stSidebar"] [data-testid*="Icon"],
+[data-testid="stSidebar"] .material-symbols-outlined,
+[data-testid="stSidebar"] .material-symbols-rounded,
+[data-testid="stSidebar"] .material-icons,
+[data-testid="stSidebar"] .stIcon,
+[data-testid="stSidebar"] [data-testid="stIconMaterial"] {
+  font-family: 'Material Symbols Outlined', 'Material Symbols Rounded', 'Material Icons' !important;
+}
+
 /* Hide Streamlit chrome — own the canvas */
 #MainMenu,
 footer,
@@ -586,6 +601,125 @@ samp,
   padding: 1px 4px;
   border-radius: 2px;
   /* font-family inherits JetBrains Mono via Phase 6 mono boundary */
+}
+
+/* ============================================================
+   Phase 8 fixes — Streamlit defaults that bleed bright red /
+   raw icon names through the editorial palette. Restyles
+   checkboxes, slider, expander, and the warning pill / unlock
+   button to match the EMBEDDINGS MISSING pill aesthetic.
+   ============================================================ */
+
+/* Expander — editorial header instead of Streamlit's bold default */
+[data-testid="stSidebar"] [data-testid="stExpander"] summary,
+[data-testid="stSidebar"] [data-testid="stExpander"] [data-testid="stExpanderToggleIcon"] + div,
+[data-testid="stSidebar"] details > summary {
+  font-family: var(--lp-font-body) !important;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-text-muted);
+}
+[data-testid="stSidebar"] [data-testid="stExpander"] {
+  background: transparent;
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-radius-md);
+  box-shadow: none;
+}
+
+/* Checkboxes — cashmere accent in place of Streamlit's red */
+[data-testid="stSidebar"] [data-baseweb="checkbox"] [data-baseweb="checkmark"],
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label > span:first-child {
+  background-color: transparent !important;
+  border: 1px solid var(--lp-border) !important;
+  border-radius: var(--lp-radius-sm) !important;
+  box-shadow: none !important;
+}
+[data-testid="stSidebar"] [data-baseweb="checkbox"] input:checked + div,
+[data-testid="stSidebar"] [data-baseweb="checkbox"] [aria-checked="true"] [data-baseweb="checkmark"],
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label:has(input:checked) > span:first-child {
+  background-color: var(--lp-accent) !important;
+  border-color: var(--lp-accent) !important;
+  color: var(--lp-neutral-0) !important;
+}
+[data-testid="stSidebar"] [data-testid="stCheckbox"] label p,
+[data-testid="stSidebar"] [data-baseweb="checkbox"] label {
+  font-family: var(--lp-font-body);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--lp-text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Slider — cashmere thumb, warm-beige track */
+[data-testid="stSidebar"] [data-testid="stSlider"] [data-baseweb="slider"] [role="slider"] {
+  background: var(--lp-accent) !important;
+  border-color: var(--lp-accent) !important;
+  box-shadow: none !important;
+}
+[data-testid="stSidebar"] [data-testid="stSlider"] [data-baseweb="slider"] > div > div:first-child {
+  background: var(--lp-border) !important;  /* unfilled track */
+}
+[data-testid="stSidebar"] [data-testid="stSlider"] [data-baseweb="slider"] > div > div:first-child > div {
+  background: var(--lp-accent) !important;  /* filled portion */
+}
+[data-testid="stSidebar"] [data-testid="stSlider"] [data-testid="stTickBar"] *,
+[data-testid="stSidebar"] [data-testid="stSlider"] [aria-valuetext] {
+  color: var(--lp-text) !important;
+  font-family: var(--lp-font-body);
+}
+[data-testid="stSidebar"] [data-testid="stSlider"] label p {
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-text-muted);
+}
+
+/* Soft warning pill — used inline for status indicators that mirror
+   the EMBEDDINGS MISSING pill shape (warm-beige tint, terracotta text,
+   rounded). */
+[data-testid="stSidebar"] .lp-pill-warn {
+  display: inline-block;
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--lp-danger);
+  background: rgba(166, 120, 102, 0.12);
+  padding: var(--lp-space-1) var(--lp-space-3);
+  border-radius: var(--lp-radius-full);
+  margin: var(--lp-space-2) 0;
+}
+
+/* UNLOCK UPLOAD button — pill-shape variant that matches the soft
+   warning pill aesthetic. Streamlit 1.36+ emits .st-key-{key} on
+   the button wrapper when key= is set on st.button. Override the
+   global cashmere fill from Phase 6 for this specific button. */
+[data-testid="stSidebar"] .st-key-unlock_upload .stButton > button,
+[data-testid="stSidebar"] .st-key-unlock_upload button {
+  background: rgba(166, 120, 102, 0.12) !important;
+  color: var(--lp-danger) !important;
+  border: 0 !important;
+  border-radius: var(--lp-radius-full) !important;
+  font-family: var(--lp-font-body) !important;
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  padding: var(--lp-space-2) var(--lp-space-4) !important;
+  box-shadow: none !important;
+}
+[data-testid="stSidebar"] .st-key-unlock_upload .stButton > button:hover,
+[data-testid="stSidebar"] .st-key-unlock_upload button:hover {
+  background: rgba(166, 120, 102, 0.2) !important;
+  color: var(--lp-danger) !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 """
 
