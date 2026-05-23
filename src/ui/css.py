@@ -404,6 +404,18 @@ samp,
   line-height: 1;
 }
 
+/* SBR-01 — Sidebar branded logo image (same PNG as main-panel hero,
+   scaled down to fit the 320px-wide sidebar). Streamlit's universal
+   font-family rule doesn't apply to <img>, so no override needed. */
+[data-testid="stSidebar"] .lp-sidebar-logo-img {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  height: auto;
+  margin: var(--lp-space-4) auto var(--lp-space-2) auto;
+  border-radius: var(--lp-radius-md);
+}
+
 [data-testid="stSidebar"] {
   width: 320px !important;
   min-width: 320px !important;

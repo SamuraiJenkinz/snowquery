@@ -150,9 +150,14 @@ def render_sidebar():
     with st.sidebar:
         # ----------------------------------------------------------------
         # SBR-01 — Wordmark hero (Phase 8: replaces brutalist terminal logo)
+        # Branded SNOWGREP logo served from /app/static/ (enableStaticServing
+        # in .streamlit/config.toml). Same image used in the main panel hero,
+        # scaled down to fit the 320px sidebar via .lp-sidebar-logo-img.
         # ----------------------------------------------------------------
         st.markdown(
-            '<h1 class="lp-sidebar-wordmark">SNOWGREP</h1>',
+            '<img class="lp-sidebar-logo-img" '
+            'src="app/static/snowgrep-logo.png" '
+            'alt="SNOWGREP — Incident Intelligence" />',
             unsafe_allow_html=True,
         )
         st.markdown('<hr class="lp-section-rule" />', unsafe_allow_html=True)
