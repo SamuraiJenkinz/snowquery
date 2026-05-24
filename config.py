@@ -18,7 +18,11 @@ AZURE_OPENAI_API_KEY: str = os.getenv("AZURE_OPENAI_API_KEY", "")
 API_VERSION: str = os.getenv("API_VERSION", "2023-05-15")
 
 # Embedding Configuration
-EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+# Multilingual SBERT — XLM-R distilled to MiniLM-L12, fine-tuned on ~50 languages
+# (German, Japanese, French, Spanish, Portuguese, etc.). 384-dim, drop-in
+# compatible with the prior all-MiniLM-L6-v2 collection dimensionality.
+# Force-rebuild embeddings after changing this constant.
+EMBEDDING_MODEL: str = "paraphrase-multilingual-MiniLM-L12-v2"
 
 # Database Paths
 DATA_DIR: Path = BASE_DIR / "data"
