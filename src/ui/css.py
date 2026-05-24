@@ -603,7 +603,7 @@ samp,
 }
 [data-testid="stSidebar"] .lp-warn-card .lp-warn-fix {
   font-family: var(--lp-font-body);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--lp-text-muted);
   margin: 0;
   line-height: 1.4;
