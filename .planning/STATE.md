@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 11 — Documentation + acceptance gate — UNBLOCKED, ready to plan/discuss
-Plan: — (ready for `/gsd:discuss-phase 11` or `/gsd:plan-phase 11`)
-Status: Phase 10 COMPLETE + verified (4/4 POL must-haves PASS via gsd-verifier; 91/91 tests green including 22/22 Phase 5 UI gate); POL-01..04 marked Complete in REQUIREMENTS.md; Phase 11 unblocked (depends on Phases 6-10 — all complete; final phase of v2.2)
-Last activity: 2026-05-23 — Phase 10 closeout: gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md updated; phase completion commit bundled
+Phase: 11 — Documentation + acceptance gate — IN PROGRESS (Plan 01 COMPLETE; Plan 02 in-flight)
+Plan: 01 of 02 COMPLETE (DOC-01 + DOC-02); 02 next (TST-01..03 acceptance suite)
+Status: Plan 01 landed (d977c56 USER_GUIDE.md Visual Refresh + v2.2 footer; d91a11b README.md Screenshots + docs/screenshots/ PNGs); Phase 5 UI suite 22/22 green; full suite 91/91 green (Plan 02 will grow this with TST-01..03 tests); all v2.1 locked UI strings preserved verbatim in both files
+Last activity: 2026-05-24 — Phase 11 Plan 01 complete: docs(11-01) Visual Refresh section + Screenshots subsection + 3 byte-identical PNG copies; one Rule-1 auto-fix (lowercase "all data stays local" to satisfy plan composite verification)
 
-Progress: v2.2 — Phases 6-10 COMPLETE; Phase 11 next
+Progress: v2.2 — Phases 6-10 COMPLETE; Phase 11 Plan 01 COMPLETE; Phase 11 Plan 02 next (final plan of v2.2)
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
@@ -22,7 +22,7 @@ Progress: v2.2 — Phases 6-10 COMPLETE; Phase 11 next
 [██████████] Phase 8  Screen restyle (sidebar + main)  ← COMPLETE (Plans 01-02 done)
 [██████████] Phase 9  Data visualization               ← COMPLETE (Plans 01-04 done)
 [██████████] Phase 10 Polish + edge states             ← COMPLETE (Plans 01-03 done)
-[          ] Phase 11 Documentation + acceptance gate
+[█████     ] Phase 11 Documentation + acceptance gate  ← IN PROGRESS (Plan 01 DONE; Plan 02 next)
 ```
 
 ## v2.2 Phase Map (summary)
@@ -56,6 +56,10 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 ## Accumulated Context
 
 ### Decisions (recent)
+
+- **Phase 11 Plan 01 — Doc plan composite-verification case sensitivity (Rule 1 auto-fix)**: Plan body authored the Data privacy bullet as `**Data privacy** — All data stays local.` (capital A), but the plan's own composite verification block uses `'all data stays local' in ug` (case-sensitive). Resolved by lowercasing the leading phrase: `**Data privacy** — all data stays local. CSVs, embeddings, …`. Pattern carry-forward: when a doc-plan supplies both authored text AND a substring-grep verification, audit case sensitivity before commit.
+- **Phase 11 Plan 01 — pytest requires `PYTHONPATH=.` (no rootdir-on-path config)**: No `pytest.ini` / `pyproject.toml [tool.pytest.ini_options]` / `conftest.py` adds repo root to `sys.path`. Phase 5..10 SUMMARY claims of "91/91 green" implicitly assume the operator sets `PYTHONPATH=.` (verified true for this repo). All future plans that run pytest must prefix with `PYTHONPATH=.` OR a Plan-02-scope task should add `[tool.pytest.ini_options]\npythonpath = ["."]` to `pyproject.toml`. Not changed in Plan 01 — outside contract.
+- **Phase 11 Plan 01 — Screenshots deploy by byte-identical copy (SHA-256 verified)**: `.planning/design-mockups/*.png` → `docs/screenshots/*.png` is COPY-not-move; sources remain in `.planning/` (untracked there; tracked at the new path). Byte-identity verified by `os.path.getsize` equality AND `hashlib.sha256` digest equality before commit. Pattern reusable for any future asset deployment from internal planning materials.
 
 - **Phase 10 Plan 03 — Markdown-injection-inside-td is a Streamlit architectural constraint**: When `st.markdown(html, unsafe_allow_html=True)` content includes heading/strong/bold tags placed inside an existing `<td>`, Streamlit's renderer injects its own heading styles that override the cell's `font-*` properties. Fix: explicit descendant selectors `.lp-editorial-table tbody td h1..h6/strong/b/p { inherit }`. Required for any editorial table that may receive markdown-injected content. Pattern generalizes to all future editorial tables.
 - **Phase 10 Plan 03 — Per-key `[class*='st-key-_ghost_']` wildcard for Streamlit button variants**: Ghost-query buttons share a `_ghost_` prefix in their Streamlit-generated key class names. CSS wildcard attribute selector `[class*="st-key-_ghost_"]` covers all variants without enumerating keys. Extends the Phase 8 `.st-key-{key}` per-button override pattern to key-prefix groups. Use this when a set of buttons shares a naming convention and all need the same visual override.
@@ -116,10 +120,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-23 — Phase 10 Plan 03 complete (f211ed0 last fix; plan metadata commit follows)
-Stopped at: Phase 10 COMPLETE — all 3 plans done; 4 visual refinements applied; human verified; 91/91 tests green; ready for gsd-verifier
+Last session: 2026-05-24 — Phase 11 Plan 01 complete (d977c56 USER_GUIDE.md; d91a11b README.md + docs/screenshots/; metadata commit follows)
+Stopped at: Phase 11 Plan 01 COMPLETE — DOC-01 + DOC-02 satisfied; 22/22 + 91/91 still green; 1 Rule-1 auto-fix logged in SUMMARY
 Resume file: None
-Next: Phase 11 (Documentation + acceptance gate — DOC-01..02, TST-01..03). Entry gates: 22/22 Phase 5 tests green, 91/91 full suite green. TST-02 may enforce LABEL_COLOR_CHARCOAL constant import (deferred from Phase 9).
+Next: Phase 11 Plan 02 (TST-01..03 acceptance suite — grows test count beyond 91). Entry gates: Plan 01 SUMMARY landed, USER_GUIDE.md and README.md anchors stable, docs/screenshots/ present and byte-identical. Plan 02 author should consider adding `[tool.pytest.ini_options]\npythonpath = ["."]` to `pyproject.toml` so new tests are runnable without manual `PYTHONPATH=.` (see Phase 11 Plan 01 decision).
 
 ---
-*Last updated: 2026-05-23 after Phase 10 Plan 03 complete (f211ed0 + docs commit — Phase 10 COMPLETE).*
+*Last updated: 2026-05-24 after Phase 11 Plan 01 complete (d977c56 + d91a11b + docs commit — Plan 02 next).*
