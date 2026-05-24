@@ -10,37 +10,34 @@ Operators get accurate, fast natural-language answers about ServiceNow incidents
 
 ## Current State
 
-**Shipped:** v2.1 (2026-05-22) — Multi-provider LLM integration. Anthropic Claude available alongside Azure OpenAI; provider toggle in sidebar; per-message provenance preserved across mid-session switches; missing-env warning disables chat input; smoke script (`scripts/smoke_llm.py`) gates production deploy.
+**Shipped:** v2.2 (2026-05-24) — SNOWGREP Visual Revamp (Loro Piana). Brutalist terminal CSS replaced with editorial warm-toned design system across every screen — helix-motif splash, branded SNOWGREP logo, small-caps tracked sidebar, warm-beige user-message cards, editorial HTML table hero + collapsible interactive view, `loro_piana` Altair theme with vibrant categorical palette, horizontal bar charts with value labels, polished edge states. v2.1 LLM behavior untouched; all 22 v2.1 locked UI strings preserved verbatim; AST-locked `_render_provenance_caption` invariant preserved. 103/103 tests green (91 v2.1 + 12 new visual regression).
 
-**Open pre-prod gate:** Operator-run live smoke against staging MGTI gateway (`python scripts/smoke_llm.py --provider both --verbose`). Smoke script artifact is structurally verified; live execution requires staging credentials not present in CI/dev. See `.planning/milestones/v2.1-MILESTONE-AUDIT.md` §7.
+**Previously shipped:** v2.1 (2026-05-22) — Multi-provider LLM integration. Anthropic Claude (via MGTI Apigee/Bedrock proxy) alongside Azure OpenAI; provider toggle in sidebar; per-message provenance preserved across mid-session switches; missing-env warning disables chat input; `scripts/smoke_llm.py` gates production deploy.
 
-## Current Milestone: v2.2 SNOWGREP Visual Revamp — Loro Piana Quiet Luxury
-
-**Goal:** Replace the brutalist terminal CSS with an editorial warm-toned design system across all screens (splash, sidebar, chat, results, charts) without touching v2.1 LLM behavior or losing any existing functionality.
-
-**Target features:**
-- Splash screen with helix-motif data animation on boot (CSS keyframes, clears when data ready)
-- Foundation CSS pass — EB Garamond + Inter fonts, warm earth palette, Streamlit color variable overrides
-- Sidebar restyle — small-caps tracked labels, MODE pill toggles, EMBEDDINGS status pills, dropdown bottom-border-only inputs
-- Main panel restyle — warm-beige user message cards, white assistant cards with thin borders, serif page header, restyled chat input + ASK button
-- Editorial dataframe + collapsible interactive view — HTML hero matching mockup wrapped in `st.expander` revealing full `st.dataframe` (zero functionality loss)
-- Altair chart theming module — cashmere bar palette, no axis box, warm gridlines, EB Garamond chart titles
-- Polish + edge states — empty state, provider-warning restyle, loading spinners with small-caps tracked labels
-- Updated USER_GUIDE noting the visual refresh; 22 Phase 5 UI tests stay green (assert strings, not styling)
-
-**Design reference:** Three Stitch mockups generated 2026-05-22 in `.planning/design-mockups/` (00-splash-helix.png, 01-main-chat.png, 02-results-chart.png) and live at https://stitch.withgoogle.com/projects/11615568135320819515
-
-**Design system:** Loro Piana Luxe — palette and component patterns at `C:\Users\taylo\.claude\skills\loro-piana-aesthetic\`
-
-**Out of scope for v2.2:** Backend / LLM behavior changes; mobile responsive; porting `app_brutalist.py` / `fixedapp.py` / `designui.py` variants; backwards-compatibility shim for the brutalist theme.
+**Open pre-prod gate (carried from v2.1):** Operator-run live smoke against staging MGTI gateway (`python scripts/smoke_llm.py --provider both --verbose`). Smoke script artifact is structurally verified; live execution requires staging credentials not present in CI/dev. See `.planning/milestones/v2.1-MILESTONE-AUDIT.md` §7.
 
 ## Next Milestone Goals
 
-After v2.2 ships, candidate v2.3+ areas (v2 backlog from v2.1):
+After v2.2 ships, candidate v2.3+ areas (v2 backlog from v2.1 + v2.2):
+
+**From v2.1 backlog:**
 - **Resilience**: Retry with exponential backoff on `LLMTransientError` (429 / 5xx)
 - **Provider features**: Per-call-site model selection (Haiku for `classify_intent` / Sonnet for `generate_executive_summary`)
 - **Opus 4.7 with adaptive thinking** — pending Hubble entitlement
 - **Connection-test button**: Sidebar widget that runs a minimal Create Message call and reports latency
+
+**From v2.2 backlog:**
+- **THM-01**: Theme toggle in sidebar to switch between Loro Piana (default) and brutalist (preserved as alternate)
+- **THM-02**: Dark-mode luxury variant — same warm earth tones at lower luminance for low-light operator environments
+- **MIC-01**: Card hover states — subtle warm-beige shadow lift on assistant message cards
+- **MIC-02**: Provider switch transition — fade between sidebar widget states when provider dropdown changes
+- **CHT-01**: Sparkline column in editorial table for time-series fields
+- **CHT-02**: Interactive crossfilter between editorial table and chart (click a bar → filter the table)
+
+**Tech debt to optionally address:**
+- Add `[tool.pytest.ini_options]\npythonpath = ["."]` to `pyproject.toml` (or create `conftest.py`) so bare `pytest tests/` works without `PYTHONPATH=.` prefix
+- Migrate sidebar password-gate `st.error()` (app.py:209) + CSV-load/embeddings-build `st.error()` calls (app.py:161, 491) to `_render_error_html` if a richer treatment is desired
+- Replace legacy `class="query-box"` div on the executive-summary block (app.py:588) with an editorial class name
 
 ## Requirements
 
@@ -81,25 +78,32 @@ Shipped in v2.1 (2026-05-22):
 - ✓ README + USER_GUIDE document provider selection, MGTI-only constraint, smoke script, warning resolution; 7 locked UI strings preserved verbatim in both docs — v2.1
 - ✓ Comprehensive test coverage: 91 tests across Phases 1-5 in 8.13s, zero live HTTP / LLM / Streamlit / subprocess / network — v2.1
 
+Shipped in v2.2 (2026-05-24):
+
+- ✓ Splash screen with helix-motif data animation on boot (`src/ui/splash.py`); EB Garamond wordmark + two diagonal INC ID streams; `prefers-reduced-motion`-compliant; 4s hard cap; single-shot per browser session via `_splash_shown` — v2.2
+- ✓ Foundation CSS module (`src/ui/css.py`, 1,407 LOC) — EB Garamond + Inter + JetBrains Mono fonts, warm earth palette (`#F5F0EB` / `#8B7355` / `#2C2420` family), Streamlit color variable overrides; single `LORO_PIANA_CSS` injection from `app.py`; no inline `<style>` blocks remain — v2.2
+- ✓ Sidebar restyle — branded SNOWGREP PNG logo (320px width), small-caps tracked section labels (DATA, EMBEDDINGS, LLM PROVIDER, MODE), MODE radio with sage active-dot via `:has(input:checked)`, EMBEDDINGS sage/terracotta pill, bottom-border-only LLM PROVIDER select with locked label "LLM provider" — v2.2
+- ✓ Main panel restyle — branded SNOWGREP hero logo, ghost example queries (click-to-fill), warm-beige user message cards aligned right (max 70% width), white assistant cards with `1px solid #E8E0D8` border aligned left (max 85% width), restyled chat input with cashmere ASK submit — v2.2
+- ✓ Provenance caption restyle — Inter 500 small-caps 11px muted gold `#B8A88A`; AST-locked v2.1 invariant preserved (helper still reads only function args, never `st.session_state`) — v2.2
+- ✓ Editorial HTML table hero (`_render_editorial_table` in `src/ui/results.py`) — italic priority cells, warm-beige row dividers, EB Garamond small-caps headers, 16/24px padding; 50-row truncation with comma-formatted caption — v2.2
+- ✓ Collapsible interactive dataframe — single `st.expander("EXPAND · INTERACTIVE VIEW")` (U+00B7 middot) beneath every editorial table containing native `st.dataframe(use_container_width=True, hide_index=True)` + CSV download; zero functionality loss vs. v2.1 — v2.2
+- ✓ Altair `loro_piana` theme module (`src/ui/altair_theme.py`) — registered via Altair 6 `@alt.theme.register("loro_piana", enable=True)`; transparent bg, warm-beige gridlines, EB Garamond titles, no axis box; `VIBRANT_PALETTE` = `[#C0392B, #2E5BBA, #2E7D32, #E67E22, #F39C12]` (crimson, royal blue, forest green, burnt orange, mustard yellow) — v2.2
+- ✓ Chart generator restyled (`src/chart_generator.py`) — `CHART_COLORS` + `configure_chart_theme` deleted; bar charts horizontal with layered value labels (Inter 12px charcoal, comma-formatted, dx=4, align=left); `legend=None` on single-series — v2.2
+- ✓ Editorial empty state (`_render_empty_card`) — EB Garamond 24px "No data loaded" + Inter 15px warm-gray "Upload incidents.csv from the sidebar to begin." — v2.2
+- ✓ Provider-warning state restyled — warm-beige `#F5F0EB` background + terracotta `#A67866` 3px left border + "WARNING — PROVIDER NOT CONFIGURED" small-caps; "QUERY DISABLED — see sidebar warning" placeholder preserved verbatim — v2.2
+- ✓ Loading indicators — `.lp-loading` small-caps tracked replaces `st.spinner` at 4 callsites: LOADING DATA, BUILDING EMBEDDINGS ×2, ANALYZING; Inter 500 11px muted gold with `@keyframes lp-pulse` — v2.2
+- ✓ Editorial error rendering (`_render_error_html`) — terracotta 3px left border + small-caps "ERROR" label + XSS-escaped message body at 6 process_query error paths + outer try/except for `QueryError`/`LLMError` — v2.2
+- ✓ Streamlit alert palette overrides via CSS sweep — `stAlertContainer`, `stAlertContentSuccess|Error|Warning|Info`, `stAlertDynamicIcon` hidden; zero call-site edits — v2.2
+- ✓ Page chrome refresh — `page_icon` `▣` → `✦` (U+2726); `page_title="SNOWGREP"` preserved verbatim — v2.2
+- ✓ USER_GUIDE.md "VISUAL REFRESH (v2.2)" section + v2.2 footer; README.md "Screenshots" subsection with three byte-identical PNG copies in `docs/screenshots/`; loro-piana-aesthetic skill referenced — v2.2
+- ✓ All 22 v2.1 Phase 5 UI tests stay green throughout — locked strings (LLM provider, Azure OpenAI, Anthropic Claude (MGTI), QUERY DISABLED — see sidebar warning, Ask anything about your incidents…, Ask in natural language. All data stays local., WARNING — PROVIDER NOT CONFIGURED) preserved verbatim — v2.2
+- ✓ New `tests/test_phase6_visual.py` (12 tests, 314 LOC) — CSS presence/absence, renderer signatures, Altair theme registration, WCAG-AA contrast via inline sRGB linearization (`#2C2420`/`#F5F0EB` = 13.4363; `#6B5E52`/`#F5F0EB` = 5.5393), negative usage scan over `var(--lp-text-muted)` rules with role-marker contract — v2.2
+
 ### Active
 
-<!-- v2.2 scope — visual revamp to Loro Piana quiet luxury aesthetic. Defined 2026-05-22. -->
+<!-- v2.3 scope TBD — populated by /gsd:new-milestone after a fresh requirements pass. -->
 
-- [ ] Splash screen with helix-motif data animation on boot, restrained Loro Piana aesthetic
-- [ ] Foundation CSS — EB Garamond serif headlines, Inter body + small-caps labels, warm earth palette (#F5F0EB / #8B7355 / #2C2420 family), Streamlit color variable overrides
-- [ ] Sidebar restyle — small-caps tracked section labels (DATA, EMBEDDINGS, LLM PROVIDER, MODE), MODE pill toggles, EMBEDDINGS status pills, dropdown bottom-border-only style
-- [ ] Main panel restyle — warm-beige user message cards aligned right; white assistant cards with thin warm-beige border aligned left; EB Garamond page header "Incident Intelligence"; restyled chat input with cashmere ASK button
-- [ ] Provenance caption restyle — muted gold small-caps tracked, sits above message content (preserves v2.1 invariant: never reads session_state)
-- [ ] Editorial dataframe view — `st.markdown` HTML hero table matching mockup (italic priority labels, warm-beige row dividers, generous cell padding); single source of truth helper in `src/utils.py`
-- [ ] Collapsible interactive dataframe — every editorial table is followed by `st.expander("EXPAND · INTERACTIVE VIEW")` containing native `st.dataframe` + CSV download button; zero functionality loss
-- [ ] Altair chart theming module — cashmere graduated palette for bars, no axis box, warm-beige gridlines, EB Garamond chart titles, no chart legend on single-series
-- [ ] Empty state — no CSV loaded screen with editorial upload prompt
-- [ ] Provider-warning state — restyled inline warning in sidebar matching Loro Piana aesthetic (small-caps "PROVIDER NOT CONFIGURED", muted gold, recovery copy)
-- [ ] Loading indicators — small-caps tracked "LOADING…" / "ANALYZING…" replacing default Streamlit spinners
-- [ ] Page chrome — `st.set_page_config` page_icon refresh from brutalist `▣` to something restrained; page title preserved
-- [ ] USER_GUIDE update — new visual refresh subsection noting the redesign; locked v2.1 UI strings stay verbatim
-- [ ] Phase 5 test suite stays green — 22 v2.1 UI tests assert exact UI strings, not colors; all must pass post-revamp
-- [ ] Visual regression coverage — new test module asserts CSS rule presence (font imports, palette tokens, no `#0a0a0a` brutalist residue) — protects against silent revert
+(None — see Next Milestone Goals above for candidate areas)
 
 ### Out of Scope
 
@@ -138,13 +142,17 @@ Shipped in v2.1 (2026-05-22):
 
 All routed through `LLMClient` via `get_llm()` + `llm_to_query_error()`.
 
-**Test suite:** 91 tests across `tests/test_llm_seam.py`, `tests/test_phase2_parity.py`, `tests/test_phase3_adapter.py`, `tests/test_phase4_strict_tools.py`, `tests/test_phase5_ui.py`. Zero live HTTP / LLM / Streamlit / subprocess / network. Combined run: 8.13s.
+**Test suite:** 103 tests (91 v2.1 + 12 new v2.2 visual regression) across `tests/test_llm_seam.py`, `tests/test_phase2_parity.py`, `tests/test_phase3_adapter.py`, `tests/test_phase4_strict_tools.py`, `tests/test_phase5_ui.py`, `tests/test_phase6_visual.py`. Zero live HTTP / LLM / Streamlit / subprocess / network. Combined run: ~10s with `PYTHONPATH=. python -m pytest tests/ -q`.
 
-**Codebase state after v2.1:**
-- ~1,964 LOC in `src/llm/` (8 modules)
-- 470 LOC `scripts/smoke_llm.py`
-- ~3,050 LOC in v2.1 test files
-- 80 files changed in v2.1 range (+26,275 / -250)
+**Codebase state after v2.2:**
+- ~1,964 LOC in `src/llm/` (8 modules — unchanged from v2.1)
+- ~2,290 LOC in `src/ui/` (5 modules: `__init__.py`, `css.py`, `altair_theme.py`, `results.py`, `splash.py` — new in v2.2)
+- 470 LOC `scripts/smoke_llm.py` (unchanged from v2.1)
+- ~3,050 LOC in v2.1 test files + 314 LOC `tests/test_phase6_visual.py` (new in v2.2)
+- v2.1 range: 80 files changed (+26,275 / -250)
+- v2.2 range: 75 files changed (+16,646 / -677) across 89 commits over 2 days (2026-05-22 → 2026-05-24)
+- `static/snowgrep-logo.png` + `.streamlit/config.toml` (`enableStaticServing = true`) — new in v2.2
+- `docs/screenshots/` byte-identical PNG copies of `.planning/design-mockups/` — new in v2.2
 
 ## Constraints
 
@@ -178,6 +186,18 @@ All routed through `LLMClient` via `get_llm()` + `llm_to_query_error()`.
 | `INTENT_TOOL` derived via `typing.get_type_hints()` not `fields().type` | Under `from __future__ import annotations`, `fields().type` returns strings — `get_type_hints` resolves to types | ✓ Good — Phase 4 Pitfall 1 guard; locked by acceptance gate |
 | `chart_requested`/`chart_type` heuristic-populated, excluded from LLM schema | Heuristic outperforms the LLM on these two fields; LLM cannot overwrite the heuristic for them | ✓ Good — TOOL-04 test injects `chart_requested=True` into ToolCall.input and asserts classify_intent reads from heuristic locals (False) |
 | Guardrail check BEFORE content-emptiness check in Anthropic HTTP 200 handler | Anthropic returns HTTP 200 + empty content when guardrail intervenes; checking emptiness first would silently succeed on guardrail blocks | ✓ Good — Phase 3 Pitfall 4 guard; locked by paired tests `test_guardrail_intervened_raises_guardrail_error` + `test_empty_content_non_guardrail_raises_schema_error` |
+| v2.2: Phase 8 merged from two phases to one (two waves) | Sidebar + main panel target disjoint DOM regions and consume Phase 6 tokens read-only; mergeable into one phase with two parallel waves (Wave A: SBR-*, Wave B: MAIN-*) | ✓ Good — reduced v2.2 phase count from 8 to 7 without losing coverage; both waves shipped 2026-05-23 |
+| v2.2: Editorial HTML hero + `st.expander` for native dataframe (DVZ-02) | Chosen over fighting glide-data-grid CSS; removes 4-6h estimate risk; zero functionality loss vs. v2.1 | ✓ Good — operators get scannable editorial view + full interactivity one click away; no widget feature loss |
+| v2.2: `st.radio(horizontal=True)` for MODE with `:has(input:checked)` sage active-dot (SBR-03 approved deviation) | Three `st.button` pills failed because sibling DOM structure prevented active-state CSS matching; native primitive with `:has()` selector is cleaner and Streamlit-idiomatic | ✓ Good — same write contract (`query_mode` ∈ `auto/structured/semantic`); no Python-side class juggling |
+| v2.2: Branded SNOWGREP PNG logo for both sidebar and main panel hero (SBR-01/MAIN-01 approved deviation) | Single asset at `static/snowgrep-logo.png` served via Streamlit static serving (`enableStaticServing = true`); dark backdrop intentional — high-contrast brand mark against warm-beige page | ✓ Good — alt text carries "Incident Intelligence" for accessibility; visually approved by user |
+| v2.2: DVZ-03 truncation cap at 50 rows, not REQUIREMENTS.md's `>1000` (approved deviation) | Editorial table is the hero view and must be scannable at a glance; full df still available behind the expander | ✓ Good — encoded as `_TRUNCATION_CAP = 50` constant; comma-formatted N in caption |
+| v2.2: Altair 6 `@alt.theme.register("loro_piana", enable=True)` decorator API (DVZ-04) | NOT the deprecated `alt.themes.*` namespace; `enable=True` registers and activates in one call | ✓ Good — SNOWGREP canonical pattern; activates process-wide at import time via side-effect import `import src.ui.altair_theme  # noqa: F401` in `app.py` |
+| v2.2: `src/ui/css.py` is the single source of truth for hex values | No module is permitted to hardcode Loro Piana hex values or Streamlit selector overrides | ✓ Good — documented exception: `src/chart_generator.py:350` `mark_text(color="#2C2420")` and line mark `color="#C0392B"` are Altair mark properties (not color encodings) where theme `range.category` does not apply |
+| v2.2: `VIBRANT_PALETTE` in `src/ui/altair_theme.py:42-48` is the canonical chart data palette source | Five hex values: `#C0392B` (crimson), `#2E5BBA` (royal blue), `#2E7D32` (forest green), `#E67E22` (burnt orange), `#F39C12` (mustard yellow); imported by `src/chart_generator.py` | ✓ Good — Phase 12 doc-accuracy cleanup re-aligned USER_GUIDE.md:36 to match this exactly |
+| v2.2: Pure-string-builder pattern for renderers (`src/ui/results.py`) | Functions return HTML strings; `st.markdown(html, unsafe_allow_html=True)` wrapping happens at call sites in `app.py`. All dynamic inputs `html.escape()`-wrapped | ✓ Good — no Streamlit import in renderer module; XSS contract documented in module docstring |
+| v2.2: `PYTHONPATH=. python -m pytest tests/` invocation pattern | Repo has no `pyproject.toml` / `pytest.ini` / `conftest.py`; bare `pytest tests/` fails with `ModuleNotFoundError: No module named 'src'` | — Pending — adding `[tool.pytest.ini_options]\npythonpath = ["."]` deferred to v2.3 backlog as orthogonal change |
+| v2.2: Phase 12 inserted late to close audit doc-drift | Initial milestone audit returned `tech_debt` status with 4 low-severity doc-drift items in USER_GUIDE.md / README.md; Phase 12 (`doc-accuracy-cleanup`) closed all four | ✓ Good — re-audit promoted milestone to `passed`; established pattern of audit → close-gaps → re-audit before archival |
+| v2.2: `AST-locked _render_provenance_caption` invariant preserved across 7 phases | Helper body reads only function args, never `st.session_state`; regression test in `tests/test_phase5_ui.py` runs after every phase | ✓ Good — load-bearing invariant from v2.1 Phase 5 stayed green throughout v2.2 |
 
 ---
-*Last updated: 2026-05-22 after v2.2 milestone initialization*
+*Last updated: 2026-05-24 after v2.2 milestone complete (Phases 6-12 shipped). 36/36 v2.2 v1 requirements validated; 103/103 tests green.*
