@@ -1,6 +1,6 @@
 """Editorial HTML renderers for SNOWGREP v2.2 results layer.
 
-Three pure-Python string builders. No Streamlit dependency — callers inject
+Five pure-Python string builders. No Streamlit dependency — callers inject
 the returned HTML via ``st.markdown(html, unsafe_allow_html=True)``.
 
 XSS-safety contract
@@ -273,4 +273,88 @@ def _render_chart_unavailable(feedback: str) -> str:
     )
 
 
-__all__ = ["_render_editorial_table", "_render_empty_state", "_render_chart_unavailable"]
+def _render_empty_card() -> str:
+    """Return the POL-01 empty-state card HTML for the no-CSV-loaded surface.
+
+    Distinct from ``_render_empty_state`` (which is the Phase 9 0-row
+    query-result fallback). This function is the top-of-panel editorial
+    card shown when ``st.session_state.data_loaded`` is False.
+
+    Spec-locked verbatim strings (do NOT alter — REQUIREMENTS.md POL-01):
+    - Heading: ``No data loaded``
+    - Subtitle: ``Upload incidents.csv from the sidebar to begin.``
+
+    Layout anatomy (consumes Phase 10 POL-01 CSS in src/ui/css.py):
+    - White background, 1px var(--lp-border), 4px radius
+    - max-width 520px, centered horizontally, top-of-panel placement
+    - EB Garamond 24px weight 300 charcoal heading
+    - 80px hairline divider (1px var(--lp-border))
+    - Inter 15px 400 warm-gray subtitle
+    - No icon, no illustration
+
+    Returns
+    -------
+    str
+        Self-contained ``<div>`` HTML fragment. No interpolation —
+        all strings are spec-locked literals, so no escaping is required.
+    """
+    return (
+        '<div class="lp-empty-card">'
+        '<p class="lp-empty-heading">No data loaded</p>'
+        '<hr class="lp-empty-divider" />'
+        '<p class="lp-empty-subtitle">'
+        "Upload incidents.csv from the sidebar to begin."
+        "</p>"
+        "</div>"
+    )
+
+
+def _render_error_html(msg: str, label: str = "ERROR") -> str:
+    """Return the POL-03 unified error card HTML for QueryError + LLMError.
+
+    Unified card (no visual distinction between QueryError and LLMError —
+    the message body carries differentiation). Replaces every brutalist
+    ``[ERR] {msg}`` string interpolation in ``app.py::process_query``.
+
+    Layout anatomy (consumes Phase 10 POL-03 CSS in src/ui/css.py):
+    - White background, 3px var(--lp-danger) (terracotta #A67866) left border
+    - 1px var(--lp-border) top/right/bottom, 4px radius
+    - "ERROR" small-caps tracked label (Inter 500 11px terracotta)
+    - Body Inter 400 charcoal, line-height 1.5
+    - No retry CTA
+
+    Parameters
+    ----------
+    msg:
+        Human-readable error message. HTML-escaped before interpolation
+        to maintain the XSS-safety contract documented in the module
+        docstring. May contain user-supplied content (e.g. SQL fragments,
+        LLM provider error strings).
+    label:
+        Small-caps label rendered above the message body. Default
+        ``"ERROR"``. Caller may override for variants (e.g. ``"WARNING"``)
+        but Phase 10 ships only the ``"ERROR"`` default.
+
+    Returns
+    -------
+    str
+        Self-contained ``<div>`` HTML fragment. ``msg`` and ``label`` are
+        both HTML-escaped via ``html.escape()``.
+    """
+    escaped_msg = html.escape(msg)
+    escaped_label = html.escape(label)
+    return (
+        '<div class="lp-error-card">'
+        f'<p class="lp-error-label">{escaped_label}</p>'
+        f'<p class="lp-error-body">{escaped_msg}</p>'
+        "</div>"
+    )
+
+
+__all__ = [
+    "_render_editorial_table",
+    "_render_empty_state",
+    "_render_chart_unavailable",
+    "_render_empty_card",
+    "_render_error_html",
+]
