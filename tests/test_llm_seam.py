@@ -73,6 +73,7 @@ def _strip_llm_env(monkeypatch):
         "ANTHROPIC_TEMPERATURE",
         "ANTHROPIC_TIMEOUT_S",
         "ANTHROPIC_TOOLS_SUPPORTED",
+        "ANTHROPIC_DIRECT_MODE",
     ):
         monkeypatch.delenv(name, raising=False)
 
