@@ -130,29 +130,36 @@ def init_session_state():
 
 def _load_csv_data(uploaded_file, append: bool = False):
     """Load CSV data with replace or append mode."""
-    mode_text = "APPENDING" if append else "LOADING"
-    with st.spinner(f"{mode_text} CSV DATA..."):
-        try:
-            schema = load_csv(uploaded_file, append=append)
-            st.session_state.schema = schema
-            st.session_state.data_loaded = True
+    _loading = st.empty()
+    _loading.markdown(
+        '<p class="lp-loading">'
+        + ("APPENDING DATA…" if append else "LOADING DATA…")
+        + "</p>",
+        unsafe_allow_html=True,
+    )
+    try:
+        schema = load_csv(uploaded_file, append=append)
+        st.session_state.schema = schema
+        st.session_state.data_loaded = True
 
-            if append:
-                st.success(
-                    f"[OK] APPENDED — {schema['row_count']:,} TOTAL INCIDENTS"
-                )
-                logger.info(f"Appended data, total: {schema['row_count']} rows")
-            else:
-                st.success(
-                    f"[OK] LOADED {schema['row_count']:,} INCIDENTS / "
-                    f"{len(schema['columns'])} COLUMNS"
-                )
-                logger.info(f"Successfully loaded {schema['row_count']} rows")
+        if append:
+            st.success(
+                f"[OK] APPENDED — {schema['row_count']:,} TOTAL INCIDENTS"
+            )
+            logger.info(f"Appended data, total: {schema['row_count']} rows")
+        else:
+            st.success(
+                f"[OK] LOADED {schema['row_count']:,} INCIDENTS / "
+                f"{len(schema['columns'])} COLUMNS"
+            )
+            logger.info(f"Successfully loaded {schema['row_count']} rows")
 
-            st.rerun()
-        except Exception as e:
-            st.error(format_error_message(e))
-            logger.exception("Failed to load CSV")
+        _loading.empty()
+        st.rerun()
+    except Exception as e:
+        _loading.empty()
+        st.error(format_error_message(e))
+        logger.exception("Failed to load CSV")
 
 
 def render_sidebar():
@@ -447,12 +454,27 @@ def render_sidebar():
 
 def _build_embeddings_with_progress(force: bool = False):
     """Build embeddings with progress display."""
+    # POL-02: small-caps tracked preamble above the progress bar.
+    _loading_label = st.empty()
+    _loading_label.markdown(
+        '<p class="lp-loading">BUILDING EMBEDDINGS…</p>',
+        unsafe_allow_html=True,
+    )
     progress_bar = st.progress(0)
     status_text = st.empty()
 
     def progress_callback(progress: float, message: str):
         progress_bar.progress(progress)
-        status_text.text(message.upper())
+        # POL-02 lock (CONTEXT.md line 37): per-batch copy is SUPPRESSED in
+        # favor of the single locked phrase "BUILDING EMBEDDINGS…". The
+        # callback still receives `message` so build_embeddings' signature
+        # is unchanged, but the parameter is intentionally ignored for
+        # rendering — cycling live per-batch text through the small-caps
+        # gold .lp-loading style would be a visual regression.
+        status_text.markdown(
+            '<p class="lp-loading">BUILDING EMBEDDINGS…</p>',
+            unsafe_allow_html=True,
+        )
 
     try:
         stats = build_embeddings(
@@ -468,6 +490,7 @@ def _build_embeddings_with_progress(force: bool = False):
     except Exception as e:
         st.error(format_error_message(e))
     finally:
+        _loading_label.empty()
         progress_bar.empty()
         status_text.empty()
 
@@ -818,22 +841,30 @@ def render_main_content():
             )
 
         with st.chat_message("assistant"):
-            with st.spinner("PROCESSING..."):
-                try:
-                    response = process_query(user_query, selected_mode)
-                except (QueryError, LLMError) as e:
-                    response = {
-                        "content": _render_error_html(str(e)),
-                        "results": None,
-                        "sql": None,
-                    }
-                except Exception as e:
-                    logger.exception("Unexpected error in process_query")
-                    response = {
-                        "content": _render_error_html(f"Unexpected error: {e}"),
-                        "results": None,
-                        "sql": None,
-                    }
+            # POL-02: small-caps tracked loading indicator inside the assistant
+            # card while process_query runs. Local st.empty() handle — cleared
+            # immediately after the call completes (single-rerun scope).
+            _loading = st.empty()
+            _loading.markdown(
+                '<p class="lp-loading">ANALYZING…</p>',
+                unsafe_allow_html=True,
+            )
+            try:
+                response = process_query(user_query, selected_mode)
+            except (QueryError, LLMError) as e:
+                response = {
+                    "content": _render_error_html(str(e)),
+                    "results": None,
+                    "sql": None,
+                }
+            except Exception as e:
+                logger.exception("Unexpected error in process_query")
+                response = {
+                    "content": _render_error_html(f"Unexpected error: {e}"),
+                    "results": None,
+                    "sql": None,
+                }
+            _loading.empty()
 
             # Assistant card opens — DOM bay for Phase 9 editorial table
             st.markdown('<div class="lp-msg-assistant">', unsafe_allow_html=True)
