@@ -158,7 +158,11 @@ Plans:
 4. `USER_GUIDE.md` contains a new "VISUAL REFRESH (v2.2)" section near the top with the aesthetic-summary paragraph, "What changed" bullet list (splash, sidebar, editorial table, expandable interactive view, restyled charts), "What did NOT change" reassurance list (v2.1 functionality, locked UI strings, LLM behavior, data privacy), and the version-stamp footer is bumped from "v2.1" to "v2.2".
 5. `README.md` contains a small "Screenshots" subsection near the top linking to `.planning/design-mockups/` (or `docs/screenshots/` if moved), with a pass-through reference to the `loro-piana-aesthetic` design system.
 
-**Plans-TBD**: To be decomposed by `/gsd:plan-phase 11`.
+**Plans**: 2 plans (1 wave, both parallel + autonomous)
+
+Plans:
+- [ ] 11-01-PLAN.md — DOC-01 + DOC-02: USER_GUIDE.md Visual Refresh section + footer bump + README Screenshots subsection + docs/screenshots/ PNG copies
+- [ ] 11-02-PLAN.md — TST-01 + TST-02 + TST-03: tests/test_phase6_visual.py acceptance gate (CSS presence/absence, renderer signatures, Altair theme, WCAG-AA contrast, negative usage scan) + .lp-warn-fix 13px→14px in src/ui/css.py
 
 ## Phases (v2.1, archived)
 
