@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 11 — Documentation + acceptance gate — IN PROGRESS (Plan 01 COMPLETE; Plan 02 in-flight)
-Plan: 01 of 02 COMPLETE (DOC-01 + DOC-02); 02 next (TST-01..03 acceptance suite)
-Status: Plan 01 landed (d977c56 USER_GUIDE.md Visual Refresh + v2.2 footer; d91a11b README.md Screenshots + docs/screenshots/ PNGs); Phase 5 UI suite 22/22 green; full suite 91/91 green (Plan 02 will grow this with TST-01..03 tests); all v2.1 locked UI strings preserved verbatim in both files
-Last activity: 2026-05-24 — Phase 11 Plan 01 complete: docs(11-01) Visual Refresh section + Screenshots subsection + 3 byte-identical PNG copies; one Rule-1 auto-fix (lowercase "all data stays local" to satisfy plan composite verification)
+Phase: 11 — Documentation + acceptance gate — Plan 02 COMPLETE; Phase 11 ready for gsd-verifier
+Plan: 02 of 02 COMPLETE (TST-01..03 acceptance suite live); next: phase-level verifier sign-off
+Status: Plan 02 landed (7ed4fd9 src/ui/css.py .lp-warn-fix 14px; 6aa3344 tests/test_phase6_visual.py +12 tests); test_phase5_ui.py 22/22 green (TST-01 invariant preserved); test_phase6_visual.py 12/12 green; combined suite grew 91/91 → 103/103 with PYTHONPATH=. invocation
+Last activity: 2026-05-24 — Phase 11 Plan 02 complete: fix(11-02) byte-edit .lp-warn-fix 13px→14px (Resolution 2 option (a)); test(11-02) add v2.2 visual + WCAG acceptance gate (12 tests across 6 # --- groups); zero deviations; combined 103/103 green
 
-Progress: v2.2 — Phases 6-10 COMPLETE; Phase 11 Plan 01 COMPLETE; Phase 11 Plan 02 next (final plan of v2.2)
+Progress: v2.2 — ALL PHASES COMPLETE at the code level; Phase 11 ready for verifier sign-off + v2.2 milestone audit
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
@@ -22,7 +22,7 @@ Progress: v2.2 — Phases 6-10 COMPLETE; Phase 11 Plan 01 COMPLETE; Phase 11 Pla
 [██████████] Phase 8  Screen restyle (sidebar + main)  ← COMPLETE (Plans 01-02 done)
 [██████████] Phase 9  Data visualization               ← COMPLETE (Plans 01-04 done)
 [██████████] Phase 10 Polish + edge states             ← COMPLETE (Plans 01-03 done)
-[█████     ] Phase 11 Documentation + acceptance gate  ← IN PROGRESS (Plan 01 DONE; Plan 02 next)
+[██████████] Phase 11 Documentation + acceptance gate  ← COMPLETE (Plans 01-02 done; ready for verifier)
 ```
 
 ## v2.2 Phase Map (summary)
@@ -56,6 +56,13 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 ## Accumulated Context
 
 ### Decisions (recent)
+
+- **Phase 11 Plan 02 — v2.2 visual acceptance gate live (TST-01..03 all green)**: New `tests/test_phase6_visual.py` adds 12 test functions in 6 `# ---` divided groups: CSS presence (4) + CSS absence (2) + renderer signatures (2) + Altair theme registration (1) + WCAG-AA contrast (2) + negative usage scan (1). Combined suite grew 91/91 → 103/103. Single byte-level edit to `src/ui/css.py` (`.lp-warn-fix` font-size 13px → 14px) so the negative usage scan over `color: var(--lp-text-muted)` passes without per-selector allowlist. Resolution 1 honored — NO upper-bound contrast assertion on the warm-gray pair. Resolution 2 honored — role-marker contract (uppercase | letter-spacing ≥ 0.1em | font-size ≥ 14px) enforced via regex scan over LORO_PIANA_CSS. One documented allowlist entry for `.lp-ghost-queries .stButton > button::before` (inherits 14px from parent rule). Zero live Streamlit / HTTP / LLM in the new test file.
+- **Phase 11 Plan 02 — Negative usage scan finds 11 var(--lp-text-muted) rules (not 5 as plan narrative suggested)**: The scan iterates every CSS rule painting in `var(--lp-text-muted)` in `LORO_PIANA_CSS`. At commit time, the regex matches 11 rules: 7 with `text-transform: uppercase` (`.lp-label`, sidebar section-header, mode-radio, bb-select label, expander summary, slider label, …), 3 with `font-size: 15px` (`.lp-page-subtitle`, chat-input `::placeholder`, `.lp-empty-subtitle`), 1 with `font-size: 14px` (the `.lp-warn-fix` edit), and 1 allowlisted (`.lp-ghost-queries .stButton > button::before` inherits 14px from parent). The plan's narrative anticipated 5; the scan is stricter and broader. Future plans extending muted-gray paint surface must declare a role marker.
+- **Phase 11 Plan 02 — pytest invocation contract (carry-forward + reaffirmed)**: Repo has NO `pyproject.toml`, NO `pytest.ini`, NO root `conftest.py`. All pytest invocations require `PYTHONPATH=.` prefix (e.g., `PYTHONPATH=. python -m pytest tests/ -q`). Bare `pytest tests/test_phase6_visual.py` fails with `ModuleNotFoundError: No module named 'src'`. Adding `[tool.pytest.ini_options]\npythonpath = ["."]` is OUT OF SCOPE for Plan 02 — flagged as a separate orthogonal change for a future plan. All Phase 11 SUMMARY claims of "22/22" "12/12" "103/103" assume this prefix.
+- **Phase 11 Plan 02 — Composite-verification literal-substring traps (similar to Plan 01)**: The plan's `<verify>` block includes literal-substring `'X' not in test_src` asserts that the test file's own docstrings/comments can accidentally violate. Three rephrasings were required: (1) docstring mention of the deprecated `alt.themes.names()` namespace → rephrased to "the deprecated themes-plural namespace"; (2) section comment `# ... NO `assert ratio < 4.5`` → rephrased to "NO upper-bound contrast assertion"; (3) section comment mentioning `color: #6B5E52` → rephrased to "literal hex strings". Pattern carry-forward: when a plan's verification block asserts `'literal' not in source`, audit ALL docstrings/comments in the source for the same literal — explanatory mentions are still substring matches.
+- **Phase 11 Plan 02 — Altair API: alt.theme.names() (singular) is the Altair 6 form**: NOT `alt.themes.names()` (plural, deprecated/removed in Altair 5+). The side-effect import of `src.ui.altair_theme` triggers `@alt.theme.register('loro_piana', enable=True)`. Carry-forward: any future test of theme registration uses the singular form.
+- **Phase 11 Plan 02 — WCAG 2.1 contrast helper is inline (~10 lines, zero deps)**: sRGB linearization + relative luminance formula `(L_lighter + 0.05) / (L_darker + 0.05)`. Computed ratios at commit time: `#2C2420`/`#F5F0EB` = 13.4363; `#6B5E52`/`#F5F0EB` = 5.5393. Both match planning research within < 0.0001. No new pip dependency added by this plan.
 
 - **Phase 11 Plan 01 — Doc plan composite-verification case sensitivity (Rule 1 auto-fix)**: Plan body authored the Data privacy bullet as `**Data privacy** — All data stays local.` (capital A), but the plan's own composite verification block uses `'all data stays local' in ug` (case-sensitive). Resolved by lowercasing the leading phrase: `**Data privacy** — all data stays local. CSVs, embeddings, …`. Pattern carry-forward: when a doc-plan supplies both authored text AND a substring-grep verification, audit case sensitivity before commit.
 - **Phase 11 Plan 01 — pytest requires `PYTHONPATH=.` (no rootdir-on-path config)**: No `pytest.ini` / `pyproject.toml [tool.pytest.ini_options]` / `conftest.py` adds repo root to `sys.path`. Phase 5..10 SUMMARY claims of "91/91 green" implicitly assume the operator sets `PYTHONPATH=.` (verified true for this repo). All future plans that run pytest must prefix with `PYTHONPATH=.` OR a Plan-02-scope task should add `[tool.pytest.ini_options]\npythonpath = ["."]` to `pyproject.toml`. Not changed in Plan 01 — outside contract.
@@ -120,10 +127,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-24 — Phase 11 Plan 01 complete (d977c56 USER_GUIDE.md; d91a11b README.md + docs/screenshots/; metadata commit follows)
-Stopped at: Phase 11 Plan 01 COMPLETE — DOC-01 + DOC-02 satisfied; 22/22 + 91/91 still green; 1 Rule-1 auto-fix logged in SUMMARY
+Last session: 2026-05-24 — Phase 11 Plan 02 complete (7ed4fd9 fix(11-02) .lp-warn-fix 14px; 6aa3344 test(11-02) test_phase6_visual.py +12 tests; metadata commit follows)
+Stopped at: Phase 11 Plan 02 COMPLETE — TST-01..03 acceptance gate live; 22/22 TST-01, 12/12 TST-02+TST-03, 103/103 combined; zero deviations; Phase 11 ready for gsd-verifier
 Resume file: None
-Next: Phase 11 Plan 02 (TST-01..03 acceptance suite — grows test count beyond 91). Entry gates: Plan 01 SUMMARY landed, USER_GUIDE.md and README.md anchors stable, docs/screenshots/ present and byte-identical. Plan 02 author should consider adding `[tool.pytest.ini_options]\npythonpath = ["."]` to `pyproject.toml` so new tests are runnable without manual `PYTHONPATH=.` (see Phase 11 Plan 01 decision).
+Next: Phase 11 phase-level verifier sign-off (gsd-verifier). v2.2 milestone closure / audit follows. Verifier invocation: `PYTHONPATH=. python -m pytest tests/ -q` (must read 103 passed).
 
 ---
-*Last updated: 2026-05-24 after Phase 11 Plan 01 complete (d977c56 + d91a11b + docs commit — Plan 02 next).*
+*Last updated: 2026-05-24 after Phase 11 Plan 02 complete (7ed4fd9 + 6aa3344 + docs commit — Phase 11 ready for verifier).*
