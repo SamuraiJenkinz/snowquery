@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 11 — Documentation + acceptance gate — COMPLETE + VERIFIED (6/6 must-haves passed via gsd-verifier 2026-05-24)
-Plan: — (all plans complete; v2.2 milestone ready for `/gsd:audit-milestone`)
-Status: v2.2 MILESTONE SHIPPED at code level; Phase 11 gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md updated; phase completion commit bundled (DOC-01..02 + TST-01..03 all marked Complete in traceability table); v2.1 invariants intact (TST-01 22/22 green); v2.2 acceptance gate live (12/12 in test_phase6_visual.py); full suite 103/103 with PYTHONPATH=.
-Last activity: 2026-05-24 — Phase 11 closeout: gsd-verifier returned `passed` (11-VERIFICATION.md created); ROADMAP.md + REQUIREMENTS.md + STATE.md updated; phase completion commit bundled
+Phase: 12 — Doc accuracy cleanup — COMPLETE (1/1 plans done)
+Plan: 12-01 of 1 (complete)
+Status: Phase 12 complete; four targeted doc-prose edits applied (USER_GUIDE.md:35,36; README.md:18,27); pytest 103/103 green; all TST-01 protected substrings intact; U+00B7 middot contract honored
+Last activity: 2026-05-24 — Phase 12 Plan 01: doc-accuracy-cleanup executed; USER_GUIDE.md + README.md synced to shipped strings; SUMMARY created
 
-Progress: v2.2 — ALL PHASES COMPLETE + VERIFIED; ready for milestone audit
+Progress: v2.2 — ALL PHASES COMPLETE + VERIFIED; Phase 12 doc cleanup applied
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
@@ -23,6 +23,7 @@ Progress: v2.2 — ALL PHASES COMPLETE + VERIFIED; ready for milestone audit
 [██████████] Phase 9  Data visualization               ← COMPLETE (Plans 01-04 done)
 [██████████] Phase 10 Polish + edge states             ← COMPLETE (Plans 01-03 done)
 [██████████] Phase 11 Documentation + acceptance gate  ← COMPLETE + VERIFIED (Plans 01-02 done; gsd-verifier passed)
+[██████████] Phase 12 Doc accuracy cleanup             ← COMPLETE (Plan 01 done)
 ```
 
 ## v2.2 Phase Map (summary)
@@ -56,6 +57,9 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 ## Accumulated Context
 
 ### Decisions (recent)
+
+- **Phase 12 Plan 01 — Doc-source-of-truth carry-forward**: Expander label string is at `app.py:612`; VIBRANT_PALETTE hex values are at `src/ui/altair_theme.py:42-48`. Future doc edits touching these topics must read those lines directly before authoring prose to prevent re-drift.
+- **Phase 12 Plan 01 — loro-piana-aesthetic link removed (no public URL)**: README.md line 18 now uses plain inline code for `loro-piana-aesthetic`; the `(https://github.com/)` placeholder hyperlink was removed. If a public URL is ever published, that line is the update target.
 
 - **Phase 11 Plan 02 — v2.2 visual acceptance gate live (TST-01..03 all green)**: New `tests/test_phase6_visual.py` adds 12 test functions in 6 `# ---` divided groups: CSS presence (4) + CSS absence (2) + renderer signatures (2) + Altair theme registration (1) + WCAG-AA contrast (2) + negative usage scan (1). Combined suite grew 91/91 → 103/103. Single byte-level edit to `src/ui/css.py` (`.lp-warn-fix` font-size 13px → 14px) so the negative usage scan over `color: var(--lp-text-muted)` passes without per-selector allowlist. Resolution 1 honored — NO upper-bound contrast assertion on the warm-gray pair. Resolution 2 honored — role-marker contract (uppercase | letter-spacing ≥ 0.1em | font-size ≥ 14px) enforced via regex scan over LORO_PIANA_CSS. One documented allowlist entry for `.lp-ghost-queries .stButton > button::before` (inherits 14px from parent rule). Zero live Streamlit / HTTP / LLM in the new test file.
 - **Phase 11 Plan 02 — Negative usage scan finds 11 var(--lp-text-muted) rules (not 5 as plan narrative suggested)**: The scan iterates every CSS rule painting in `var(--lp-text-muted)` in `LORO_PIANA_CSS`. At commit time, the regex matches 11 rules: 7 with `text-transform: uppercase` (`.lp-label`, sidebar section-header, mode-radio, bb-select label, expander summary, slider label, …), 3 with `font-size: 15px` (`.lp-page-subtitle`, chat-input `::placeholder`, `.lp-empty-subtitle`), 1 with `font-size: 14px` (the `.lp-warn-fix` edit), and 1 allowlisted (`.lp-ghost-queries .stButton > button::before` inherits 14px from parent). The plan's narrative anticipated 5; the scan is stricter and broader. Future plans extending muted-gray paint surface must declare a role marker.
@@ -127,10 +131,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-24 — Phase 11 COMPLETE + VERIFIED. gsd-verifier returned `passed` (6/6 must-haves) — 11-VERIFICATION.md created. ROADMAP.md milestone marker flipped 🔄 → ✅ for v2.2; phase 11 row marked Complete (2/2 plans, completion date 2026-05-24); REQUIREMENTS.md traceability rows DOC-01..02 + TST-01..03 flipped Pending → Complete and v1 requirement checkboxes marked [x].
-Stopped at: Phase 11 COMPLETE + VERIFIED — v2.2 milestone shipped at code level. 36/36 v1 requirements complete. Ready for `/gsd:audit-milestone`.
+Last session: 2026-05-24 — Phase 12 Plan 01 COMPLETE. Four doc-prose edits applied (USER_GUIDE.md:35,36; README.md:18,27); pytest 103/103 green; 12-01-SUMMARY.md created; STATE.md updated.
+Stopped at: Phase 12 COMPLETE — v2.2 doc-accuracy cleanup done. All six must_haves verified. Ready for `/gsd:audit-milestone`.
 Resume file: None
 Next: `/gsd:audit-milestone` — cross-phase integration check + E2E flow validation before archival. After audit passes, `/gsd:complete-milestone` archives v2.2 and prepares for v2.3 milestone start.
 
 ---
-*Last updated: 2026-05-24 after Phase 11 COMPLETE + VERIFIED (gsd-verifier passed 6/6, v2.2 milestone shipped).*
+*Last updated: 2026-05-24 after Phase 12 Plan 01 COMPLETE (doc-accuracy-cleanup; pytest 103/103; all must_haves green).*
