@@ -8,17 +8,39 @@ A natural language query interface for ServiceNow incident data using AI-powered
 
 ## Table of Contents
 
-1. [Getting Started](#getting-started)
-2. [Loading Data](#loading-data)
-3. [Building Embeddings](#building-embeddings)
-4. [Query Modes](#query-modes)
-5. [Chart Visualization](#chart-visualization)
-6. [Writing Effective Queries](#writing-effective-queries)
-7. [Understanding Results](#understanding-results)
-8. [Settings](#settings)
-9. [LLM Provider Selection](#llm-provider-selection)
-10. [Tips & Best Practices](#tips--best-practices)
-11. [Troubleshooting](#troubleshooting)
+1. [Visual Refresh (v2.2)](#visual-refresh-v22)
+2. [Getting Started](#getting-started)
+3. [Loading Data](#loading-data)
+4. [Building Embeddings](#building-embeddings)
+5. [Query Modes](#query-modes)
+6. [Chart Visualization](#chart-visualization)
+7. [Writing Effective Queries](#writing-effective-queries)
+8. [Understanding Results](#understanding-results)
+9. [Settings](#settings)
+10. [LLM Provider Selection](#llm-provider-selection)
+11. [Tips & Best Practices](#tips--best-practices)
+12. [Troubleshooting](#troubleshooting)
+
+---
+
+## Visual Refresh (v2.2)
+
+As of v2.2, the application wears a quiet-luxury aesthetic — EB Garamond display type for headings, Inter for body, a warm-beige page with charcoal text, and small-caps tracked labels for editorial polish. The functional surface is unchanged from v2.1; only the styling, the splash screen, the results table presentation, and the chart palette have moved.
+
+### What changed
+
+- **Splash screen** — A 4-second animated logo (geometric helix in muted gold) replaces the brutalist startup splash before the first frame renders.
+- **Sidebar style** — Section labels are now small-caps tracked, the LLM PROVIDER picker and MODE toggle inherit the editorial typography, and warnings use a soft warm-beige card with a terracotta hairline (no red banners).
+- **Editorial table** — Query results render in a hairline-bordered table with EB Garamond column heads and Inter body cells; the previous brutalist grid is gone.
+- **Expandable interactive view** — Below the editorial table, an expander labelled "VIEW INTERACTIVE DATAFRAME" reveals Streamlit's native dataframe for sort/filter operations when an operator needs them.
+- **Restyled charts** — Altair charts use a registered `loro_piana` theme: charcoal axes on warm-beige background, palette colors `#8B7355` (muted gold) and `#A67866` (terracotta), with EB Garamond title type.
+
+### What did NOT change
+
+- **All v2.1 functionality** — Every query, every routing path, every chart type, every export still works exactly as before. No features added, removed, or repositioned.
+- **Locked UI strings** — "LLM provider", "Azure OpenAI", "Anthropic Claude (MGTI)", and "QUERY DISABLED — see sidebar warning" remain verbatim and in their original locations.
+- **LLM behavior** — Query routing, SQL generation, executive summaries, provider switching (Azure OpenAI / Anthropic Claude via MGTI), and the `_render_provenance_caption(provider, model)` invariant are unchanged.
+- **Data privacy** — all data stays local. CSVs, embeddings, and query results never leave your machine; only the natural-language prompt itself is sent to the configured LLM endpoint, identical to v2.1.
 
 ---
 
@@ -451,4 +473,4 @@ Contact your system administrator or refer to the project repository for technic
 
 ---
 
-*Last updated: May 2026 (v2.1 - Added multi-provider LLM selection: Azure OpenAI / Anthropic Claude via MGTI)*
+*Last updated: May 2026 (v2.2 - SNOWGREP Visual Revamp: Loro Piana quiet-luxury aesthetic across all screens; v2.1 functionality + locked UI strings preserved)*
