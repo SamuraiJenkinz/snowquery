@@ -47,6 +47,13 @@ class LLMSettings:
     anthropic_timeout_s: int = 30
     anthropic_tools_supported: bool = True
 
+    # When true, the adapter targets the native Anthropic API
+    # (api.anthropic.com): URL path is /messages (no /model/{name}),
+    # model goes in the body, and version is sent as an HTTP header
+    # (anthropic-version) instead of the body's anthropic_version key.
+    # Default false preserves the MGTI/Bedrock path byte-identical.
+    anthropic_direct_mode: bool = False
+
 
 # Per-provider required env vars (CFG-03: validate_config raises with FULL list,
 # not fail-on-first).
@@ -106,6 +113,7 @@ def load_settings() -> LLMSettings:
         anthropic_temperature=_float("ANTHROPIC_TEMPERATURE", 0.0),
         anthropic_timeout_s=_int("ANTHROPIC_TIMEOUT_S", 30),
         anthropic_tools_supported=_bool("ANTHROPIC_TOOLS_SUPPORTED", True),
+        anthropic_direct_mode=_bool("ANTHROPIC_DIRECT_MODE", False),
     )
 
 

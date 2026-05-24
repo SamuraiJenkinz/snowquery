@@ -68,6 +68,7 @@ def _build_request_body(
     max_tokens: int,
     temperature: float,
     messages: list[dict],
+    direct_mode: bool = False,
 ) -> dict:
     """Build the MGTI request body from text-mode inputs.
 
@@ -102,18 +103,32 @@ def _build_request_body(
     ]
     non_system = [m for m in messages if m.get("role") != "system"]
 
-    body: dict = {
-        "anthropic_version": version,
-        "messages": non_system,
-        "max_tokens": max_tokens,
-    }
+    if direct_mode:
+        # Native Anthropic API: model in body, no anthropic_version (sent as header).
+        body: dict = {
+            "model": model,
+            "messages": non_system,
+            "max_tokens": max_tokens,
+        }
+    else:
+        body = {
+            "anthropic_version": version,
+            "messages": non_system,
+            "max_tokens": max_tokens,
+        }
 
     # 2. system key OMITTED entirely when no system messages present
     if system_parts:
         body["system"] = "\n\n".join(system_parts)
 
-    # 3. Sampling params: opus-4-7 omits ALL; other eu.anthropic.claude-* sends temperature only
-    if not model.startswith("eu.anthropic.claude-opus-4-7"):
+    # 3. Sampling params: opus-4-7 omits ALL; other Claude models send temperature only.
+    #    Match both eu.anthropic.claude-opus-4-7* (MGTI/Bedrock) and claude-opus-4-7*
+    #    (direct API) — same family, different namespace.
+    opus_47 = (
+        model.startswith("eu.anthropic.claude-opus-4-7")
+        or (direct_mode and model.startswith("claude-opus-4-7"))
+    )
+    if not opus_47:
         body["temperature"] = temperature
 
     return body
@@ -160,12 +175,19 @@ class AnthropicMGTIClient(LLMClient):
         self._temperature: float = settings.anthropic_temperature
         self._timeout_s: int = settings.anthropic_timeout_s
         self._tools_supported: bool = settings.anthropic_tools_supported
+        self._direct_mode: bool = settings.anthropic_direct_mode
 
         # SC #2 first half: a NON-EMPTY model name MUST start with
         # 'eu.anthropic.claude-' (Claude 4.5+ on EU Bedrock). Empty model
         # is allowed at __init__ — the no-op pattern from Phase 1 lets the
         # factory cache store the instance even when config is missing.
-        if self._model and not self._model.startswith("eu.anthropic.claude-"):
+        # Direct mode skips the eu.* prefix check (native API uses
+        # claude-haiku-4-5-20251001 / claude-sonnet-4-5-* / etc.).
+        if (
+            self._model
+            and not self._direct_mode
+            and not self._model.startswith("eu.anthropic.claude-")
+        ):
             raise LLMConfigError(
                 f"ANTHROPIC_MODEL must start with 'eu.anthropic.claude-' "
                 f"(Claude 4.5+ on EU Bedrock region). Got: {self._model!r}. "
@@ -218,7 +240,10 @@ class AnthropicMGTIClient(LLMClient):
         `extra` is mutated in-place for log enrichment (llm_outcome, llm_error_type)
         so the caller's finally block sees the right values when emitting llm_call.
         """
-        url = f"{self._base_url.rstrip('/')}/model/{self._model}/messages"
+        if self._direct_mode:
+            url = f"{self._base_url.rstrip('/')}/messages"
+        else:
+            url = f"{self._base_url.rstrip('/')}/model/{self._model}/messages"
 
         try:
             response = requests.post(
@@ -348,12 +373,16 @@ class AnthropicMGTIClient(LLMClient):
             "X-Api-Key": self._api_key,
             "X-Correlation-Id": correlation_id,
         }
+        if self._direct_mode:
+            # Native Anthropic API requires the version as a header (not in body).
+            headers["anthropic-version"] = self._version if self._version and not self._version.startswith("bedrock-") else "2023-06-01"
         body = _build_request_body(
             model=self._model,
             version=self._version,
             max_tokens=max_tokens,
             temperature=temperature,
             messages=messages,
+            direct_mode=self._direct_mode,
         )
 
         t0 = time.monotonic()
@@ -535,6 +564,8 @@ class AnthropicMGTIClient(LLMClient):
             "X-Api-Key": self._api_key,
             "X-Correlation-Id": correlation_id,
         }
+        if self._direct_mode:
+            headers["anthropic-version"] = self._version if self._version and not self._version.startswith("bedrock-") else "2023-06-01"
 
         # Body shape: complete()'s baseline body PLUS tools + tool_choice.
         # max_tokens uses kwargs override OR self._max_tokens default
@@ -548,6 +579,7 @@ class AnthropicMGTIClient(LLMClient):
             max_tokens=max_tokens,
             temperature=temperature,
             messages=messages,
+            direct_mode=self._direct_mode,
         )
         # Anthropic tool definition shape — verified verbatim against
         # platform.claude.com/docs/en/api/messages (RESEARCH.md "Anthropic
