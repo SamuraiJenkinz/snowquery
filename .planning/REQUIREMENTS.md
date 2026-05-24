@@ -55,10 +55,10 @@
 
 ### Polish (POL) — Edge states + indicators
 
-- [ ] **POL-01**: Empty state (no CSV loaded) renders an editorial centered card in the main panel — EB Garamond 24px "No data loaded" heading, Inter 15px warm-gray subtitle "Upload incidents.csv from the sidebar to begin.", and a hairline divider beneath. No brutalist "DATA INGEST REQUIRED" message.
-- [ ] **POL-02**: Loading spinners — `st.spinner` calls swap to a small-caps tracked text indicator. Replace "Generating response..." → "ANALYZING…"; replace "Loading embeddings..." → "BUILDING EMBEDDINGS…"; replace "Executing query..." → "QUERYING…". Inter weight 500 11px muted gold `#B8A88A` tracked wide.
-- [ ] **POL-03**: Error rendering — `QueryError` / `LLMError` surface in the assistant card with: terracotta `#A67866` left border 3px, "ERROR" small-caps tracked label at top, error message in Inter weight 400 color `#2C2420`, no red brutalist banner.
-- [ ] **POL-04**: Toast / notification rendering — any `st.success` / `st.error` / `st.warning` calls restyle to the Loro Piana palette via CSS overrides. No browser-default colors leak through.
+- [x] **POL-01**: Empty state (no CSV loaded) renders an editorial centered card in the main panel — EB Garamond 24px "No data loaded" heading, Inter 15px warm-gray subtitle "Upload incidents.csv from the sidebar to begin.", and a hairline divider beneath. No brutalist "DATA INGEST REQUIRED" message.
+- [x] **POL-02**: Loading spinners — `st.spinner` calls swap to a small-caps tracked text indicator. Replace "Generating response..." → "ANALYZING…"; replace "Loading embeddings..." → "BUILDING EMBEDDINGS…"; replace "Executing query..." → "QUERYING…". Inter weight 500 11px muted gold `#B8A88A` tracked wide.
+- [x] **POL-03**: Error rendering — `QueryError` / `LLMError` surface in the assistant card with: terracotta `#A67866` left border 3px, "ERROR" small-caps tracked label at top, error message in Inter weight 400 color `#2C2420`, no red brutalist banner.
+- [x] **POL-04**: Toast / notification rendering — any `st.success` / `st.error` / `st.warning` calls restyle to the Loro Piana palette via CSS overrides. No browser-default colors leak through.
 
 ### Documentation (DOC) — User-facing docs
 
@@ -140,10 +140,10 @@ Phases mapped during roadmap creation 2026-05-22.
 | DVZ-03      | 9     | Complete |
 | DVZ-04      | 9     | Complete |
 | DVZ-05      | 9     | Complete |
-| POL-01      | 10    | Pending |
-| POL-02      | 10    | Pending |
-| POL-03      | 10    | Pending |
-| POL-04      | 10    | Pending |
+| POL-01      | 10    | Complete |
+| POL-02      | 10    | Complete |
+| POL-03      | 10    | Complete |
+| POL-04      | 10    | Complete |
 | DOC-01      | 11    | Pending |
 | DOC-02      | 11    | Pending |
 | TST-01      | 11    | Pending |

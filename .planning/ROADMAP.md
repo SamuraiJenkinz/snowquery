@@ -25,7 +25,7 @@ Three Stitch mockups (`.planning/design-mockups/00-splash-helix.png`, `01-main-c
 - [x] Phase 7: Splash screen — Helix-motif boot animation (4 requirements) ✓ 2026-05-23
 - [x] Phase 8: Screen restyle — Sidebar + main panel + chat editorial pass (12 requirements) ✓ 2026-05-23
 - [x] Phase 9: Data visualization — Editorial HTML table + collapsible interactive view + Altair theme (5 requirements) ✓ 2026-05-23
-- [ ] Phase 10: Polish + edge states — Empty state, loading indicators, error rendering, toasts (4 requirements)
+- [x] Phase 10: Polish + edge states — Empty state, loading indicators, error rendering, toasts (4 requirements) ✓ 2026-05-23
 - [ ] Phase 11: Documentation + acceptance gate — USER_GUIDE/README + visual regression test suite + WCAG check (5 requirements)
 
 ## Phase Details
@@ -138,9 +138,9 @@ Plans:
 **Plans:** 3 plans in 2 waves
 
 Plans:
-- [ ] 10-01-PLAN.md — Wave 1: Extend LORO_PIANA_CSS with POL-01..04 styling — `src/ui/css.py` gains .lp-empty-card, .lp-loading + @keyframes lp-pulse, .lp-error-card, and Streamlit alert palette overrides (stAlertContainer / stAlertContentSuccess|Error|Warning|Info / stAlertDynamicIcon suppression)
-- [ ] 10-02-PLAN.md — Wave 1: Add _render_empty_card and _render_error_html to `src/ui/results.py` — pure HTML string builders extend the Phase 9 pattern (3 → 5 functions, __all__ extended, XSS-safe error escaping)
-- [ ] 10-03-PLAN.md — Wave 2: Wire renderers + loading indicators into `app.py` — POL-01 empty card render, POL-03 _render_error_html at 4 process_query sites + outer try/except for QueryError/LLMError, POL-02 .lp-loading replaces 3 spinners (ANALYZING…, BUILDING EMBEDDINGS…, LOADING DATA…); POL-04 requires zero call-site edits (CSS sweep)
+- [x] 10-01-PLAN.md — Wave 1: Extend LORO_PIANA_CSS with POL-01..04 styling — `src/ui/css.py` gains .lp-empty-card, .lp-loading + @keyframes lp-pulse, .lp-error-card, and Streamlit alert palette overrides (stAlertContainer / stAlertContentSuccess|Error|Warning|Info / stAlertDynamicIcon suppression) ✓ 2026-05-23
+- [x] 10-02-PLAN.md — Wave 1: Add _render_empty_card and _render_error_html to `src/ui/results.py` — pure HTML string builders extend the Phase 9 pattern (3 → 5 functions, __all__ extended, XSS-safe error escaping) ✓ 2026-05-23
+- [x] 10-03-PLAN.md — Wave 2: Wire renderers + loading indicators into `app.py` — POL-01 empty card render, POL-03 _render_error_html at 4 process_query sites + outer try/except for QueryError/LLMError, POL-02 .lp-loading replaces 3 spinners (ANALYZING…, BUILDING EMBEDDINGS…, LOADING DATA…); POL-04 requires zero call-site edits (CSS sweep) ✓ 2026-05-23
 
 ### Phase 11: Documentation + acceptance gate
 
@@ -189,7 +189,7 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 | 7. Splash screen                     | v2.2      | 2/2            | Complete    | 2026-05-23 |
 | 8. Screen restyle (sidebar + main)   | v2.2      | 2/2            | Complete    | 2026-05-23 |
 | 9. Data visualization                | v2.2      | 4/4            | Complete    | 2026-05-23 |
-| 10. Polish + edge states             | v2.2      | 0/TBD          | Not started | —          |
+| 10. Polish + edge states             | v2.2      | 3/3            | Complete    | 2026-05-23 |
 | 11. Documentation + acceptance gate  | v2.2      | 0/TBD          | Not started | —          |
 
 ## Coverage (v2.2)
@@ -201,4 +201,4 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 Detailed traceability lives in `REQUIREMENTS.md` Traceability section.
 
 ---
-*Last updated: 2026-05-23 after Phase 9 (Data visualization) execution complete — all DVZ-01..05 verified (5/5), gsd-verifier status: passed, 22/22 Phase 5 UI tests green. Phase 9 ships `src/ui/altair_theme.py` (loro_piana theme + VIBRANT_PALETTE), `src/ui/results.py` (3 HTML renderers), extended `LORO_PIANA_CSS` (11 new classes), restyled `src/chart_generator.py` (horizontal bars with layered value labels, CHART_COLORS + configure_chart_theme deleted), and rewritten `app.py::display_results` with 0-row early return + editorial hero + EXPAND · INTERACTIVE VIEW expander. User-approved deviations: DVZ-01 module lives in src/ui/results.py (not src/utils.py), DVZ-03 truncates at 50 rows (not >1000), DVZ-04 data palette is vibrant categorical (chrome stays cashmere).*
+*Last updated: 2026-05-23 after Phase 10 (Polish + edge states) execution complete — all POL-01..04 verified (4/4), gsd-verifier status: passed, 22/22 Phase 5 UI tests + 91/91 full suite green. Phase 10 ships ~150 net new lines of CSS in `src/ui/css.py` (.lp-empty-card, .lp-loading + @keyframes lp-pulse, .lp-error-card, full Streamlit alert palette overrides with stAlertDynamicIcon suppression), 2 new pure-Python renderers in `src/ui/results.py` (_render_empty_card, _render_error_html — 3→5 functions, XSS-escape contract preserved), and ~10 wiring edits in `app.py` (empty card render, 4 _render_error_html call-sites + outer try/except for QueryError/LLMError, 3 .lp-loading callsites replacing st.spinner). POL-04 required ZERO call-site edits (CSS sweep covers all 6 st.success/st.error sites). Additional visual refinements applied during checkpoint review (commits eeb2321, 273147e, f211ed0): sidebar action buttons + DROP CSV caption + Clear History + ghost queries all match the editorial italic-on-cashmere pattern; editorial table cells inherit typography for markdown-injected headings so bounce-email transcripts render flat. Side-mission committed separately (3bdbdfe, 8f2e360): ANTHROPIC_DIRECT_MODE env-flag for direct sk-ant API testing (not a POL deliverable).*

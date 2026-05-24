@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 10 — Polish + edge states — COMPLETE
-Plan: 03 of 03 — complete (all three plans done: 10-01, 10-02, 10-03)
-Status: Phase 10 COMPLETE — all four POL surfaces wired and human-verified; 4 visual refinements applied during checkpoint; 91/91 tests green
-Last activity: 2026-05-23 — Phase 10 Plan 03 complete (f211ed0 last fix commit); ready for gsd-verifier
+Phase: 11 — Documentation + acceptance gate — UNBLOCKED, ready to plan/discuss
+Plan: — (ready for `/gsd:discuss-phase 11` or `/gsd:plan-phase 11`)
+Status: Phase 10 COMPLETE + verified (4/4 POL must-haves PASS via gsd-verifier; 91/91 tests green including 22/22 Phase 5 UI gate); POL-01..04 marked Complete in REQUIREMENTS.md; Phase 11 unblocked (depends on Phases 6-10 — all complete; final phase of v2.2)
+Last activity: 2026-05-23 — Phase 10 closeout: gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md updated; phase completion commit bundled
 
 Progress: v2.2 — Phases 6-10 COMPLETE; Phase 11 next
 
