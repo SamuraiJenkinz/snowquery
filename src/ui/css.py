@@ -749,6 +749,49 @@ samp,
   margin: 0 !important;
 }
 
+/* Sidebar action buttons (REPLACE, APPEND, LOCK UPLOAD, REBUILD, UPDATE) —
+   editorial typography: EB Garamond italic at refined small size. Cashmere
+   bg + white text inherit from the base .stButton rule. UNLOCK UPLOAD is
+   protected by its own .st-key-unlock_upload override above (higher
+   specificity wins). Streamlit nests button text in <p>/<div>/<span>, so
+   typography is propagated to inner elements like the unlock_upload block. */
+[data-testid="stSidebar"] .stButton > button {
+  font-family: var(--lp-font-headline) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  padding: var(--lp-space-2) var(--lp-space-4) !important;
+}
+[data-testid="stSidebar"] .stButton > button p,
+[data-testid="stSidebar"] .stButton > button div,
+[data-testid="stSidebar"] .stButton > button span {
+  font-family: var(--lp-font-headline) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+/* DROP CSV FILE HERE caption — same editorial treatment as the sidebar
+   action buttons above. Targets st.caption() inside the sidebar (rendered
+   as [data-testid="stCaptionContainer"]). Charcoal color stays via the
+   sidebar universal rule; only typography changes. */
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p,
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] small {
+  font-family: var(--lp-font-headline) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
 /* === Main panel (Phase 8 MAIN-*) === */
 
 /* SNOWGREP hero — branded logo image (static/snowgrep-logo.png) with the
