@@ -903,6 +903,39 @@ samp,
   color: var(--lp-text-muted);
 }
 
+/* Ghost-query buttons — chat empty state example queries (app.py:804).
+   The .lp-ghost-queries wrapper at app.py:802 doesn't reach the button DOM
+   because Streamlit renders st.markdown and st.button as sibling nodes, not
+   parent/child — so the rules above never match in the real DOM. Target via
+   per-button keys (st.button(key=f"_ghost_{_i}") → .st-key-_ghost_0..N on
+   the button wrapper). Matches REBUILD / UPDATE / CLEAR HISTORY: cashmere
+   bg + white text + EB Garamond italic. */
+[class*="st-key-_ghost_"] .stButton > button,
+[class*="st-key-_ghost_"] button {
+  font-family: var(--lp-font-headline) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  text-align: center !important;
+  justify-content: center !important;
+  padding: var(--lp-space-2) var(--lp-space-4) !important;
+}
+[class*="st-key-_ghost_"] button p,
+[class*="st-key-_ghost_"] button div,
+[class*="st-key-_ghost_"] button span {
+  font-family: var(--lp-font-headline) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  color: var(--lp-neutral-0) !important;
+}
+
 /* MAIN-02 — User message card (right-aligned, warm-beige) */
 .lp-msg-user {
   background: var(--lp-bg);
