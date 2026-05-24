@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v2.1 Multi-Provider LLM Integration** — Phases 1-5 (shipped 2026-05-22) — see [milestones/v2.1-ROADMAP.md](milestones/v2.1-ROADMAP.md)
-- ✅ **v2.2 SNOWGREP Visual Revamp (Loro Piana)** — Phases 6-11 (shipped 2026-05-24, started 2026-05-22)
+- 🔄 **v2.2 SNOWGREP Visual Revamp (Loro Piana)** — Phases 6-12 (Phases 6-11 complete; Phase 12 closes audit doc-drift, started 2026-05-22)
 
 ## Overview (v2.2)
 
@@ -27,6 +27,7 @@ Three Stitch mockups (`.planning/design-mockups/00-splash-helix.png`, `01-main-c
 - [x] Phase 9: Data visualization — Editorial HTML table + collapsible interactive view + Altair theme (5 requirements) ✓ 2026-05-23
 - [x] Phase 10: Polish + edge states — Empty state, loading indicators, error rendering, toasts (4 requirements) ✓ 2026-05-23
 - [x] Phase 11: Documentation + acceptance gate — USER_GUIDE/README + visual regression test suite + WCAG check (5 requirements) ✓ 2026-05-24
+- [ ] Phase 12: Doc accuracy cleanup — Close v2.2 audit doc-drift (no new requirements; fixes DOC-01/DOC-02 description content)
 
 ## Phase Details
 
@@ -164,6 +165,31 @@ Plans:
 - [x] 11-01-PLAN.md — DOC-01 + DOC-02: USER_GUIDE.md Visual Refresh section + footer bump + README Screenshots subsection + docs/screenshots/ PNG copies ✓ 2026-05-24
 - [x] 11-02-PLAN.md — TST-01 + TST-02 + TST-03: tests/test_phase6_visual.py acceptance gate (CSS presence/absence, renderer signatures, Altair theme, WCAG-AA contrast, negative usage scan) + .lp-warn-fix 13px→14px in src/ui/css.py ✓ 2026-05-24
 
+### Phase 12: Doc accuracy cleanup
+
+**Goal**: Close the three low-severity doc-drift items surfaced by `.planning/milestones/v2.2-MILESTONE-AUDIT.md`. The shipped code is correct; only the description of it in `USER_GUIDE.md` and `README.md` drifted from what `app.py` and `src/ui/altair_theme.py` actually ship. No new requirements; this is content accuracy under existing DOC-01 / DOC-02.
+
+**Depends on**: Phases 6-11 (the shipped state of the code these docs describe)
+
+**Closes audit gaps** (from `v2.2-MILESTONE-AUDIT.md` tech_debt → 11-documentation-acceptance-gate):
+
+1. **Expander caption mismatch** — `USER_GUIDE.md:35` and `README.md:27` describe the interactive expander as `"VIEW INTERACTIVE DATAFRAME"`. Shipped code (`app.py:612`) uses spec-locked `"EXPAND · INTERACTIVE VIEW"` (U+00B7 middot).
+2. **Chart palette mismatch** — `USER_GUIDE.md:36` claims the palette is `#8B7355` (muted gold) + `#A67866` (terracotta). Shipped `VIBRANT_PALETTE` (`src/ui/altair_theme.py:42-48`) is `[#C0392B, #2E5BBA, #2E7D32, #E67E22, #F39C12]` (crimson/blue/green/orange/gold).
+3. **Placeholder design-system link** — `README.md:18` links `loro-piana-aesthetic` to bare `https://github.com/`. Skill lives locally at `~/.claude/skills/loro-piana-aesthetic/`, not on GitHub.
+
+**Success Criteria**:
+
+1. `USER_GUIDE.md:35` (and the README counterpart) describe the expander label as `"EXPAND · INTERACTIVE VIEW"` verbatim — operators reading the doc see the same string they will encounter in the app.
+2. `USER_GUIDE.md:36` describes the chart palette accurately — data marks are the five `VIBRANT_PALETTE` hex values (crimson, blue, green, orange, gold), chart chrome remains warm (beige gridlines, EB Garamond titles, charcoal axes on warm-beige page).
+3. `README.md:18` no longer carries a placeholder `https://github.com/` link — either resolved to a real URL or restated as a plain in-line reference to the local skill.
+4. All TST-01 protected substrings remain present verbatim in both docs (`"LLM provider"`, `"Azure OpenAI"`, `"Anthropic Claude (MGTI)"`, `"QUERY DISABLED — see sidebar warning"`, smoke_llm.py, etc.).
+5. `pytest tests/ -q` stays 103/103 green (doc edits should not touch tests; re-run as a regression safety net).
+
+**Plans:** 1 plan (single wave; two files but one logical unit of work)
+
+Plans:
+- [ ] 12-01-PLAN.md — Sync USER_GUIDE.md and README.md to shipped strings: expander caption (×2 files), chart palette description (×1 file), loro-piana-aesthetic link (×1 file). Verify protected substrings unchanged; re-run pytest.
+
 ## Phases (v2.1, archived)
 
 <details>
@@ -195,6 +221,7 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 | 9. Data visualization                | v2.2      | 4/4            | Complete    | 2026-05-23 |
 | 10. Polish + edge states             | v2.2      | 3/3            | Complete    | 2026-05-23 |
 | 11. Documentation + acceptance gate  | v2.2      | 2/2            | Complete    | 2026-05-24 |
+| 12. Doc accuracy cleanup             | v2.2      | 0/1            | Planned     | —          |
 
 ## Coverage (v2.2)
 
@@ -205,4 +232,4 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 Detailed traceability lives in `REQUIREMENTS.md` Traceability section.
 
 ---
-*Last updated: 2026-05-24 after Phase 11 (Documentation + acceptance gate) execution complete — all DOC-01..02 + TST-01..03 verified (5/5), gsd-verifier status: passed (6/6 must-haves), 22/22 Phase 5 UI tests + 12/12 new Phase 6 visual tests + 103/103 full suite green with `PYTHONPATH=. python -m pytest`. v2.2 milestone shipped. Phase 11 ships: USER_GUIDE.md "Visual Refresh (v2.2)" section as TOC item 1 (renumbered 1-12) + footer bump v2.1 → v2.2; README.md "## Screenshots" subsection between Features and Tech Stack with three docs/screenshots/*.png byte-identical copies from .planning/design-mockups/ + loro-piana-aesthetic reference; new tests/test_phase6_visual.py (12 functions, 6 # --- groups: CSS presence × 4 + CSS absence × 2 + renderer signatures × 2 + Altair theme × 1 + WCAG contrast × 2 + negative usage scan × 1, with inline _contrast_ratio helper, alt.theme.names() Altair-6 API, NO `assert ratio < 4.5` for warm-gray pair per Resolution 1, scan over var(--lp-text-muted) rules per Resolution 2); single byte-level edit src/ui/css.py .lp-warn-fix font-size 13px → 14px (Resolution 2 option (a), WCAG large-text floor). WCAG ratios computed: #2C2420 on #F5F0EB = 13.4363, #6B5E52 on #F5F0EB = 5.5393. Negative usage scan: 11 rules painting in var(--lp-text-muted), all pass via role markers (7 uppercase, 3×15px, 1×14px from this plan, 1 documented pseudo-element allowlist). Observation flagged for future: repo has no pyproject.toml / pytest.ini / conftest.py — bare `pytest tests/...` fails ModuleNotFoundError; all test runs require `PYTHONPATH=.` prefix.*
+*Last updated: 2026-05-24 after v2.2 milestone audit (`.planning/milestones/v2.2-MILESTONE-AUDIT.md`) returned status `tech_debt`. Phase 12 added to close three low-severity doc-drift items surfaced by the audit: USER_GUIDE.md:35 + README.md:27 expander caption ("VIEW INTERACTIVE DATAFRAME" → "EXPAND · INTERACTIVE VIEW"); USER_GUIDE.md:36 chart palette ("muted gold + terracotta" → VIBRANT_PALETTE crimson/blue/green/orange/gold); README.md:18 placeholder loro-piana-aesthetic link. No new requirements added — Phase 12 is content accuracy under existing DOC-01/DOC-02. Coverage stays 36/36. Previous note (Phase 11 closeout 2026-05-24): all DOC-01..02 + TST-01..03 verified (5/5), gsd-verifier status passed (6/6), 22/22 Phase 5 UI tests + 12/12 Phase 6 visual tests + 103/103 full suite green with PYTHONPATH=. python -m pytest. Repo still has no pyproject.toml / pytest.ini / conftest.py — bare pytest fails ModuleNotFoundError; all test runs require PYTHONPATH=. prefix.*
