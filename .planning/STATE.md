@@ -57,6 +57,10 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 
 ### Decisions (recent)
 
+- **Phase 10 Plan 01 — stAlertDynamicIcon is the correct testid (not stAlertContentIcon)**: CONTEXT.md had a typo; RESEARCH.md verified against Streamlit 1.52.1. `stAlertDynamicIcon` used for POL-04 icon suppression; `stAlertContentIcon` appears zero times in css.py. POL-04 icon suppression is scoped under `[data-testid="stAlert"]` parent — alert-scoped, NOT global.
+- **Phase 10 Plan 01 — lp-neutral-400 token used for .lp-loading and INFO alert color**: Muted gold for loading indicator and INFO alert label — no new token introduced.
+- **Phase 10 Plan 01 — .lp-error-card is main-panel scoped, anatomy mirrors Phase 8 .lp-warn-card**: The error card uses identical border anatomy (3px left + hairline top/right/bottom) but is NOT nested under `stSidebar` — it lives in the main panel. Phase 8's sidebar rule is untouched.
+
 - **Phase 10 Plan 02 — NAMING: _render_empty_card (NOT _render_empty_state)**: `_render_empty_state` is already taken by the Phase 9 0-row query-result fallback (class `lp-et-empty`, label `NO RESULTS`). New POL-01 function is `_render_empty_card` (class `lp-empty-card`, heading `No data loaded`). Both coexist in `__all__`; zero collision confirmed by assertion.
 - **Phase 10 Plan 02 — _render_error_html escapes both `msg` AND `label`**: The `label` parameter (default `"ERROR"`, may be overridden by caller) is also HTML-escaped via `html.escape()` — not just `msg`. Extends the XSS-safety contract documented in the module docstring to all user-supplied interpolation points.
 - **Phase 10 Plan 02 — Pure-string-builder pattern confirmed for Plan 03 call sites**: `_render_empty_card()` and `_render_error_html(str(e))` return strings; `st.markdown(html, unsafe_allow_html=True)` wrapping happens at Plan 03 call sites in app.py. Pattern identical to Phase 9 renderers.
