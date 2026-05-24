@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 10 — Polish + edge states — UNBLOCKED, ready to plan/discuss
-Plan: — (ready for `/gsd:discuss-phase 10` or `/gsd:plan-phase 10`)
-Status: Phase 9 COMPLETE + verified (5/5 must_haves PASS, 22/22 Phase 5 UI tests green); DVZ-01..05 marked Complete in REQUIREMENTS.md; Phase 10 unblocked (depends on Phases 6, 8, 9 — all complete)
-Last activity: 2026-05-23 — Phase 9 closeout: gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md + STATE.md updated; phase completion commit bundled
+Phase: 10 — Polish + edge states — IN PROGRESS
+Plan: 02 of 4 — complete (Plan 01 may be parallel/concurrent)
+Status: Phase 10 Plan 02 COMPLETE — _render_empty_card + _render_error_html added to src/ui/results.py; __all__ 3→5; 22/22 Phase 5 UI tests green
+Last activity: 2026-05-23 — Phase 10 Plan 02 complete (0562cb6 feat commit)
 
 Progress: v2.2 — Phases 6-9 COMPLETE; Phase 10 next
 
@@ -56,6 +56,10 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 ## Accumulated Context
 
 ### Decisions (recent)
+
+- **Phase 10 Plan 02 — NAMING: _render_empty_card (NOT _render_empty_state)**: `_render_empty_state` is already taken by the Phase 9 0-row query-result fallback (class `lp-et-empty`, label `NO RESULTS`). New POL-01 function is `_render_empty_card` (class `lp-empty-card`, heading `No data loaded`). Both coexist in `__all__`; zero collision confirmed by assertion.
+- **Phase 10 Plan 02 — _render_error_html escapes both `msg` AND `label`**: The `label` parameter (default `"ERROR"`, may be overridden by caller) is also HTML-escaped via `html.escape()` — not just `msg`. Extends the XSS-safety contract documented in the module docstring to all user-supplied interpolation points.
+- **Phase 10 Plan 02 — Pure-string-builder pattern confirmed for Plan 03 call sites**: `_render_empty_card()` and `_render_error_html(str(e))` return strings; `st.markdown(html, unsafe_allow_html=True)` wrapping happens at Plan 03 call sites in app.py. Pattern identical to Phase 9 renderers.
 
 - **Phase 9 Plan 02 — results.py in src/ui/ (NOT src/utils.py)**: utils.py has zero Streamlit-adjacent helpers; results.py is the logical home alongside css.py and splash.py. Plan 04 imports from `src.ui.results`.
 - **Phase 9 Plan 02 — DVZ-03 truncation cap confirmed at 50**: User-approved deviation from REQUIREMENTS.md `>1000` literal; editorial table is the hero view and must be scannable at a glance. The 50-row cap is encoded in `_TRUNCATION_CAP` constant; caption spec-locked verbatim with U+00B7 middot and comma-formatted N.
@@ -105,10 +109,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-23 — Phase 9 closeout (verifier passed, requirements + roadmap updated, phase commit bundled)
-Stopped at: Phase 9 COMPLETE — all 4 plans done, gsd-verifier `passed` (5/5 must_haves, 22/22 Phase 5 UI tests still green); DVZ-01..05 marked Complete; three user-approved deviations preserved: DVZ-01 module in src/ui/results.py (not src/utils.py), DVZ-03 truncates at 50 rows (not >1000), DVZ-04 data palette is vibrant categorical (chrome stays cashmere)
+Last session: 2026-05-23 — Phase 10 Plan 02 complete (0562cb6)
+Stopped at: Phase 10 Plan 02 COMPLETE — _render_empty_card + _render_error_html added, __all__ 5 entries, 22/22 Phase 5 tests green
 Resume file: None
-Next: Phase 10 (Polish + edge states) — POL-01..04 — empty state, loading indicators, error rendering, toasts; depends on Phases 6, 8, 9 (all complete)
+Next: Phase 10 Plan 03 (app.py call-site wiring for POL-01 + POL-03) — import _render_empty_card and _render_error_html from src.ui.results; replace brutalist [ERR] strings and wire empty-card to data_loaded gate
 
 ---
-*Last updated: 2026-05-23 after Phase 9 closeout (verifier passed, requirements + roadmap updated).*
+*Last updated: 2026-05-23 after Phase 10 Plan 02 complete (0562cb6 — _render_empty_card + _render_error_html).*
