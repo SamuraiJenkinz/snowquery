@@ -30,7 +30,6 @@ from src.utils import (
 from src.ui.css import LORO_PIANA_CSS
 import src.ui.altair_theme  # noqa: F401  Phase 9 DVZ-04 side-effect: registers + enables loro_piana Altair theme
 from src.ui.results import (
-    _render_editorial_table,
     _render_empty_state,
     _render_chart_unavailable,
     _render_empty_card,
@@ -560,15 +559,15 @@ def render_chat_history():
 
 
 def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None, chart=None, chart_feedback: str | None = None):
-    """Display query results with editorial hero + interactive expander.
+    """Display query results with executive summary, chart, and interactive expander.
 
-    Phase 9 contract:
-    - 0-row df → editorial NO RESULTS card ONLY (no table, no expander, no chart,
+    Display contract:
+    - 0-row df → editorial NO RESULTS card ONLY (no expander, no chart,
       no chart_feedback warning). Short-circuits before any other render.
-    - 1-50 row df → editorial HTML table as hero, expander beneath holds native
-      st.dataframe + EXPORT CSV.
-    - >50 row df → editorial hero shows df.head(50) + truncation caption;
-      expander's st.dataframe receives the FULL df.
+    - 1+ row df → executive summary (if present) + chart (if present) +
+      interactive `EXPAND · INTERACTIVE VIEW` expander beneath. The expander
+      is the single source of truth for the data; the editorial HTML hero
+      was retired because it duplicated the expander content.
     - chart is None AND chart_feedback is set (1-data-point case) → editorial
       CHART UNAVAILABLE restyle replaces the v2.1 st.warning/st.info pattern.
 
@@ -590,7 +589,10 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
 
     # Chart display (theme baked in via altair_theme side-effect import).
     if chart is not None:
-        st.markdown("### VISUALIZATION")
+        st.markdown(
+            '<h3 style="color: #2C2420;">VISUALIZATION</h3>',
+            unsafe_allow_html=True,
+        )
         # Show feedback about chart adjustments (e.g., "Switched to bar chart")
         if chart_feedback:
             st.markdown(_render_chart_unavailable(chart_feedback), unsafe_allow_html=True)
@@ -601,12 +603,7 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
         # Phase 9 DVZ-05 edge: editorial restyle, not st.warning.
         st.markdown(_render_chart_unavailable(chart_feedback), unsafe_allow_html=True)
 
-    # Phase 9 DVZ-01 — editorial hero table.
-    # Pass RAW df (renderer applies its own 140-char short_description truncation
-    # and 50-row cap). The expander below shows the full df via native st.dataframe.
-    st.markdown(_render_editorial_table(df), unsafe_allow_html=True)
-
-    # Phase 9 DVZ-02 — interactive expander beneath the editorial hero.
+    # Interactive expander — single source of truth for tabular data.
     # st.expander has NO key= parameter in Streamlit 1.52.1 — no widget-id
     # collision in chat history because the expander itself owns no state.
     with st.expander("EXPAND · INTERACTIVE VIEW", expanded=False):

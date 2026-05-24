@@ -86,13 +86,18 @@ def _detect_column_type(
             pass
 
     if numeric_count >= len(non_null_values[:10]) * 0.9:
-        # Check if integer or float
-        all_int = all(
-            float(str(v).replace(",", "")).is_integer()
-            for v in non_null_values[:10]
-            if pd.notna(v)
-        )
-        return "BIGINT" if all_int else "DOUBLE"
+        # Check if integer or float — guard against the 10% non-numeric slice
+        # (e.g. a stray "guest" among caller-id numerics) that passed the
+        # 0.9 threshold but would otherwise raise inside `float(...)` here.
+        try:
+            all_int = all(
+                float(str(v).replace(",", "")).is_integer()
+                for v in non_null_values[:10]
+                if pd.notna(v)
+            )
+            return "BIGINT" if all_int else "DOUBLE"
+        except (ValueError, TypeError):
+            return "VARCHAR"
 
     # Default to VARCHAR
     return "VARCHAR"

@@ -252,6 +252,11 @@ def build_embeddings(
         batch_ids = []
         batch_texts = []
         batch_metadatas = []
+        # Dedupe across the whole build: ServiceNow exports occasionally
+        # contain the same incident number twice (concatenated exports,
+        # re-opens). ChromaDB's add() rejects duplicates inside a single
+        # batch AND across the collection, so we skip seen IDs.
+        seen_ids: set[str] = set()
 
         offset = 0
         while offset < total_rows:
@@ -269,6 +274,10 @@ def build_embeddings(
 
                 try:
                     doc_id = _get_incident_id(row)
+                    if doc_id in seen_ids:
+                        logger.warning(f"Skipping duplicate incident ID: {doc_id}")
+                        continue
+                    seen_ids.add(doc_id)
                     text = _prepare_text(row)
                     metadata = _get_metadata(row)
 
@@ -396,6 +405,9 @@ def update_embeddings(
         # Fetch and embed new records
         new_ids_list = list(new_ids)
         embedded_count = 0
+        # Dedupe across the whole update — IN-clause query can return
+        # duplicate rows if the SQL table has them (same INC exported twice).
+        seen_ids: set[str] = set()
 
         for i in range(0, len(new_ids_list), BATCH_SIZE):
             batch_ids_to_fetch = new_ids_list[i:i + BATCH_SIZE]
@@ -418,6 +430,9 @@ def update_embeddings(
                 row = dict(zip(columns, row_tuple))
                 try:
                     doc_id = _get_incident_id(row)
+                    if doc_id in seen_ids:
+                        continue
+                    seen_ids.add(doc_id)
                     text = _prepare_text(row)
                     metadata = _get_metadata(row)
 
