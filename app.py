@@ -25,10 +25,18 @@ from src.utils import (
     format_error_message,
     generate_export_filename,
     logger,
+    QueryError,
 )
 from src.ui.css import LORO_PIANA_CSS
 import src.ui.altair_theme  # noqa: F401  Phase 9 DVZ-04 side-effect: registers + enables loro_piana Altair theme
-from src.ui.results import _render_editorial_table, _render_empty_state, _render_chart_unavailable
+from src.ui.results import (
+    _render_editorial_table,
+    _render_empty_state,
+    _render_chart_unavailable,
+    _render_empty_card,
+    _render_error_html,
+)
+from src.llm.errors import LLMError
 from src.ui.splash import render_splash
 
 # Page configuration
@@ -605,7 +613,7 @@ def process_query(user_query: str, mode: str):
     """Process a user query and return formatted response."""
     if not st.session_state.schema:
         return {
-            "content": "[ERR] NO DATA LOADED — UPLOAD CSV FIRST",
+            "content": _render_error_html("NO DATA LOADED — UPLOAD CSV FIRST"),
             "results": None,
             "sql": None
         }
@@ -613,7 +621,7 @@ def process_query(user_query: str, mode: str):
     if mode in ["semantic", "hybrid", "auto"] and not st.session_state.embeddings_ready:
         if mode == "semantic":
             return {
-                "content": "[ERR] NO EMBEDDINGS — BUILD VIA SIDEBAR",
+                "content": _render_error_html("NO EMBEDDINGS — BUILD VIA SIDEBAR"),
                 "results": None,
                 "sql": None
             }
@@ -628,7 +636,7 @@ def process_query(user_query: str, mode: str):
 
         if result.get("error"):
             return {
-                "content": f"[ERR] {result['error']}",
+                "content": _render_error_html(result["error"]),
                 "results": None,
                 "sql": result.get("sql")
             }
@@ -715,7 +723,7 @@ def process_query(user_query: str, mode: str):
     except Exception as e:
         logger.exception("Error processing query")
         return {
-            "content": f"[ERR] {str(e)}",
+            "content": _render_error_html(str(e)),
             "results": None,
             "sql": None
         }
@@ -747,8 +755,10 @@ def render_main_content():
     )
 
     if not st.session_state.data_loaded:
-        # No-CSV-loaded empty card is Phase 10 (POL-01). Phase 8 just exits gracefully
-        # after rendering the editorial header — the sidebar shows the upload UI.
+        # POL-01: editorial empty card (top-of-panel placement, 520px max-width).
+        # _render_empty_card() returns the locked HTML fragment; CSS lives in
+        # src/ui/css.py (.lp-empty-card / -heading / -divider / -subtitle).
+        st.markdown(_render_empty_card(), unsafe_allow_html=True)
         return
 
     render_schema_details()
@@ -809,7 +819,21 @@ def render_main_content():
 
         with st.chat_message("assistant"):
             with st.spinner("PROCESSING..."):
-                response = process_query(user_query, selected_mode)
+                try:
+                    response = process_query(user_query, selected_mode)
+                except (QueryError, LLMError) as e:
+                    response = {
+                        "content": _render_error_html(str(e)),
+                        "results": None,
+                        "sql": None,
+                    }
+                except Exception as e:
+                    logger.exception("Unexpected error in process_query")
+                    response = {
+                        "content": _render_error_html(f"Unexpected error: {e}"),
+                        "results": None,
+                        "sql": None,
+                    }
 
             # Assistant card opens — DOM bay for Phase 9 editorial table
             st.markdown('<div class="lp-msg-assistant">', unsafe_allow_html=True)
