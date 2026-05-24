@@ -1076,6 +1076,102 @@ samp,
   color: var(--lp-text);
   margin: 0;
 }
+
+/* ============================================================
+   Phase 10 POL-01 — Empty state card (no CSV loaded)
+   Top-of-panel placement, centered horizontally. Render site:
+   app.py:749 _render_empty_card() via st.markdown.
+   ============================================================ */
+.lp-empty-card {
+  background: var(--lp-bg);
+  border: 1px solid var(--lp-border);
+  border-radius: var(--lp-radius-md);
+  max-width: 520px;
+  margin: var(--lp-space-8) auto 0 auto;
+  padding: var(--lp-space-8);
+  text-align: center;
+}
+.lp-empty-card .lp-empty-heading {
+  font-family: var(--lp-font-display);
+  font-weight: 300;
+  font-size: 24px;
+  color: var(--lp-text);
+  margin: 0 0 var(--lp-space-4) 0;
+  line-height: 1.3;
+}
+.lp-empty-card .lp-empty-divider {
+  width: 80px;
+  height: 1px;
+  background: var(--lp-border);
+  margin: 0 auto var(--lp-space-4) auto;
+  border: 0;
+}
+.lp-empty-card .lp-empty-subtitle {
+  font-family: var(--lp-font-body);
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--lp-text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   Phase 10 POL-02 — Loading indicator (subtle opacity pulse)
+   Replaces st.spinner brutalist text. Three callsites:
+   app.py:126 (LOADING DATA…), app.py:447 (BUILDING EMBEDDINGS…),
+   app.py:811 (ANALYZING…). String "QUERYING…" reserved for
+   future use; no callsite today.
+   ============================================================ */
+.lp-loading {
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lp-neutral-400);
+  margin: var(--lp-space-2) 0;
+  animation: lp-pulse 1.5s ease-in-out infinite;
+}
+@keyframes lp-pulse {
+  0%   { opacity: 0.5; }
+  50%  { opacity: 1.0; }
+  100% { opacity: 0.5; }
+}
+
+/* ============================================================
+   Phase 10 POL-03 — Unified error card (QueryError + LLMError)
+   Main-panel scoped — does NOT reuse the sidebar .lp-warn-card
+   selector (which is scoped under [data-testid="stSidebar"]).
+   Render site: app.py:608/616/631/718 + outer try/except at 812
+   via _render_error_html(msg) in src/ui/results.py.
+   ============================================================ */
+.lp-error-card {
+  background: var(--lp-bg);
+  border-left: 3px solid var(--lp-danger);
+  border-top: 1px solid var(--lp-border);
+  border-right: 1px solid var(--lp-border);
+  border-bottom: 1px solid var(--lp-border);
+  border-radius: var(--lp-radius-md);
+  padding: var(--lp-space-4);
+  margin: var(--lp-space-2) 0;
+}
+.lp-error-card .lp-error-label {
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lp-danger);
+  margin: 0 0 var(--lp-space-2) 0;
+}
+.lp-error-card .lp-error-body {
+  font-family: var(--lp-font-body);
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--lp-text);
+  margin: 0;
+  line-height: 1.5;
+}
 """
 
 
