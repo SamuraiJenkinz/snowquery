@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 10 — Polish + edge states — IN PROGRESS
-Plan: 02 of 4 — complete (Plan 01 may be parallel/concurrent)
-Status: Phase 10 Plan 02 COMPLETE — _render_empty_card + _render_error_html added to src/ui/results.py; __all__ 3→5; 22/22 Phase 5 UI tests green
-Last activity: 2026-05-23 — Phase 10 Plan 02 complete (0562cb6 feat commit)
+Phase: 10 — Polish + edge states — COMPLETE
+Plan: 03 of 03 — complete (all three plans done: 10-01, 10-02, 10-03)
+Status: Phase 10 COMPLETE — all four POL surfaces wired and human-verified; 4 visual refinements applied during checkpoint; 91/91 tests green
+Last activity: 2026-05-23 — Phase 10 Plan 03 complete (f211ed0 last fix commit); ready for gsd-verifier
 
-Progress: v2.2 — Phases 6-9 COMPLETE; Phase 10 next
+Progress: v2.2 — Phases 6-10 COMPLETE; Phase 11 next
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
 [██████████] Phase 7  Splash screen                    ← COMPLETE (Plans 01-02 done)
 [██████████] Phase 8  Screen restyle (sidebar + main)  ← COMPLETE (Plans 01-02 done)
 [██████████] Phase 9  Data visualization               ← COMPLETE (Plans 01-04 done)
-[          ] Phase 10 Polish + edge states
+[██████████] Phase 10 Polish + edge states             ← COMPLETE (Plans 01-03 done)
 [          ] Phase 11 Documentation + acceptance gate
 ```
 
@@ -56,6 +56,9 @@ Design system: Loro Piana Luxe — palette, tokens, components at `C:\Users\tayl
 ## Accumulated Context
 
 ### Decisions (recent)
+
+- **Phase 10 Plan 03 — Markdown-injection-inside-td is a Streamlit architectural constraint**: When `st.markdown(html, unsafe_allow_html=True)` content includes heading/strong/bold tags placed inside an existing `<td>`, Streamlit's renderer injects its own heading styles that override the cell's `font-*` properties. Fix: explicit descendant selectors `.lp-editorial-table tbody td h1..h6/strong/b/p { inherit }`. Required for any editorial table that may receive markdown-injected content. Pattern generalizes to all future editorial tables.
+- **Phase 10 Plan 03 — Per-key `[class*='st-key-_ghost_']` wildcard for Streamlit button variants**: Ghost-query buttons share a `_ghost_` prefix in their Streamlit-generated key class names. CSS wildcard attribute selector `[class*="st-key-_ghost_"]` covers all variants without enumerating keys. Extends the Phase 8 `.st-key-{key}` per-button override pattern to key-prefix groups. Use this when a set of buttons shares a naming convention and all need the same visual override.
 
 - **Phase 10 Plan 01 — stAlertDynamicIcon is the correct testid (not stAlertContentIcon)**: CONTEXT.md had a typo; RESEARCH.md verified against Streamlit 1.52.1. `stAlertDynamicIcon` used for POL-04 icon suppression; `stAlertContentIcon` appears zero times in css.py. POL-04 icon suppression is scoped under `[data-testid="stAlert"]` parent — alert-scoped, NOT global.
 - **Phase 10 Plan 01 — lp-neutral-400 token used for .lp-loading and INFO alert color**: Muted gold for loading indicator and INFO alert label — no new token introduced.
@@ -113,10 +116,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-23 — Phase 10 Plan 02 complete (0562cb6)
-Stopped at: Phase 10 Plan 02 COMPLETE — _render_empty_card + _render_error_html added, __all__ 5 entries, 22/22 Phase 5 tests green
+Last session: 2026-05-23 — Phase 10 Plan 03 complete (f211ed0 last fix; plan metadata commit follows)
+Stopped at: Phase 10 COMPLETE — all 3 plans done; 4 visual refinements applied; human verified; 91/91 tests green; ready for gsd-verifier
 Resume file: None
-Next: Phase 10 Plan 03 (app.py call-site wiring for POL-01 + POL-03) — import _render_empty_card and _render_error_html from src.ui.results; replace brutalist [ERR] strings and wire empty-card to data_loaded gate
+Next: Phase 11 (Documentation + acceptance gate — DOC-01..02, TST-01..03). Entry gates: 22/22 Phase 5 tests green, 91/91 full suite green. TST-02 may enforce LABEL_COLOR_CHARCOAL constant import (deferred from Phase 9).
 
 ---
-*Last updated: 2026-05-23 after Phase 10 Plan 02 complete (0562cb6 — _render_empty_card + _render_error_html).*
+*Last updated: 2026-05-23 after Phase 10 Plan 03 complete (f211ed0 + docs commit — Phase 10 COMPLETE).*
