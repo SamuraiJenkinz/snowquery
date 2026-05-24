@@ -1172,6 +1172,98 @@ samp,
   margin: 0;
   line-height: 1.5;
 }
+
+/* ============================================================
+   Phase 10 POL-04 — Streamlit alert palette overrides
+   Pure CSS sweep. Zero call-site edits. Covers all 6 callsites:
+   st.success (app.py:133, 138, 455), st.error (app.py:146, 194, 461).
+   Testids verified against Streamlit 1.52.1 (see 10-RESEARCH.md).
+   ============================================================ */
+
+/* Shared container shape — applies to all four alert kinds */
+[data-testid="stAlert"] [data-testid="stAlertContainer"] {
+  border-radius: var(--lp-radius-md);
+  padding: var(--lp-space-4);
+  background: var(--lp-bg);
+  font-family: var(--lp-font-body);
+  color: var(--lp-text);
+  border-top: 1px solid var(--lp-border);
+  border-right: 1px solid var(--lp-border);
+  border-bottom: 1px solid var(--lp-border);
+}
+
+/* Hide Streamlit's dynamic alert icon — alert-scoped, NOT global.
+   The icon node is only present when icon= is passed; none of our 6
+   callsites pass it, but this is a safety net so future calls don't
+   leak a brutalist icon. Does NOT regress the Phase 8 sidebar
+   Material Symbols restoration (which is stSidebar-scoped). */
+[data-testid="stAlert"] [data-testid="stAlertDynamicIcon"] {
+  display: none;
+}
+
+/* SUCCESS — sage */
+[data-testid="stAlert"]:has([data-testid="stAlertContentSuccess"]) [data-testid="stAlertContainer"] {
+  border-left: 3px solid var(--lp-success);
+}
+[data-testid="stAlert"] [data-testid="stAlertContentSuccess"]::before {
+  content: "SUCCESS";
+  display: block;
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lp-success);
+  margin-bottom: var(--lp-space-2);
+}
+
+/* ERROR — terracotta */
+[data-testid="stAlert"]:has([data-testid="stAlertContentError"]) [data-testid="stAlertContainer"] {
+  border-left: 3px solid var(--lp-danger);
+}
+[data-testid="stAlert"] [data-testid="stAlertContentError"]::before {
+  content: "ERROR";
+  display: block;
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lp-danger);
+  margin-bottom: var(--lp-space-2);
+}
+
+/* WARNING — amber */
+[data-testid="stAlert"]:has([data-testid="stAlertContentWarning"]) [data-testid="stAlertContainer"] {
+  border-left: 3px solid var(--lp-warning);
+}
+[data-testid="stAlert"] [data-testid="stAlertContentWarning"]::before {
+  content: "WARNING";
+  display: block;
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lp-warning);
+  margin-bottom: var(--lp-space-2);
+}
+
+/* INFO — muted gold */
+[data-testid="stAlert"]:has([data-testid="stAlertContentInfo"]) [data-testid="stAlertContainer"] {
+  border-left: 3px solid var(--lp-neutral-400);
+}
+[data-testid="stAlert"] [data-testid="stAlertContentInfo"]::before {
+  content: "INFO";
+  display: block;
+  font-family: var(--lp-font-body);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lp-neutral-400);
+  margin-bottom: var(--lp-space-2);
+}
 """
 
 
