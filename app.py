@@ -909,9 +909,10 @@ def render_main_content():
             "model": response.get("model"),             # Phase 5 (SC #4)
         })
 
-    # Clear chat button — already cashmere via Phase 6. Keep label "CLEAR HISTORY".
+    # Clear chat button — keyed so the sidebar-action editorial style applies
+    # (EB Garamond italic 13px, cashmere bg, white text). Label "CLEAR HISTORY".
     if st.session_state.messages:
-        if st.button("CLEAR HISTORY"):
+        if st.button("CLEAR HISTORY", key="clear_history"):
             st.session_state.messages = []
             st.rerun()
 

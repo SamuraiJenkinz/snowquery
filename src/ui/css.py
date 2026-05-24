@@ -775,6 +775,39 @@ samp,
   letter-spacing: normal !important;
   line-height: 1.2 !important;
   margin: 0 !important;
+  /* Cashmere bg needs white text — the sidebar universal `* { color }`
+     rule would otherwise paint inner spans charcoal (poor contrast).
+     UNLOCK UPLOAD pill primitive is unaffected (its .st-key-unlock_upload
+     override wins on specificity and explicitly sets terracotta). */
+  color: var(--lp-neutral-0) !important;
+}
+
+/* CLEAR HISTORY main-panel button — same editorial treatment as the sidebar
+   action buttons (EB Garamond italic 13px). Main-panel scope, so no
+   charcoal inheritance issue; cashmere bg + white text inherits from the
+   global .stButton > button rule. */
+.st-key-clear_history .stButton > button,
+.st-key-clear_history button {
+  font-family: var(--lp-font-headline) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  padding: var(--lp-space-2) var(--lp-space-4) !important;
+}
+.st-key-clear_history button p,
+.st-key-clear_history button div,
+.st-key-clear_history button span {
+  font-family: var(--lp-font-headline) !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  color: var(--lp-neutral-0) !important;
 }
 
 /* DROP CSV FILE HERE caption — same editorial treatment as the sidebar
@@ -1051,6 +1084,34 @@ samp,
 .lp-editorial-table td.lp-et-right,
 .lp-editorial-table th.lp-et-right {
   text-align: right;
+}
+
+/* Streamlit's st.markdown(unsafe_allow_html=True) re-parses cell text as
+   Markdown before HTML — so a cell containing patterns like
+   '----- Transcript -----' on its own line or '>>> DATA <<<' can spawn
+   <h1>/<h2>/<strong>/<p> elements with the default heavy heading
+   typography. Force any such injection to inherit the td's typography so
+   cells read as one paragraph. Mono / priority italic / date italic cells
+   keep their styling because the inherited values flow from those td
+   rules above. */
+.lp-editorial-table tbody td h1,
+.lp-editorial-table tbody td h2,
+.lp-editorial-table tbody td h3,
+.lp-editorial-table tbody td h4,
+.lp-editorial-table tbody td h5,
+.lp-editorial-table tbody td h6,
+.lp-editorial-table tbody td strong,
+.lp-editorial-table tbody td b,
+.lp-editorial-table tbody td p {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  font-style: inherit !important;
+  line-height: inherit !important;
+  color: inherit !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: inline !important;
 }
 
 /* Truncation caption — small-caps tracked CHARCOAL (NOT muted gold).
