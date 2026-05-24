@@ -135,7 +135,12 @@ Plans:
 3. Forcing a `QueryError` or `LLMError` (e.g. via missing env vars + retry) renders the message in the assistant card with a terracotta 3px left border, "ERROR" small-caps tracked label at top, and the error text in Inter 400 charcoal — no red brutalist banner.
 4. `st.success` / `st.error` / `st.warning` calls anywhere in the app render with Loro Piana palette colors via CSS overrides — no browser-default toast colors leak through.
 
-**Plans-TBD**: To be decomposed by `/gsd:plan-phase 10`.
+**Plans:** 3 plans in 2 waves
+
+Plans:
+- [ ] 10-01-PLAN.md — Wave 1: Extend LORO_PIANA_CSS with POL-01..04 styling — `src/ui/css.py` gains .lp-empty-card, .lp-loading + @keyframes lp-pulse, .lp-error-card, and Streamlit alert palette overrides (stAlertContainer / stAlertContentSuccess|Error|Warning|Info / stAlertDynamicIcon suppression)
+- [ ] 10-02-PLAN.md — Wave 1: Add _render_empty_card and _render_error_html to `src/ui/results.py` — pure HTML string builders extend the Phase 9 pattern (3 → 5 functions, __all__ extended, XSS-safe error escaping)
+- [ ] 10-03-PLAN.md — Wave 2: Wire renderers + loading indicators into `app.py` — POL-01 empty card render, POL-03 _render_error_html at 4 process_query sites + outer try/except for QueryError/LLMError, POL-02 .lp-loading replaces 3 spinners (ANALYZING…, BUILDING EMBEDDINGS…, LOADING DATA…); POL-04 requires zero call-site edits (CSS sweep)
 
 ### Phase 11: Documentation + acceptance gate
 
