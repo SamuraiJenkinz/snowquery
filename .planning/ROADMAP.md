@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v2.1 Multi-Provider LLM Integration** — Phases 1-5 (shipped 2026-05-22) — see [milestones/v2.1-ROADMAP.md](milestones/v2.1-ROADMAP.md)
-- 🔄 **v2.2 SNOWGREP Visual Revamp (Loro Piana)** — Phases 6-11 (in progress, started 2026-05-22)
+- ✅ **v2.2 SNOWGREP Visual Revamp (Loro Piana)** — Phases 6-11 (shipped 2026-05-24, started 2026-05-22)
 
 ## Overview (v2.2)
 
@@ -26,7 +26,7 @@ Three Stitch mockups (`.planning/design-mockups/00-splash-helix.png`, `01-main-c
 - [x] Phase 8: Screen restyle — Sidebar + main panel + chat editorial pass (12 requirements) ✓ 2026-05-23
 - [x] Phase 9: Data visualization — Editorial HTML table + collapsible interactive view + Altair theme (5 requirements) ✓ 2026-05-23
 - [x] Phase 10: Polish + edge states — Empty state, loading indicators, error rendering, toasts (4 requirements) ✓ 2026-05-23
-- [ ] Phase 11: Documentation + acceptance gate — USER_GUIDE/README + visual regression test suite + WCAG check (5 requirements)
+- [x] Phase 11: Documentation + acceptance gate — USER_GUIDE/README + visual regression test suite + WCAG check (5 requirements) ✓ 2026-05-24
 
 ## Phase Details
 
@@ -161,8 +161,8 @@ Plans:
 **Plans**: 2 plans (1 wave, both parallel + autonomous)
 
 Plans:
-- [ ] 11-01-PLAN.md — DOC-01 + DOC-02: USER_GUIDE.md Visual Refresh section + footer bump + README Screenshots subsection + docs/screenshots/ PNG copies
-- [ ] 11-02-PLAN.md — TST-01 + TST-02 + TST-03: tests/test_phase6_visual.py acceptance gate (CSS presence/absence, renderer signatures, Altair theme, WCAG-AA contrast, negative usage scan) + .lp-warn-fix 13px→14px in src/ui/css.py
+- [x] 11-01-PLAN.md — DOC-01 + DOC-02: USER_GUIDE.md Visual Refresh section + footer bump + README Screenshots subsection + docs/screenshots/ PNG copies ✓ 2026-05-24
+- [x] 11-02-PLAN.md — TST-01 + TST-02 + TST-03: tests/test_phase6_visual.py acceptance gate (CSS presence/absence, renderer signatures, Altair theme, WCAG-AA contrast, negative usage scan) + .lp-warn-fix 13px→14px in src/ui/css.py ✓ 2026-05-24
 
 ## Phases (v2.1, archived)
 
@@ -194,7 +194,7 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 | 8. Screen restyle (sidebar + main)   | v2.2      | 2/2            | Complete    | 2026-05-23 |
 | 9. Data visualization                | v2.2      | 4/4            | Complete    | 2026-05-23 |
 | 10. Polish + edge states             | v2.2      | 3/3            | Complete    | 2026-05-23 |
-| 11. Documentation + acceptance gate  | v2.2      | 0/TBD          | Not started | —          |
+| 11. Documentation + acceptance gate  | v2.2      | 2/2            | Complete    | 2026-05-24 |
 
 ## Coverage (v2.2)
 
@@ -205,4 +205,4 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 Detailed traceability lives in `REQUIREMENTS.md` Traceability section.
 
 ---
-*Last updated: 2026-05-23 after Phase 10 (Polish + edge states) execution complete — all POL-01..04 verified (4/4), gsd-verifier status: passed, 22/22 Phase 5 UI tests + 91/91 full suite green. Phase 10 ships ~150 net new lines of CSS in `src/ui/css.py` (.lp-empty-card, .lp-loading + @keyframes lp-pulse, .lp-error-card, full Streamlit alert palette overrides with stAlertDynamicIcon suppression), 2 new pure-Python renderers in `src/ui/results.py` (_render_empty_card, _render_error_html — 3→5 functions, XSS-escape contract preserved), and ~10 wiring edits in `app.py` (empty card render, 4 _render_error_html call-sites + outer try/except for QueryError/LLMError, 3 .lp-loading callsites replacing st.spinner). POL-04 required ZERO call-site edits (CSS sweep covers all 6 st.success/st.error sites). Additional visual refinements applied during checkpoint review (commits eeb2321, 273147e, f211ed0): sidebar action buttons + DROP CSV caption + Clear History + ghost queries all match the editorial italic-on-cashmere pattern; editorial table cells inherit typography for markdown-injected headings so bounce-email transcripts render flat. Side-mission committed separately (3bdbdfe, 8f2e360): ANTHROPIC_DIRECT_MODE env-flag for direct sk-ant API testing (not a POL deliverable).*
+*Last updated: 2026-05-24 after Phase 11 (Documentation + acceptance gate) execution complete — all DOC-01..02 + TST-01..03 verified (5/5), gsd-verifier status: passed (6/6 must-haves), 22/22 Phase 5 UI tests + 12/12 new Phase 6 visual tests + 103/103 full suite green with `PYTHONPATH=. python -m pytest`. v2.2 milestone shipped. Phase 11 ships: USER_GUIDE.md "Visual Refresh (v2.2)" section as TOC item 1 (renumbered 1-12) + footer bump v2.1 → v2.2; README.md "## Screenshots" subsection between Features and Tech Stack with three docs/screenshots/*.png byte-identical copies from .planning/design-mockups/ + loro-piana-aesthetic reference; new tests/test_phase6_visual.py (12 functions, 6 # --- groups: CSS presence × 4 + CSS absence × 2 + renderer signatures × 2 + Altair theme × 1 + WCAG contrast × 2 + negative usage scan × 1, with inline _contrast_ratio helper, alt.theme.names() Altair-6 API, NO `assert ratio < 4.5` for warm-gray pair per Resolution 1, scan over var(--lp-text-muted) rules per Resolution 2); single byte-level edit src/ui/css.py .lp-warn-fix font-size 13px → 14px (Resolution 2 option (a), WCAG large-text floor). WCAG ratios computed: #2C2420 on #F5F0EB = 13.4363, #6B5E52 on #F5F0EB = 5.5393. Negative usage scan: 11 rules painting in var(--lp-text-muted), all pass via role markers (7 uppercase, 3×15px, 1×14px from this plan, 1 documented pseudo-element allowlist). Observation flagged for future: repo has no pyproject.toml / pytest.ini / conftest.py — bare `pytest tests/...` fails ModuleNotFoundError; all test runs require `PYTHONPATH=.` prefix.*

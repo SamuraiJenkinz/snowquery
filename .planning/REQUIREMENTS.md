@@ -62,14 +62,14 @@
 
 ### Documentation (DOC) — User-facing docs
 
-- [ ] **DOC-01**: USER_GUIDE.md gains a new section "VISUAL REFRESH (v2.2)" near the top with: one-paragraph summary of the aesthetic change, "What changed" bullet list (splash, sidebar style, editorial table, expandable interactive view, restyled charts), "What did NOT change" reassurance list (all v2.1 functionality, locked UI strings, LLM behavior, data privacy). Version stamp footer bumped from "v2.1" to "v2.2".
-- [ ] **DOC-02**: README.md gains a small "Screenshots" subsection near the top linking to `.planning/design-mockups/` (or moved to `docs/screenshots/` as part of this milestone). Reference to the loro-piana-aesthetic design system noted in passing — does not duplicate it.
+- [x] **DOC-01**: USER_GUIDE.md gains a new section "VISUAL REFRESH (v2.2)" near the top with: one-paragraph summary of the aesthetic change, "What changed" bullet list (splash, sidebar style, editorial table, expandable interactive view, restyled charts), "What did NOT change" reassurance list (all v2.1 functionality, locked UI strings, LLM behavior, data privacy). Version stamp footer bumped from "v2.1" to "v2.2".
+- [x] **DOC-02**: README.md gains a small "Screenshots" subsection near the top linking to `.planning/design-mockups/` (or moved to `docs/screenshots/` as part of this milestone). Reference to the loro-piana-aesthetic design system noted in passing — does not duplicate it.
 
 ### Testing (TST) — Regression coverage
 
-- [ ] **TST-01**: All 22 tests in `tests/test_phase5_ui.py` (v2.1 Phase 5 acceptance gate) stay green. The AST-based session_state-invariant test on `_render_provenance_caption` is load-bearing. Combined Phase 1+2+3+4+5 suite remains 91/91.
-- [ ] **TST-02**: New `tests/test_phase6_visual.py` acceptance gate proving v2.2 success criteria with zero live Streamlit / HTTP / LLM: CSS string presence checks (EB Garamond import, Inter import, palette tokens `#8B7355` / `#F5F0EB` / `#2C2420`); absence checks (no `#0a0a0a`, no `JetBrains Mono` on `.stApp`); helper function signature checks (`_render_editorial_table`, `render_splash`, Altair theme `loro_piana` registered).
-- [ ] **TST-03**: Accessibility contrast check — programmatic verification that `#2C2420` on `#F5F0EB` passes WCAG AA for body text (4.5:1 minimum) and `#6B5E52` on `#F5F0EB` passes AA for large text only (3:1 minimum, NOT small body). Test fails with clear message if any palette color used outside its valid contrast role.
+- [x] **TST-01**: All 22 tests in `tests/test_phase5_ui.py` (v2.1 Phase 5 acceptance gate) stay green. The AST-based session_state-invariant test on `_render_provenance_caption` is load-bearing. Combined Phase 1+2+3+4+5 suite remains 91/91.
+- [x] **TST-02**: New `tests/test_phase6_visual.py` acceptance gate proving v2.2 success criteria with zero live Streamlit / HTTP / LLM: CSS string presence checks (EB Garamond import, Inter import, palette tokens `#8B7355` / `#F5F0EB` / `#2C2420`); absence checks (no `#0a0a0a`, no `JetBrains Mono` on `.stApp`); helper function signature checks (`_render_editorial_table`, `render_splash`, Altair theme `loro_piana` registered).
+- [x] **TST-03**: Accessibility contrast check — programmatic verification that `#2C2420` on `#F5F0EB` passes WCAG AA for body text (4.5:1 minimum) and `#6B5E52` on `#F5F0EB` passes AA for large text only (3:1 minimum, NOT small body). Test fails with clear message if any palette color used outside its valid contrast role.
 
 ## v2 Requirements (deferred)
 
@@ -144,11 +144,11 @@ Phases mapped during roadmap creation 2026-05-22.
 | POL-02      | 10    | Complete |
 | POL-03      | 10    | Complete |
 | POL-04      | 10    | Complete |
-| DOC-01      | 11    | Pending |
-| DOC-02      | 11    | Pending |
-| TST-01      | 11    | Pending |
-| TST-02      | 11    | Pending |
-| TST-03      | 11    | Pending |
+| DOC-01      | 11    | Complete |
+| DOC-02      | 11    | Complete |
+| TST-01      | 11    | Complete |
+| TST-02      | 11    | Complete |
+| TST-03      | 11    | Complete |
 
 **Coverage:**
 - v1 requirements: 36 total

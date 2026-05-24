@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 11 — Documentation + acceptance gate — Plan 02 COMPLETE; Phase 11 ready for gsd-verifier
-Plan: 02 of 02 COMPLETE (TST-01..03 acceptance suite live); next: phase-level verifier sign-off
-Status: Plan 02 landed (7ed4fd9 src/ui/css.py .lp-warn-fix 14px; 6aa3344 tests/test_phase6_visual.py +12 tests); test_phase5_ui.py 22/22 green (TST-01 invariant preserved); test_phase6_visual.py 12/12 green; combined suite grew 91/91 → 103/103 with PYTHONPATH=. invocation
-Last activity: 2026-05-24 — Phase 11 Plan 02 complete: fix(11-02) byte-edit .lp-warn-fix 13px→14px (Resolution 2 option (a)); test(11-02) add v2.2 visual + WCAG acceptance gate (12 tests across 6 # --- groups); zero deviations; combined 103/103 green
+Phase: 11 — Documentation + acceptance gate — COMPLETE + VERIFIED (6/6 must-haves passed via gsd-verifier 2026-05-24)
+Plan: — (all plans complete; v2.2 milestone ready for `/gsd:audit-milestone`)
+Status: v2.2 MILESTONE SHIPPED at code level; Phase 11 gsd-verifier returned `passed`; ROADMAP.md + REQUIREMENTS.md updated; phase completion commit bundled (DOC-01..02 + TST-01..03 all marked Complete in traceability table); v2.1 invariants intact (TST-01 22/22 green); v2.2 acceptance gate live (12/12 in test_phase6_visual.py); full suite 103/103 with PYTHONPATH=.
+Last activity: 2026-05-24 — Phase 11 closeout: gsd-verifier returned `passed` (11-VERIFICATION.md created); ROADMAP.md + REQUIREMENTS.md + STATE.md updated; phase completion commit bundled
 
-Progress: v2.2 — ALL PHASES COMPLETE at the code level; Phase 11 ready for verifier sign-off + v2.2 milestone audit
+Progress: v2.2 — ALL PHASES COMPLETE + VERIFIED; ready for milestone audit
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
@@ -22,7 +22,7 @@ Progress: v2.2 — ALL PHASES COMPLETE at the code level; Phase 11 ready for ver
 [██████████] Phase 8  Screen restyle (sidebar + main)  ← COMPLETE (Plans 01-02 done)
 [██████████] Phase 9  Data visualization               ← COMPLETE (Plans 01-04 done)
 [██████████] Phase 10 Polish + edge states             ← COMPLETE (Plans 01-03 done)
-[██████████] Phase 11 Documentation + acceptance gate  ← COMPLETE (Plans 01-02 done; ready for verifier)
+[██████████] Phase 11 Documentation + acceptance gate  ← COMPLETE + VERIFIED (Plans 01-02 done; gsd-verifier passed)
 ```
 
 ## v2.2 Phase Map (summary)
@@ -127,10 +127,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-24 — Phase 11 Plan 02 complete (7ed4fd9 fix(11-02) .lp-warn-fix 14px; 6aa3344 test(11-02) test_phase6_visual.py +12 tests; metadata commit follows)
-Stopped at: Phase 11 Plan 02 COMPLETE — TST-01..03 acceptance gate live; 22/22 TST-01, 12/12 TST-02+TST-03, 103/103 combined; zero deviations; Phase 11 ready for gsd-verifier
+Last session: 2026-05-24 — Phase 11 COMPLETE + VERIFIED. gsd-verifier returned `passed` (6/6 must-haves) — 11-VERIFICATION.md created. ROADMAP.md milestone marker flipped 🔄 → ✅ for v2.2; phase 11 row marked Complete (2/2 plans, completion date 2026-05-24); REQUIREMENTS.md traceability rows DOC-01..02 + TST-01..03 flipped Pending → Complete and v1 requirement checkboxes marked [x].
+Stopped at: Phase 11 COMPLETE + VERIFIED — v2.2 milestone shipped at code level. 36/36 v1 requirements complete. Ready for `/gsd:audit-milestone`.
 Resume file: None
-Next: Phase 11 phase-level verifier sign-off (gsd-verifier). v2.2 milestone closure / audit follows. Verifier invocation: `PYTHONPATH=. python -m pytest tests/ -q` (must read 103 passed).
+Next: `/gsd:audit-milestone` — cross-phase integration check + E2E flow validation before archival. After audit passes, `/gsd:complete-milestone` archives v2.2 and prepares for v2.3 milestone start.
 
 ---
-*Last updated: 2026-05-24 after Phase 11 Plan 02 complete (7ed4fd9 + 6aa3344 + docs commit — Phase 11 ready for verifier).*
+*Last updated: 2026-05-24 after Phase 11 COMPLETE + VERIFIED (gsd-verifier passed 6/6, v2.2 milestone shipped).*
