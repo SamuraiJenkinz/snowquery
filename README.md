@@ -15,7 +15,7 @@ A local Python application that enables natural language querying of ServiceNow 
 
 ## Screenshots
 
-The v2.2 visual surface follows the in-house [`loro-piana-aesthetic`](https://github.com/) design system — EB Garamond + Inter typography, warm-beige page, charcoal body, muted-gold accents.
+The v2.2 visual surface follows the in-house `loro-piana-aesthetic` design system — EB Garamond + Inter typography, warm-beige page, charcoal body, muted-gold accents.
 
 ![Splash screen — animated helix logo on warm-beige page](docs/screenshots/00-splash-helix.png)
 *Splash screen — 4-second animated geometric helix in muted gold before the first frame renders.*
@@ -24,7 +24,7 @@ The v2.2 visual surface follows the in-house [`loro-piana-aesthetic`](https://gi
 *Main chat surface — small-caps tracked sidebar labels, editorial typography in the chat input, ghost example queries below.*
 
 ![Results + chart surface — hairline-bordered editorial table above a Loro Piana–themed Altair chart](docs/screenshots/02-results-chart.png)
-*Results + chart surface — editorial table with EB Garamond column heads, expandable "VIEW INTERACTIVE DATAFRAME" view, restyled chart with charcoal axes and muted-gold marks.*
+*Results + chart surface — editorial table with EB Garamond column heads, expandable "EXPAND · INTERACTIVE VIEW" view, restyled chart with charcoal axes and vibrant categorical marks.*
 
 ## Tech Stack
 
