@@ -32,8 +32,8 @@ As of v2.2, the application wears a quiet-luxury aesthetic — EB Garamond displ
 - **Splash screen** — A 4-second animated logo (geometric helix in muted gold) replaces the brutalist startup splash before the first frame renders.
 - **Sidebar style** — Section labels are now small-caps tracked, the LLM PROVIDER picker and MODE toggle inherit the editorial typography, and warnings use a soft warm-beige card with a terracotta hairline (no red banners).
 - **Editorial table** — Query results render in a hairline-bordered table with EB Garamond column heads and Inter body cells; the previous brutalist grid is gone.
-- **Expandable interactive view** — Below the editorial table, an expander labelled "VIEW INTERACTIVE DATAFRAME" reveals Streamlit's native dataframe for sort/filter operations when an operator needs them.
-- **Restyled charts** — Altair charts use a registered `loro_piana` theme: charcoal axes on warm-beige background, palette colors `#8B7355` (muted gold) and `#A67866` (terracotta), with EB Garamond title type.
+- **Expandable interactive view** — Below the editorial table, an expander labelled "EXPAND · INTERACTIVE VIEW" reveals Streamlit's native dataframe for sort/filter operations when an operator needs them.
+- **Restyled charts** — Altair charts use a registered `loro_piana` theme: charcoal axes on warm-beige gridlines, vibrant categorical palette `#C0392B` / `#2E5BBA` / `#2E7D32` / `#E67E22` / `#F39C12` (crimson, royal blue, forest green, burnt orange, mustard yellow) for data marks, with EB Garamond title type.
 
 ### What did NOT change
 
