@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 
 ## Current Position
 
-Phase: 12 — Doc accuracy cleanup — COMPLETE (1/1 plans done)
-Plan: 12-01 of 1 (complete)
-Status: Phase 12 complete; four targeted doc-prose edits applied (USER_GUIDE.md:35,36; README.md:18,27); pytest 103/103 green; all TST-01 protected substrings intact; U+00B7 middot contract honored
-Last activity: 2026-05-24 — Phase 12 Plan 01: doc-accuracy-cleanup executed; USER_GUIDE.md + README.md synced to shipped strings; SUMMARY created
+Phase: 12 — Doc accuracy cleanup — COMPLETE + VERIFIED (6/6 must-haves passed via gsd-verifier 2026-05-24)
+Plan: — (all plans complete; v2.2 milestone fully shipped; ready for `/gsd:audit-milestone`)
+Status: v2.2 MILESTONE FULLY SHIPPED. Phase 12 gsd-verifier returned `passed` (12-VERIFICATION.md created). All three audit doc-drift items closed: expander caption (USER_GUIDE.md:35 + README.md:27 "EXPAND · INTERACTIVE VIEW" U+00B7 middot), chart palette (USER_GUIDE.md:36 VIBRANT_PALETTE five hex values matching `src/ui/altair_theme.py:42-48`), loro-piana-aesthetic link (README.md:18 placeholder removed). All TST-01 protected substrings verified verbatim in both files. Full suite 103/103 with `PYTHONPATH=. python -m pytest tests/ -q`. 36/36 v1 requirements complete.
+Last activity: 2026-05-24 — Phase 12 closeout: gsd-verifier returned `passed` (12-VERIFICATION.md created); ROADMAP.md milestone marker flipped 🔄 → ✅ for v2.2; STATE.md updated; phase completion commit bundled. REQUIREMENTS.md unchanged (Phase 12 has no new requirements — content accuracy under existing DOC-01/DOC-02 already marked Complete in Phase 11).
 
-Progress: v2.2 — ALL PHASES COMPLETE + VERIFIED; Phase 12 doc cleanup applied
+Progress: v2.2 — ALL PHASES COMPLETE + VERIFIED; milestone shipped, ready for audit
 
 ```
 [██████████] Phase 6  Foundation                       ← COMPLETE (Plans 01-03 done)
@@ -23,7 +23,7 @@ Progress: v2.2 — ALL PHASES COMPLETE + VERIFIED; Phase 12 doc cleanup applied
 [██████████] Phase 9  Data visualization               ← COMPLETE (Plans 01-04 done)
 [██████████] Phase 10 Polish + edge states             ← COMPLETE (Plans 01-03 done)
 [██████████] Phase 11 Documentation + acceptance gate  ← COMPLETE + VERIFIED (Plans 01-02 done; gsd-verifier passed)
-[██████████] Phase 12 Doc accuracy cleanup             ← COMPLETE (Plan 01 done)
+[██████████] Phase 12 Doc accuracy cleanup             ← COMPLETE + VERIFIED (Plan 01 done; gsd-verifier passed)
 ```
 
 ## v2.2 Phase Map (summary)
@@ -36,6 +36,7 @@ Progress: v2.2 — ALL PHASES COMPLETE + VERIFIED; Phase 12 doc cleanup applied
 | 9     | Data visualization                     | DVZ-01..05                                                                                            | 8            |
 | 10    | Polish + edge states                   | POL-01..04                                                                                            | 6, 8, 9      |
 | 11    | Documentation + acceptance gate        | DOC-01..02, TST-01..03                                                                                | 6-10         |
+| 12    | Doc accuracy cleanup                   | (none — content accuracy under DOC-01/DOC-02)                                                         | 6-11         |
 
 Phase 8 contains two parallelizable waves (sidebar SBR-* and main panel MAIN-*) — disjoint DOM regions sharing the Phase 6 CSS module read-only.
 
@@ -131,10 +132,10 @@ Full decision log: `.planning/PROJECT.md` Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-05-24 — Phase 12 Plan 01 COMPLETE. Four doc-prose edits applied (USER_GUIDE.md:35,36; README.md:18,27); pytest 103/103 green; 12-01-SUMMARY.md created; STATE.md updated.
-Stopped at: Phase 12 COMPLETE — v2.2 doc-accuracy cleanup done. All six must_haves verified. Ready for `/gsd:audit-milestone`.
+Last session: 2026-05-24 — Phase 12 COMPLETE + VERIFIED. gsd-verifier returned `passed` (6/6 must-haves) — 12-VERIFICATION.md created. Four doc-prose edits applied (USER_GUIDE.md:35,36; README.md:18,27); pytest 103/103 green; ROADMAP.md milestone marker flipped 🔄 → ✅ for v2.2; STATE.md updated.
+Stopped at: Phase 12 COMPLETE + VERIFIED — v2.2 milestone fully shipped at code AND doc level. 36/36 v1 requirements complete. Ready for `/gsd:audit-milestone`.
 Resume file: None
 Next: `/gsd:audit-milestone` — cross-phase integration check + E2E flow validation before archival. After audit passes, `/gsd:complete-milestone` archives v2.2 and prepares for v2.3 milestone start.
 
 ---
-*Last updated: 2026-05-24 after Phase 12 Plan 01 COMPLETE (doc-accuracy-cleanup; pytest 103/103; all must_haves green).*
+*Last updated: 2026-05-24 after Phase 12 COMPLETE + VERIFIED (gsd-verifier passed 6/6, v2.2 milestone fully shipped).*

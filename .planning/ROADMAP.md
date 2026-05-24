@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v2.1 Multi-Provider LLM Integration** — Phases 1-5 (shipped 2026-05-22) — see [milestones/v2.1-ROADMAP.md](milestones/v2.1-ROADMAP.md)
-- 🔄 **v2.2 SNOWGREP Visual Revamp (Loro Piana)** — Phases 6-12 (Phases 6-11 complete; Phase 12 closes audit doc-drift, started 2026-05-22)
+- ✅ **v2.2 SNOWGREP Visual Revamp (Loro Piana)** — Phases 6-12 (shipped 2026-05-24) — see milestones/v2.2-MILESTONE-AUDIT.md
 
 ## Overview (v2.2)
 
@@ -27,7 +27,7 @@ Three Stitch mockups (`.planning/design-mockups/00-splash-helix.png`, `01-main-c
 - [x] Phase 9: Data visualization — Editorial HTML table + collapsible interactive view + Altair theme (5 requirements) ✓ 2026-05-23
 - [x] Phase 10: Polish + edge states — Empty state, loading indicators, error rendering, toasts (4 requirements) ✓ 2026-05-23
 - [x] Phase 11: Documentation + acceptance gate — USER_GUIDE/README + visual regression test suite + WCAG check (5 requirements) ✓ 2026-05-24
-- [ ] Phase 12: Doc accuracy cleanup — Close v2.2 audit doc-drift (no new requirements; fixes DOC-01/DOC-02 description content)
+- [x] Phase 12: Doc accuracy cleanup — Close v2.2 audit doc-drift (no new requirements; fixes DOC-01/DOC-02 description content) ✓ 2026-05-24
 
 ## Phase Details
 
@@ -188,7 +188,7 @@ Plans:
 **Plans:** 1 plan (single wave; two files but one logical unit of work)
 
 Plans:
-- [ ] 12-01-PLAN.md — Sync USER_GUIDE.md and README.md to shipped strings: expander caption (×2 files), chart palette description (×1 file), loro-piana-aesthetic link (×1 file). Verify protected substrings unchanged; re-run pytest.
+- [x] 12-01-PLAN.md — Sync USER_GUIDE.md and README.md to shipped strings: expander caption (×2 files), chart palette description (×1 file), loro-piana-aesthetic link (×1 file). Verify protected substrings unchanged; re-run pytest. ✓ 2026-05-24
 
 ## Phases (v2.1, archived)
 
@@ -221,7 +221,7 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 | 9. Data visualization                | v2.2      | 4/4            | Complete    | 2026-05-23 |
 | 10. Polish + edge states             | v2.2      | 3/3            | Complete    | 2026-05-23 |
 | 11. Documentation + acceptance gate  | v2.2      | 2/2            | Complete    | 2026-05-24 |
-| 12. Doc accuracy cleanup             | v2.2      | 0/1            | Planned     | —          |
+| 12. Doc accuracy cleanup             | v2.2      | 1/1            | Complete    | 2026-05-24 |
 
 ## Coverage (v2.2)
 
@@ -232,4 +232,4 @@ Audit report: [milestones/v2.1-MILESTONE-AUDIT.md](milestones/v2.1-MILESTONE-AUD
 Detailed traceability lives in `REQUIREMENTS.md` Traceability section.
 
 ---
-*Last updated: 2026-05-24 after v2.2 milestone audit (`.planning/milestones/v2.2-MILESTONE-AUDIT.md`) returned status `tech_debt`. Phase 12 added to close three low-severity doc-drift items surfaced by the audit: USER_GUIDE.md:35 + README.md:27 expander caption ("VIEW INTERACTIVE DATAFRAME" → "EXPAND · INTERACTIVE VIEW"); USER_GUIDE.md:36 chart palette ("muted gold + terracotta" → VIBRANT_PALETTE crimson/blue/green/orange/gold); README.md:18 placeholder loro-piana-aesthetic link. No new requirements added — Phase 12 is content accuracy under existing DOC-01/DOC-02. Coverage stays 36/36. Previous note (Phase 11 closeout 2026-05-24): all DOC-01..02 + TST-01..03 verified (5/5), gsd-verifier status passed (6/6), 22/22 Phase 5 UI tests + 12/12 Phase 6 visual tests + 103/103 full suite green with PYTHONPATH=. python -m pytest. Repo still has no pyproject.toml / pytest.ini / conftest.py — bare pytest fails ModuleNotFoundError; all test runs require PYTHONPATH=. prefix.*
+*Last updated: 2026-05-24 after Phase 12 COMPLETE + VERIFIED (gsd-verifier passed 6/6). v2.2 milestone now fully shipped: 12/12 phases, 36/36 v1 requirements complete. Phase 12 closed the three low-severity doc-drift items from `v2.2-MILESTONE-AUDIT.md`: USER_GUIDE.md:35 + README.md:27 expander caption ("VIEW INTERACTIVE DATAFRAME" → "EXPAND · INTERACTIVE VIEW", U+00B7 middot); USER_GUIDE.md:36 chart palette ("muted gold + terracotta" → VIBRANT_PALETTE crimson/blue/green/orange/gold matching `src/ui/altair_theme.py:42-48`); README.md:18 placeholder GitHub link removed (loro-piana-aesthetic kept as inline code). All TST-01 protected substrings verified verbatim. Full suite 103/103 green with `PYTHONPATH=. python -m pytest tests/ -q`. Next: `/gsd:audit-milestone` then `/gsd:complete-milestone` to archive v2.2.*
