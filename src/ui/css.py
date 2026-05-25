@@ -409,10 +409,10 @@ samp,
    font-family rule doesn't apply to <img>, so no override needed. */
 [data-testid="stSidebar"] .lp-sidebar-logo-img {
   display: block;
-  width: 100%;
+  height: 120px;           /* shared height; main hero matches this exactly */
+  width: auto;
   max-width: 240px;
-  height: auto;
-  margin: var(--lp-space-4) auto var(--lp-space-2) auto;
+  margin: 0 auto var(--lp-space-2) auto;   /* top margin 0 so it sits flush with the sidebar's top */
   border-radius: var(--lp-radius-md);
 }
 
@@ -463,63 +463,70 @@ samp,
   margin: var(--lp-space-6) 0;
 }
 
-/* SBR-03 — MODE selector (horizontal st.radio with sage dot indicator)
-   Renders three labels AUTO / SQL / SEMANTIC in a row. The native radio
-   circle is replaced with a sage dot that only shows when the option is
-   active — inactive labels have a hollow hairline ring instead. */
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] > div[role="radiogroup"] {
+/* SBR-03 — MODE selector restyled as vertical sage pill stack to match
+   the DATA + EMBEDDINGS pill aesthetic. AUTO / SQL / SEMANTIC each
+   render as a sage pill; the active mode is filled sage with white
+   text, inactive ones use the lp-status-pill--ready tint pattern.
+
+   Selector note: the sidebar contains exactly one st.radio (the MODE
+   selector), so we drop the .lp-mode-radio marker-div sibling chain
+   (which silently stopped matching after a Streamlit DOM change) and
+   target the sole sidebar radio directly. */
+[data-testid="stSidebar"] [data-testid="stRadio"] > div[role="radiogroup"] {
   display: flex;
-  flex-direction: row;
-  gap: var(--lp-space-4);
+  flex-direction: column;
+  gap: 6px;
   margin-top: var(--lp-space-2);
+  align-items: stretch;  /* labels stretch to full radiogroup width like data pills */
 }
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label {
+/* Hide Streamlit's collapsed widget label (the empty "MODE" label that
+   sits above the radiogroup when label_visibility="collapsed" — it's
+   present in the DOM but should not render as a sage pill). */
+[data-testid="stSidebar"] [data-testid="stRadio"] > label,
+[data-testid="stSidebar"] [data-testid="stRadio"] > [data-testid="stWidgetLabel"] {
+  display: none !important;
+}
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label {
   display: flex;
   align-items: center;
-  gap: var(--lp-space-2);
+  justify-content: flex-start;  /* left-align the pill text */
+  width: 100%;                  /* full sidebar width, matches data pills */
+  padding: var(--lp-space-1) var(--lp-space-3);
+  border-radius: var(--lp-radius-full);
+  background: rgba(138, 154, 125, 0.12);  /* sage tint — matches lp-status-pill--ready */
   cursor: pointer;
-  padding: 0;
+  transition: background 0.15s ease, color 0.15s ease;
   margin: 0;
+  box-sizing: border-box;
 }
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label > div:first-child {
-  /* The native circle wrapper — neutralize its default size/look */
-  width: 10px;
-  height: 10px;
-  min-width: 10px;
-  min-height: 10px;
-  border-radius: 50%;
-  border: 1px solid var(--lp-border);
-  background: transparent;
-  box-shadow: none;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
+/* Hide the native radio circle wrapper AND any nested SVG/span/div
+   indicators Streamlit emits inside it. */
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label > div:first-child,
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label > div:first-child *,
+[data-testid="stSidebar"] [data-testid="stRadio"] input[type="radio"] {
+  display: none !important;
 }
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label > div:first-child > div {
-  /* Hide the inner native indicator (Streamlit emits an inner div for checked state) */
-  display: none;
-}
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label:has(input:checked) > div:first-child {
-  background: var(--lp-success);  /* sage filled dot when active */
-  border-color: var(--lp-success);
-}
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label > div:last-child,
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label p {
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label > div:last-child,
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label p {
   font-family: var(--lp-font-body);
   font-weight: 500;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--lp-text-muted);
+  color: var(--lp-success) !important;  /* sage text on tint bg for inactive */
   margin: 0;
   white-space: nowrap;
 }
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label:has(input:checked) p,
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"] label:has(input:checked) > div:last-child {
-  color: var(--lp-text);  /* active label darkens to charcoal */
+/* Active: filled sage pill with white text — visually distinct from inactive */
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label:has(input:checked) {
+  background: var(--lp-success);
 }
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"][aria-disabled="true"],
-[data-testid="stSidebar"] .lp-mode-radio + div [data-testid="stRadio"]:has(input:disabled) {
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label:has(input:checked) p,
+[data-testid="stSidebar"] [data-testid="stRadio"] [role="radiogroup"] label:has(input:checked) > div:last-child {
+  color: var(--lp-neutral-0) !important;  /* white text on filled sage */
+}
+[data-testid="stSidebar"] [data-testid="stRadio"][aria-disabled="true"],
+[data-testid="stSidebar"] [data-testid="stRadio"]:has(input:disabled) {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -835,16 +842,17 @@ samp,
    logo as a deliberate brand mark. */
 .lp-main-hero {
   text-align: center;
-  margin: var(--lp-space-6) 0 var(--lp-space-8) 0;
+  margin: 0 0 var(--lp-space-8) 0;   /* top margin 0 so the hero logo aligns with the sidebar logo */
   padding: 0;
 }
 .lp-main-logo-img {
   display: block;
+  height: 120px;           /* matches sidebar logo exactly for horizontal alignment */
+  width: 70%;              /* centered, ~70% of main panel width (elongated, not edge-to-edge) */
+  max-width: 800px;        /* cap on very wide displays */
   margin: 0 auto var(--lp-space-3) auto;
-  max-width: 480px;
-  width: 100%;
-  height: auto;
   border-radius: var(--lp-radius-md);
+  object-fit: fill;        /* stretches PNG to fill width x height (user-requested elongation) */
 }
 
 /* MAIN-01 — Editorial page header + subtitle (sit directly below .lp-main-logo

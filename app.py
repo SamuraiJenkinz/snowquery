@@ -245,24 +245,34 @@ def render_sidebar():
                 st.session_state.upload_authenticated = False
                 st.rerun()
 
-        # Data status (consolidated into DATA section)
+        # Data status — two sage pills stacked vertically (INCIDENTS above
+        # COLUMNS), matching the EMBEDDINGS pattern below. Previously rendered
+        # as two large st.metric widgets that dominated the sidebar.
+        def _data_pills(row_count: int, col_count: int) -> str:
+            return (
+                f'<div style="display: flex; flex-direction: column; gap: 6px;">'
+                f'<span class="lp-status-pill lp-status-pill--ready">'
+                f'{row_count:,} INCIDENTS</span>'
+                f'<span class="lp-status-pill lp-status-pill--ready">'
+                f'{col_count} COLUMNS</span>'
+                f'</div>'
+            )
+
         if st.session_state.schema:
             schema = st.session_state.schema
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("INCIDENTS", f"{schema['row_count']:,}")
-            with col2:
-                st.metric("COLUMNS", len(schema['columns']))
+            st.markdown(
+                _data_pills(schema['row_count'], len(schema['columns'])),
+                unsafe_allow_html=True,
+            )
         elif table_exists():
             schema = get_schema_summary()
             if schema:
                 st.session_state.schema = schema
                 st.session_state.data_loaded = True
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("INCIDENTS", f"{schema['row_count']:,}")
-                with col2:
-                    st.metric("COLUMNS", len(schema['columns']))
+                st.markdown(
+                    _data_pills(schema['row_count'], len(schema['columns'])),
+                    unsafe_allow_html=True,
+                )
             else:
                 st.markdown(
                     '<span class="lp-pill-warn">NO DATA LOADED</span>',
@@ -1022,7 +1032,10 @@ def main():
     client-side inside the iframe.
     """
     init_session_state()
-    _run_splash_lifecycle()  # Phase 7: mount + gate + dismiss boot splash
+    # Phase 7 boot splash disabled — iframe height was pushing the main hero
+    # below its placeholder even after dismiss. Splash code remains in
+    # src/ui/splash.py and src/ui/css.py for future re-enable.
+    # _run_splash_lifecycle()
     render_sidebar()
     render_main_content()
 
