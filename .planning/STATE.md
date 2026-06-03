@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v2.2 milestone complete)
 
 Phase: — (no active phase)
 Plan: — (no active plan)
-Status: v2.2 MILESTONE SHIPPED + ARCHIVED. 36/36 v1 requirements complete; 103/103 tests green; audit passed; archive files in `.planning/milestones/v2.2-{ROADMAP,REQUIREMENTS,MILESTONE-AUDIT}.md`. Ready to start v2.3.
-Last activity: 2026-05-24 — `/gsd:complete-milestone v2.2` archived ROADMAP + REQUIREMENTS, updated PROJECT.md + MILESTONES.md, deleted REQUIREMENTS.md (fresh one created by `/gsd:new-milestone`), tagged v2.2.
+Status: v2.2 MILESTONE SHIPPED + ARCHIVED. 36/36 v1 requirements complete; 103/103 tests green; audit passed; archive files in `.planning/milestones/v2.2-{ROADMAP,REQUIREMENTS,MILESTONE-AUDIT}.md`. Ready to start v2.3. (Hotfix Quick-001 2026-06-03 added Accept header for Bedrock.)
+Last activity: 2026-06-03 — Quick task 001: added `Accept: application/json` header to Anthropic MGTI adapter (Bedrock now enforces this header; restored previously-working LLM access). Commit `facfefa`.
 
 Progress:
 
@@ -62,12 +62,18 @@ See `PROJECT.md` § Next Milestone Goals for the full list. High-level groupings
 
 (None for v2.3 start)
 
+### Quick Tasks Completed
+
+| #   | Description                                                              | Date       | Commit    | Directory                                                                                |
+| --- | ------------------------------------------------------------------------ | ---------- | --------- | ---------------------------------------------------------------------------------------- |
+| 001 | Add `Accept: application/json` header to Anthropic MGTI (Bedrock req)    | 2026-06-03 | `facfefa` | [001-fix-anthropic-mgti-accept-header](./quick/001-fix-anthropic-mgti-accept-header/)    |
+
 ## Session Continuity
 
-Last session: 2026-05-24 — `/gsd:complete-milestone v2.2` archived v2.2 ROADMAP + REQUIREMENTS to `milestones/`, collapsed ROADMAP.md v2.2 entries to `<details>` block, deleted REQUIREMENTS.md (fresh one created by `/gsd:new-milestone`), updated PROJECT.md (Validated requirements + Key Decisions + footer + Codebase state), prepended MILESTONES.md v2.2 entry, reset STATE.md, committed and tagged v2.2.
-Stopped at: v2.2 MILESTONE COMPLETE AND ARCHIVED.
+Last session: 2026-06-03 — `/gsd:quick` 001 added `Accept: application/json` header to Anthropic MGTI adapter (`complete()` + `classify_with_tool()`) + regression assertion in `test_required_headers_present`. AWS Bedrock began enforcing this header at the proxy ingress between 2026-05-12 (v2.1 ship) and 2026-06-03 (operator-reported 400). 103/103 tests green. Code commit `facfefa`.
+Stopped at: Hotfix shipped. Live smoke (`scripts/smoke_llm.py --provider anthropic --verbose`) still open — operator gate.
 Resume file: None
 Next: `/gsd:new-milestone` — questioning → research → requirements → roadmap for v2.3.
 
 ---
-*Last updated: 2026-05-24 after v2.2 milestone archival complete. Ready for `/gsd:new-milestone`.*
+*Last updated: 2026-06-03 after quick task 001 (Bedrock Accept-header hotfix). Ready for `/gsd:new-milestone`.*
