@@ -121,14 +121,16 @@ def _build_request_body(
     if system_parts:
         body["system"] = "\n\n".join(system_parts)
 
-    # 3. Sampling params: opus-4-7 omits ALL; other Claude models send temperature only.
-    #    Match both eu.anthropic.claude-opus-4-7* (MGTI/Bedrock) and claude-opus-4-7*
-    #    (direct API) — same family, different namespace.
-    opus_47 = (
-        model.startswith("eu.anthropic.claude-opus-4-7")
-        or (direct_mode and model.startswith("claude-opus-4-7"))
-    )
-    if not opus_47:
+    # 3. Sampling-param omission rules (post-hotfix-002, 2026-06-03):
+    #    - Bedrock (direct_mode=False): NEVER send temperature/top_p/top_k.
+    #      AWS Bedrock began rejecting these in the request body for ALL
+    #      Anthropic models with HTTP 400: "AWS Bedrock does not accept
+    #      temperature, top_p, or top_k in the request body."
+    #      Previously this was opus-4-7-only; the constraint is now Bedrock-wide.
+    #    - Direct Anthropic API (direct_mode=True): send temperature, EXCEPT
+    #      for opus-4-7 which uses adaptive thinking and doesn't accept
+    #      sampling params (Anthropic API constraint for that model family).
+    if direct_mode and not model.startswith("claude-opus-4-7"):
         body["temperature"] = temperature
 
     return body

@@ -277,21 +277,25 @@ def test_opus_4_7_omits_sampling_params(opus_env):
     assert body["anthropic_version"] == "bedrock-2023-05-31"
 
 
-def test_non_opus_includes_temperature(anthropic_env):
-    """SC #2 boundary: non-opus eu.anthropic.claude-* model INCLUDES temperature.
-
-    The SONNET model is not opus-4-7 so temperature IS sent in the body
-    (sourced from the kwarg or env default).
+def test_non_opus_bedrock_omits_temperature(anthropic_env):
+    """Quick-task-002 (2026-06-03): AWS Bedrock rejects sampling params
+    (`temperature`, `top_p`, `top_k`) in the request body for ALL Anthropic
+    models, not just opus-4-7. Constraint tightened upstream — observed as
+    `HTTP 400 The request body contains unsupported inference parameters.
+    AWS Bedrock does not accept temperature, top_p, or top_k in the request
+    body.` Adapter must omit them for any Bedrock (`direct_mode=False`)
+    request regardless of model family. Regression guard for the post-v2.2
+    hotfix.
     """
     client = get_llm("anthropic_mgti")
     with patch("requests.post", return_value=_make_anthropic_response()) as mp:
+        # Pass temperature explicitly — adapter MUST still omit it because
+        # this is a Bedrock request (no direct_mode in this env).
         client.complete([{"role": "user", "content": "x"}], temperature=0.3)
     body = mp.call_args.kwargs["json"]
-    assert body.get("temperature") == 0.3, (
-        f"non-opus model must INCLUDE temperature from kwarg: {body}"
+    assert "temperature" not in body, (
+        f"Bedrock requests must OMIT temperature regardless of model: {body}"
     )
-    # top_p/top_k still omitted (caller didn't pass them — Phase 3 doesn't
-    # plumb arbitrary kwargs through; that's a Phase 4+ concern)
     assert "top_p" not in body
     assert "top_k" not in body
 
