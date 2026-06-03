@@ -196,6 +196,10 @@ def test_required_headers_present(anthropic_env):
         client.complete([{"role": "user", "content": "hi"}])
     headers = mp.call_args.kwargs["headers"]
     assert headers["Content-Type"] == "application/json"
+    # AWS Bedrock (behind the MGTI proxy) requires Accept: application/json;
+    # missing this header surfaces as HTTP 400 from Bedrock. Regression guard
+    # for quick-task 001 (post-v2.2 hotfix).
+    assert headers["Accept"] == "application/json"
     assert headers["X-Api-Key"] == _API_KEY
     assert "X-Correlation-Id" in headers, "X-Correlation-Id header missing"
     uuid.UUID(headers["X-Correlation-Id"])  # raises ValueError if not a valid UUID

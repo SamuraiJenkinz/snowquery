@@ -370,6 +370,7 @@ class AnthropicMGTIClient(LLMClient):
 
         headers = {
             "Content-Type": "application/json",
+            "Accept": "application/json",
             "X-Api-Key": self._api_key,
             "X-Correlation-Id": correlation_id,
         }
@@ -561,6 +562,7 @@ class AnthropicMGTIClient(LLMClient):
         correlation_id = str(uuid.uuid4())  # RESEARCH.md Pitfall 5: before try
         headers = {
             "Content-Type": "application/json",
+            "Accept": "application/json",
             "X-Api-Key": self._api_key,
             "X-Correlation-Id": correlation_id,
         }
