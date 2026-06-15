@@ -143,6 +143,25 @@ def _get_sample_value(df: pd.DataFrame, column: str) -> Any:
     return non_null.iloc[0] if len(non_null) > 0 else ""
 
 
+def _ctas_select_clause(df: pd.DataFrame, schema: dict[str, str]) -> str:
+    """Build a SELECT-list that coerces TIMESTAMP columns to plain `TIMESTAMP`.
+
+    pandas `datetime64[ns]` registers into DuckDB as `TIMESTAMP_NS`, which has
+    no overload against `TIMESTAMP WITH TIME ZONE` (e.g. `CURRENT_TIMESTAMP`).
+    Casting on materialisation downcasts to microsecond `TIMESTAMP`, restoring
+    arithmetic with `CURRENT_TIMESTAMP` and matching the schema string we
+    report to the LLM.
+    """
+    parts = []
+    for col in df.columns:
+        quoted = '"' + col.replace('"', '""') + '"'
+        if schema.get(col) == "TIMESTAMP":
+            parts.append(f"CAST({quoted} AS TIMESTAMP) AS {quoted}")
+        else:
+            parts.append(quoted)
+    return ", ".join(parts)
+
+
 def load_csv(
     file: str | Path | BinaryIO | BytesIO,
     table_name: str = "incidents",
@@ -243,7 +262,8 @@ def load_csv(
                 # Drop and recreate with combined data
                 conn.execute(f"DROP TABLE {table_name}")
                 conn.register("temp_df", combined_df)
-                conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM temp_df")
+                select_clause = _ctas_select_clause(combined_df, combined_schema)
+                conn.execute(f"CREATE TABLE {table_name} AS SELECT {select_clause} FROM temp_df")
                 conn.unregister("temp_df")
 
                 row_count = len(combined_df)
@@ -255,7 +275,8 @@ def load_csv(
                 conn.execute(f"DROP TABLE IF EXISTS {table_name}")
 
                 conn.register("temp_df", df)
-                conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM temp_df")
+                select_clause = _ctas_select_clause(df, schema)
+                conn.execute(f"CREATE TABLE {table_name} AS SELECT {select_clause} FROM temp_df")
                 conn.unregister("temp_df")
 
                 row_count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
