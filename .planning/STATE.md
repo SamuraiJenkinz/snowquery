@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v2.2 milestone complete)
 Phase: — (no active phase)
 Plan: — (no active plan)
 Status: v2.2 MILESTONE SHIPPED + ARCHIVED. 36/36 v1 requirements complete; 103/103 tests green; audit passed; archive files in `.planning/milestones/v2.2-{ROADMAP,REQUIREMENTS,MILESTONE-AUDIT}.md`. Ready to start v2.3. (Hotfix Quick-001 + Quick-002 2026-06-03 chased Bedrock contract tightening: Accept header + sampling-param omission.)
-Last activity: 2026-06-03 — Quick task 002: generalized `temperature`/`top_p`/`top_k` omission to ALL Bedrock models (previously opus-4-7-only). Caught after Quick-001 deploy hit a fresh 400 on sonnet-4-5. Commit `41869ad`.
+Last activity: 2026-06-21 — Quick task 003: added an EXPORT HTML download button beside EXPORT CSV producing a self-contained, Loro Piana–styled HTML report (question + executive summary + results table + SQL + provider/model/route provenance). All dynamic values HTML-escaped. +5 regression tests → 108/108 green. Commit `befe0f9`.
 
 Progress:
 
@@ -68,13 +68,14 @@ See `PROJECT.md` § Next Milestone Goals for the full list. High-level groupings
 | --- | --------------------------------------------------------------------------------- | ---------- | --------- | -------------------------------------------------------------------------------------------------------- |
 | 001 | Add `Accept: application/json` header to Anthropic MGTI (Bedrock req)             | 2026-06-03 | `facfefa` | [001-fix-anthropic-mgti-accept-header](./quick/001-fix-anthropic-mgti-accept-header/)                    |
 | 002 | Omit `temperature`/`top_p`/`top_k` for ALL Bedrock models (not just opus-4-7)     | 2026-06-03 | `41869ad` | [002-omit-sampling-params-all-bedrock-models](./quick/002-omit-sampling-params-all-bedrock-models/)      |
+| 003 | Add self-contained Loro Piana HTML report export (EXPORT HTML beside EXPORT CSV)   | 2026-06-21 | `befe0f9` | [260621-aj0-html-export-query-report](./quick/260621-aj0-html-export-query-report/)                      |
 
 ## Session Continuity
 
-Last session: 2026-06-03 — `/gsd:quick` 001 + 002 chased Bedrock contract tightening: Quick-001 added Accept header (commit `facfefa`); operator hit a follow-on 400 on sonnet-4-5 ("AWS Bedrock does not accept temperature, top_p, or top_k") on first deploy → Quick-002 generalized the opus-4-7 sampling-param omission to all Bedrock models (commit `41869ad`). 103/103 tests green at each step. Operator carries the live-smoke gate on `D:\snowquery` (pull + restart streamlit).
-Stopped at: Two hotfixes shipped. Live smoke against MGTI sonnet-4-5 still open — operator gate.
+Last session: 2026-06-21 — `/gsd:quick` 003 added the EXPORT HTML feature (commit `befe0f9`). `build_html_report` in `src/utils.py` renders a self-contained report with inlined Loro Piana palette CSS; `generate_export_filename` now takes an `extension` arg (CSV callers unchanged); `app.py` renders EXPORT CSV + EXPORT HTML in `st.columns(2)` and threads `question`/`route` into the message dict for historical-export provenance. Ran NON-worktree (changes pre-existed in the working tree). 108/108 tests green.
+Stopped at: HTML export feature shipped + committed. Prior live-smoke gate against MGTI sonnet-4-5 still open — operator gate (unchanged by this task; no LLM-contract surface touched).
 Resume file: None
 Next: `/gsd:new-milestone` — questioning → research → requirements → roadmap for v2.3.
 
 ---
-*Last updated: 2026-06-03 after quick tasks 001 + 002 (Bedrock contract-tightening hotfixes). Ready for `/gsd:new-milestone`.*
+*Last updated: 2026-06-21 after quick task 003 (HTML report export). Ready for `/gsd:new-milestone`.*
