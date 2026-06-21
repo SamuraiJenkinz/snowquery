@@ -20,10 +20,12 @@ from src.ingest import get_schema_summary, load_csv, table_exists
 from src.llm import get_llm, load_settings, missing_vars
 from src.query_router import generate_executive_summary, get_mode_description, route_query
 from src.utils import (
+    build_html_report,
     dataframe_to_csv_bytes,
     format_dataframe_for_display,
     format_error_message,
     generate_export_filename,
+    html_report_to_bytes,
     logger,
     QueryError,
 )
@@ -563,12 +565,16 @@ def render_chat_history():
                         message.get("executive_summary"),
                         message.get("chart"),
                         message.get("chart_feedback"),
+                        question=message.get("question"),
+                        provider=message.get("provider"),
+                        model=message.get("model"),
+                        route=message.get("route"),
                     )
                 # Assistant card closes
                 st.markdown('</div>', unsafe_allow_html=True)
 
 
-def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None, chart=None, chart_feedback: str | None = None):
+def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_summary: str | None = None, chart=None, chart_feedback: str | None = None, question: str | None = None, provider: str | None = None, model: str | None = None, route: str | None = None):
     """Display query results with executive summary, chart, and interactive expander.
 
     Display contract:
@@ -623,14 +629,37 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
             hide_index=True,
         )
 
-        csv_data = dataframe_to_csv_bytes(df)
-        st.download_button(
-            label="EXPORT CSV",
-            data=csv_data,
-            file_name=generate_export_filename("incidents"),
-            mime="text/csv",
-            key=f"export_{query_id}",
-        )
+        _csv_col, _html_col = st.columns(2)
+        with _csv_col:
+            csv_data = dataframe_to_csv_bytes(df)
+            st.download_button(
+                label="EXPORT CSV",
+                data=csv_data,
+                file_name=generate_export_filename("incidents"),
+                mime="text/csv",
+                key=f"export_{query_id}",
+                use_container_width=True,
+            )
+        with _html_col:
+            # Self-contained HTML report bundling question + executive summary +
+            # data table. Built lazily on render; download_button serves the bytes.
+            html_report = build_html_report(
+                question or "ServiceNow incident query",
+                df,
+                executive_summary,
+                sql=sql,
+                provider=provider,
+                model=model,
+                route=route,
+            )
+            st.download_button(
+                label="EXPORT HTML",
+                data=html_report_to_bytes(html_report),
+                file_name=generate_export_filename("incident_report", "html"),
+                mime="text/html",
+                key=f"export_html_{query_id}",
+                use_container_width=True,
+            )
 
     # SQL expander (unchanged — outside the EXPAND · INTERACTIVE VIEW for
     # visual separation; SQL is a debugging affordance, not data).
@@ -748,6 +777,7 @@ def process_query(user_query: str, mode: str):
             "chart_feedback": chart_feedback,
             "provider": _provider,   # NEW Phase 5 (SC #4)
             "model": _model,         # NEW Phase 5 (SC #4)
+            "route": route_used,     # HTML export provenance
         }
 
     except Exception as e:
@@ -898,6 +928,10 @@ def render_main_content():
                     response.get("executive_summary"),
                     response.get("chart"),
                     response.get("chart_feedback"),
+                    question=user_query,
+                    provider=response.get("provider"),
+                    model=response.get("model"),
+                    route=response.get("route"),
                 )
 
             # Assistant card closes
@@ -914,6 +948,8 @@ def render_main_content():
             "chart_feedback": response.get("chart_feedback"),
             "provider": response.get("provider"),       # Phase 5 (SC #4)
             "model": response.get("model"),             # Phase 5 (SC #4)
+            "question": user_query,                     # HTML export provenance
+            "route": response.get("route"),             # HTML export provenance
         })
 
     # Clear chat button — keyed so the sidebar-action editorial style applies
