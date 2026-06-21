@@ -556,7 +556,14 @@ def render_chat_history():
                         message["provider"], message.get("model")
                     )
                     st.markdown('</div>', unsafe_allow_html=True)
-                st.markdown(message["content"])
+                # unsafe_allow_html=True MUST match the live-render path (the
+                # `st.markdown(response["content"], unsafe_allow_html=True)` call
+                # in render_main_content). The assistant content carries app-built
+                # HTML (route-badge / results-count <span>s); without this flag the
+                # history re-render (every Streamlit rerun after the first) shows
+                # those tags as literal text. Regression-locked in
+                # tests/test_render_parity.py.
+                st.markdown(message["content"], unsafe_allow_html=True)
                 if "results" in message and message["results"] is not None:
                     display_results(
                         message["results"],
