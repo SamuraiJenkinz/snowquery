@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-05-24 after v2.2 milestone complete)
 Phase: — (no active phase)
 Plan: — (no active plan)
 Status: v2.2 MILESTONE SHIPPED + ARCHIVED. 36/36 v1 requirements complete; 103/103 tests green; audit passed; archive files in `.planning/milestones/v2.2-{ROADMAP,REQUIREMENTS,MILESTONE-AUDIT}.md`. Ready to start v2.3. (Hotfix Quick-001 + Quick-002 2026-06-03 chased Bedrock contract tightening: Accept header + sampling-param omission.)
-Last activity: 2026-06-21 — Quick task 003: added an EXPORT HTML download button beside EXPORT CSV producing a self-contained, Loro Piana–styled HTML report (question + executive summary + results table + SQL + provider/model/route provenance). All dynamic values HTML-escaped. +5 regression tests → 108/108 green. Commit `befe0f9`.
+Last activity: 2026-06-21 — Quick task 004: fixed assistant-message HTML render parity. The chat-history re-render path called `st.markdown(message["content"])` without `unsafe_allow_html=True` (the live path had it), so route-badge / results-count `<span>`s showed as literal text on every rerun after the first. Added AST-lock regression test (`tests/test_render_parity.py`) asserting every `st.markdown(<name>["content"])` call passes the flag. +2 tests → 110/110 green. Commit `3dcd200`. (Quick task 003 earlier same day: EXPORT HTML report feature, commit `befe0f9`.)
 
 Progress:
 
@@ -69,13 +69,14 @@ See `PROJECT.md` § Next Milestone Goals for the full list. High-level groupings
 | 001 | Add `Accept: application/json` header to Anthropic MGTI (Bedrock req)             | 2026-06-03 | `facfefa` | [001-fix-anthropic-mgti-accept-header](./quick/001-fix-anthropic-mgti-accept-header/)                    |
 | 002 | Omit `temperature`/`top_p`/`top_k` for ALL Bedrock models (not just opus-4-7)     | 2026-06-03 | `41869ad` | [002-omit-sampling-params-all-bedrock-models](./quick/002-omit-sampling-params-all-bedrock-models/)      |
 | 003 | Add self-contained Loro Piana HTML report export (EXPORT HTML beside EXPORT CSV)   | 2026-06-21 | `befe0f9` | [260621-aj0-html-export-query-report](./quick/260621-aj0-html-export-query-report/)                      |
+| 004 | Fix assistant-message HTML render parity (history path missing `unsafe_allow_html`) | 2026-06-21 | `3dcd200` | [260621-c28-fix-assistant-message-html-render-parity](./quick/260621-c28-fix-assistant-message-html-render-parity/) |
 
 ## Session Continuity
 
-Last session: 2026-06-21 — `/gsd:quick` 003 added the EXPORT HTML feature (commit `befe0f9`). `build_html_report` in `src/utils.py` renders a self-contained report with inlined Loro Piana palette CSS; `generate_export_filename` now takes an `extension` arg (CSV callers unchanged); `app.py` renders EXPORT CSV + EXPORT HTML in `st.columns(2)` and threads `question`/`route` into the message dict for historical-export provenance. Ran NON-worktree (changes pre-existed in the working tree). 108/108 tests green.
-Stopped at: HTML export feature shipped + committed. Prior live-smoke gate against MGTI sonnet-4-5 still open — operator gate (unchanged by this task; no LLM-contract surface touched).
+Last session: 2026-06-21 — `/gsd:quick` 003 + 004. Quick-003 added the EXPORT HTML feature (commit `befe0f9`): `build_html_report` in `src/utils.py` renders a self-contained report with inlined Loro Piana palette CSS; `generate_export_filename` gained an `extension` arg (CSV callers unchanged); `app.py` renders EXPORT CSV + EXPORT HTML in `st.columns(2)` and threads `question`/`route` into the message dict. Quick-004 fixed assistant-message render parity (commit `3dcd200`): history-render path was missing `unsafe_allow_html=True`, leaking raw `<span>` markup on rerun; AST-lock test added. Both ran NON-worktree (changes pre-existed). 110/110 tests green. NOT yet pushed — origin `mmctech/snow_query` has a GitHub IP allow list that blocked this machine's IP (403); push from an allow-listed network.
+Stopped at: Quick-003 + Quick-004 committed locally on `main`, awaiting push (IP allow-list gate). Prior live-smoke gate against MGTI sonnet-4-5 still open — operator gate (untouched; no LLM-contract surface changed).
 Resume file: None
-Next: `/gsd:new-milestone` — questioning → research → requirements → roadmap for v2.3.
+Next: push the two commits from an allow-listed network, then `/gsd:new-milestone` for v2.3.
 
 ---
-*Last updated: 2026-06-21 after quick task 003 (HTML report export). Ready for `/gsd:new-milestone`.*
+*Last updated: 2026-06-21 after quick tasks 003 (HTML export) + 004 (render-parity fix). Two commits await push (IP allow-list gate). Ready for `/gsd:new-milestone`.*
