@@ -74,10 +74,12 @@ See `PROJECT.md` § Next Milestone Goals for the full list. High-level groupings
 
 ## Session Continuity
 
-Last session: 2026-06-21 — `/gsd:quick` 003 + 004 + 005, all NON-worktree (changes pre-existed in the working tree). Quick-003: EXPORT HTML feature (commit `befe0f9`) — `build_html_report` in `src/utils.py` renders a self-contained Loro Piana report; `generate_export_filename` gained an `extension` arg; `app.py` renders EXPORT CSV + EXPORT HTML in `st.columns(2)`. Quick-004: assistant-message render parity (commit `3dcd200`) — history-render path was missing `unsafe_allow_html=True`, leaking raw `<span>` markup on rerun; AST-lock test added. Quick-005: NL→SQL column-hallucination guard + one-shot self-repair retry (commit `a8d7ba0`) — prompt/few-shot teach the `number` ID column, `query_with_sql` retries once on a DuckDB Binder error. 118/118 tests green. NOT yet pushed — origin `mmctech/snow_query` has a GitHub IP allow list that blocked this machine's IP `72.79.125.195` (403); push from an allow-listed network.
-Stopped at: Quick-003/004/005 committed locally on `main` (6 commits ahead of origin counting their docs commits), awaiting push (IP allow-list gate). Prior live-smoke gate against MGTI sonnet-4-5 still open — operator gate (untouched; no LLM-contract surface changed).
+Last session: 2026-06-21 — `/gsd:quick` 003 + 004 + 005, all NON-worktree (changes pre-existed in the working tree). Quick-003: EXPORT HTML feature (commit `befe0f9`) — `build_html_report` in `src/utils.py` renders a self-contained Loro Piana report; `generate_export_filename` gained an `extension` arg; `app.py` renders EXPORT CSV + EXPORT HTML in `st.columns(2)`. Quick-004: assistant-message render parity (commit `3dcd200`) — history-render path was missing `unsafe_allow_html=True`, leaking raw `<span>` markup on rerun; AST-lock test added. Quick-005: NL→SQL column-hallucination guard + one-shot self-repair retry (commit `a8d7ba0`) — prompt/few-shot teach the `number` ID column, `query_with_sql` retries once on a DuckDB Binder error. 118/118 tests green. All six commits PUSHED to the personal remote `samurai` (`https://github.com/SamuraiJenkinz/snowquery.git`); `samurai/main` == local `main` == `e666a3b`.
+Stopped at: Quick-003/004/005 committed on `main` and pushed to `samurai`. The corporate `origin` remote (`mmctech/snow_query`) has been REMOVED from this repo and is no longer a push target — push only to `samurai`. Prior live-smoke gate against MGTI sonnet-4-5 still open — operator gate (untouched; no LLM-contract surface changed).
 Resume file: None
-Next: push the queued commits from an allow-listed network, then `/gsd:new-milestone` for v2.3.
+Next: `/gsd:new-milestone` for v2.3.
+
+> **Push target:** Personal remote `samurai` (`SamuraiJenkinz/snowquery`) ONLY. The MMC corporate remote was removed — do not re-add or push to it.
 
 ---
-*Last updated: 2026-06-21 after quick tasks 003 (HTML export) + 004 (render-parity fix) + 005 (SQL column-repair retry). Commits await push (IP allow-list gate). Ready for `/gsd:new-milestone`.*
+*Last updated: 2026-06-21 after quick tasks 003 (HTML export) + 004 (render-parity fix) + 005 (SQL column-repair retry). All commits pushed to personal remote `samurai`; corporate remote removed. Ready for `/gsd:new-milestone`.*
