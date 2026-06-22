@@ -105,3 +105,48 @@ def test_html_report_to_bytes_returns_bytes_and_round_trips():
     assert result.decode("utf-8") == source, (
         "Round-trip decode mismatch — encoding or content was altered."
     )
+
+
+def test_summary_only_omits_results_and_sql_keeps_summary():
+    """summary_only=True keeps the question + executive summary but drops the
+    results table (the cell data) and the Generated SQL section.
+    """
+    df = pd.DataFrame({"number": ["INC1"], "short_description": ["UNIQUE_CELL_TOKEN"]})
+    summary = "**Key Findings**: things are stable"
+    html = build_html_report(
+        "my question",
+        df,
+        executive_summary=summary,
+        sql="SELECT * FROM incidents",
+        summary_only=True,
+    )
+
+    # Summary + question retained.
+    assert "<strong>Key Findings</strong>" in html
+    assert "my question" in html
+    # Results table content and SQL section omitted.
+    assert "UNIQUE_CELL_TOKEN" not in html, "summary_only must not embed the data table"
+    assert "Generated SQL" not in html, "summary_only must omit the SQL section"
+    assert "<h2>Results</h2>" not in html, "summary_only must omit the Results section"
+
+
+def test_summary_only_without_summary_states_absence():
+    """summary_only=True with no executive summary still produces a valid doc
+    that explicitly notes the summary is absent (no near-empty document)."""
+    html = build_html_report("q", pd.DataFrame(), executive_summary=None, summary_only=True)
+
+    assert html.strip().startswith("<!DOCTYPE html>")
+    assert "No executive summary was generated" in html
+
+
+def test_full_report_still_includes_results_and_sql():
+    """Regression guard: the default (non-summary_only) report keeps the data
+    table and SQL — summary_only must not have changed the full-report path."""
+    df = pd.DataFrame({"number": ["INC1"], "short_description": ["UNIQUE_CELL_TOKEN"]})
+    html = build_html_report(
+        "q", df, executive_summary="**X**: y", sql="SELECT 1 FROM incidents"
+    )
+
+    assert "UNIQUE_CELL_TOKEN" in html, "full report must embed the data table"
+    assert "<h2>Results</h2>" in html
+    assert "Generated SQL" in html

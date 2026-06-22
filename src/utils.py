@@ -232,6 +232,7 @@ def build_html_report(
     provider: str | None = None,
     model: str | None = None,
     route: str | None = None,
+    summary_only: bool = False,
 ) -> str:
     """Build a self-contained, Loro Piana–styled HTML report of a query answer.
 
@@ -243,11 +244,16 @@ def build_html_report(
     Args:
         question: The natural-language question the user asked.
         df: The result DataFrame (rendered as a table; empty → "no results").
+            Ignored when summary_only is True.
         executive_summary: Optional LLM summary (lightweight markdown).
-        sql: Optional generated SQL to include in a footer block.
+        sql: Optional generated SQL to include in a footer block. Ignored when
+            summary_only is True.
         provider: Optional provider key for the provenance line.
         model: Optional model identifier for the provenance line.
         route: Optional route label (structured/semantic/hybrid).
+        summary_only: When True, produce a summary-only report — the question +
+            executive summary + provenance, with the results table, row count,
+            and SQL omitted. Intended for the "EXPORT SUMMARY" affordance.
 
     Returns:
         A complete HTML document as a string.
@@ -257,22 +263,21 @@ def build_html_report(
     p = _REPORT_PALETTE
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Result table — pandas renders escaped cell values; we add the class hook.
-    if df is None or df.empty:
-        table_html = '<p class="report-empty">No matching incidents were found.</p>'
-        row_note = "0 incidents"
-    else:
-        table_html = df.to_html(
-            index=False, border=0, classes="report-table", na_rep="", escape=True
-        )
-        row_note = f"{len(df):,} incident{'s' if len(df) != 1 else ''}"
-
     summary_block = ""
     if executive_summary and executive_summary.strip():
         summary_block = (
             '<section class="report-summary">'
             '<h2>Executive Summary</h2>'
             f'<div class="report-summary-body">{_summary_to_html(executive_summary)}</div>'
+            "</section>"
+        )
+    elif summary_only:
+        # Summary-only export with no summary available — make the absence
+        # explicit rather than emitting a near-empty document.
+        summary_block = (
+            '<section class="report-summary">'
+            '<h2>Executive Summary</h2>'
+            '<p class="report-empty">No executive summary was generated for this query.</p>'
             "</section>"
         )
 
@@ -285,14 +290,34 @@ def build_html_report(
         provenance_bits.append(f"Model: {escape(model)}")
     provenance_line = " · ".join(provenance_bits)
 
-    sql_block = ""
-    if sql and sql.strip():
-        sql_block = (
-            '<section class="report-sql">'
-            "<h2>Generated SQL</h2>"
-            f"<pre><code>{escape(sql.strip())}</code></pre>"
+    # Results + SQL sections are suppressed entirely in summary-only mode.
+    if summary_only:
+        row_note = "Executive summary"
+        results_section = ""
+        sql_block = ""
+    else:
+        if df is None or df.empty:
+            table_html = '<p class="report-empty">No matching incidents were found.</p>'
+            row_note = "0 incidents"
+        else:
+            table_html = df.to_html(
+                index=False, border=0, classes="report-table", na_rep="", escape=True
+            )
+            row_note = f"{len(df):,} incident{'s' if len(df) != 1 else ''}"
+        results_section = (
+            '<section class="report-results">'
+            "<h2>Results</h2>"
+            f"{table_html}"
             "</section>"
         )
+        sql_block = ""
+        if sql and sql.strip():
+            sql_block = (
+                '<section class="report-sql">'
+                "<h2>Generated SQL</h2>"
+                f"<pre><code>{escape(sql.strip())}</code></pre>"
+                "</section>"
+            )
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -370,10 +395,7 @@ def build_html_report(
       <hr class="rule">
     </div>
     {summary_block}
-    <section class="report-results">
-      <h2>Results</h2>
-      {table_html}
-    </section>
+    {results_section}
     {sql_block}
     <footer>Generated locally by SNOWGREP. All incident data was processed on-device.</footer>
   </main>

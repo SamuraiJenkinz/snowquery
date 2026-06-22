@@ -636,8 +636,13 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
             hide_index=True,
         )
 
-        _csv_col, _html_col = st.columns(2)
-        with _csv_col:
+        # Export buttons. EXPORT SUMMARY is offered only when an executive
+        # summary exists for this answer; otherwise the row keeps two columns.
+        _has_summary = bool(executive_summary and executive_summary.strip())
+        _export_cols = st.columns(3 if _has_summary else 2)
+        _question = question or "ServiceNow incident query"
+
+        with _export_cols[0]:
             csv_data = dataframe_to_csv_bytes(df)
             st.download_button(
                 label="EXPORT CSV",
@@ -647,11 +652,11 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
                 key=f"export_{query_id}",
                 use_container_width=True,
             )
-        with _html_col:
-            # Self-contained HTML report bundling question + executive summary +
-            # data table. Built lazily on render; download_button serves the bytes.
+        with _export_cols[1]:
+            # Full self-contained HTML report: question + executive summary +
+            # data table + SQL. Built lazily on render; button serves the bytes.
             html_report = build_html_report(
-                question or "ServiceNow incident query",
+                _question,
                 df,
                 executive_summary,
                 sql=sql,
@@ -667,6 +672,27 @@ def display_results(df: pd.DataFrame, sql: str | None, query_id: str, executive_
                 key=f"export_html_{query_id}",
                 use_container_width=True,
             )
+        if _has_summary:
+            with _export_cols[2]:
+                # Summary-only HTML report: question + executive summary +
+                # provenance, with the results table and SQL omitted.
+                summary_report = build_html_report(
+                    _question,
+                    df,
+                    executive_summary,
+                    provider=provider,
+                    model=model,
+                    route=route,
+                    summary_only=True,
+                )
+                st.download_button(
+                    label="EXPORT SUMMARY",
+                    data=html_report_to_bytes(summary_report),
+                    file_name=generate_export_filename("incident_summary", "html"),
+                    mime="text/html",
+                    key=f"export_summary_{query_id}",
+                    use_container_width=True,
+                )
 
     # SQL expander (unchanged — outside the EXPAND · INTERACTIVE VIEW for
     # visual separation; SQL is a debugging affordance, not data).
